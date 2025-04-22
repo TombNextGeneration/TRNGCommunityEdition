@@ -1,0 +1,42 @@
+#include "resource.h"
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+#define VER_MAJOR 0
+#define VER_MINOR 1
+#define VER_PATCH 0
+
+#define STR_(x) #x
+#define STR(x) STR_(x)
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION VER_MAJOR,VER_MINOR,VER_PATCH,0
+ PRODUCTVERSION VER_MAJOR,VER_MINOR,VER_PATCH,0
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG
+#else
+ FILEFLAGS 0
+#endif
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "FileVersion", STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_PATCH) ".0\0"
+            VALUE "OriginalFilename", "TRNGCE.dll\0"
+            VALUE "ProductVersion", STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_PATCH) ".0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
