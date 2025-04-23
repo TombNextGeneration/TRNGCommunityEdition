@@ -5,7 +5,32 @@ extern "C" int DummyFunction() {
     return 0;
 }
 
-void Inject() {
+#pragma pack(push, 1)
+struct Jump {
+    BYTE opcode;
+    DWORD offset;
+};
+#pragma pack(pop)
+
+static void WriteProcessJump(DWORD from, DWORD to) {
+    DWORD protection;
+    Jump buffer;
+
+    VirtualProtect((LPVOID) from, sizeof(Jump), PAGE_EXECUTE_READWRITE, &protection);
+    buffer.opcode = 0xE9;
+    buffer.offset = to - from + sizeof(Jump);
+    memcpy((void *) from, &buffer, sizeof(Jump));
+    VirtualProtect((LPVOID) from, sizeof(Jump), protection, &protection);
+}
+
+void WriteProcess(DWORD from, DWORD to, bool replace) {
+    if (replace)
+        WriteProcessJump(from, to);
+    else
+        WriteProcessJump(to, from);
+}
+
+static void Inject() {
 
 }
 
