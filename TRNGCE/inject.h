@@ -1,3 +1,3 @@
 #pragma once
 
-void WriteProcess(DWORD from, DWORD to, bool replace);
+void WriteProcess(unsigned int from, unsigned int to, bool replace);

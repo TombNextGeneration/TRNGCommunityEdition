@@ -1,4 +1,5 @@
-#include "pch.h"
+#include "inject.h"
+#include "framework.h"
 
 #pragma comment(linker, "/EXPORT:_DummyFunction,@1,NONAME")
 extern "C" int DummyFunction() {
@@ -7,12 +8,12 @@ extern "C" int DummyFunction() {
 
 #pragma pack(push, 1)
 struct Jump {
-    BYTE opcode;
-    DWORD offset;
+    unsigned char opcode;
+    unsigned int offset;
 };
 #pragma pack(pop)
 
-static void WriteProcessJump(DWORD from, DWORD to) {
+static void WriteProcessJump(unsigned int from, unsigned int to) {
     DWORD protection;
     Jump buffer;
 
@@ -23,7 +24,7 @@ static void WriteProcessJump(DWORD from, DWORD to) {
     VirtualProtect((LPVOID) from, sizeof(Jump), protection, &protection);
 }
 
-void WriteProcess(DWORD from, DWORD to, bool replace) {
+void WriteProcess(unsigned int from, unsigned int to, bool replace) {
     if (replace)
         WriteProcessJump(from, to);
     else
