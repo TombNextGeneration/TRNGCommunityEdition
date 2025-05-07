@@ -54,6 +54,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;TRNGCE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -74,6 +75,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;TRNGCE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -91,9 +93,31 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tomb4\specific\3dmath.h" />
+    <ClInclude Include="tomb4\specific\function_stubs.h" />
+    <ClInclude Include="tomb4\game\croc.h" />
+    <ClInclude Include="tomb4\game\draw.h" />
+    <ClInclude Include="tomb4\game\enums.h" />
+    <ClInclude Include="tomb4\game\lara.h" />
+    <ClInclude Include="tomb4\game\math.h" />
+    <ClInclude Include="tomb4\game\sound.h" />
+    <ClInclude Include="tomb4\game\tomb4fx.h" />
+    <ClInclude Include="tomb4\game\types.h" />
+    <ClInclude Include="tomb4\specific\math_tbls.h" />
+    <ClInclude Include="trng\bass.h" />
+    <ClInclude Include="trng\structures.h" />
+    <ClInclude Include="trng\tomb_nextgeneration.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="tomb4\specific\3dmath.cpp" />
+    <ClCompile Include="tomb4\specific\function_stubs.cpp" />
+    <ClCompile Include="tomb4\game\croc.cpp" />
+    <ClCompile Include="tomb4\game\draw.cpp" />
+    <ClCompile Include="tomb4\game\lara.cpp" />
+    <ClCompile Include="tomb4\game\sound.cpp" />
+    <ClCompile Include="tomb4\game\tomb4fx.cpp" />
+    <ClCompile Include="trng\tomb_nextgeneration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />

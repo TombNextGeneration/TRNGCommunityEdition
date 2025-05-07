@@ -4,11 +4,91 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="trng\structures.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\tomb_nextgeneration.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\bass.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\croc.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\types.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\lara.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\enums.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\math.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\sound.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\draw.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\tomb4fx.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\function_stubs.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\3dmath.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\math_tbls.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="tomb4\game\croc.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\lara.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\sound.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\draw.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\tomb4fx.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\function_stubs.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\3dmath.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\tomb_nextgeneration.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="tomb4">
+      <UniqueIdentifier>{a08dd1d4-bbc0-4af7-a7cd-0242f3ebd82b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="trng">
+      <UniqueIdentifier>{8163c0a7-4c5a-40d0-ac99-bb58762a1214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tomb4\game">
+      <UniqueIdentifier>{3653bb14-2c62-4305-bd71-30178509951a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tomb4\specific">
+      <UniqueIdentifier>{96a11696-fb26-4e75-b3bb-ed95a56687ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
