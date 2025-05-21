@@ -5,6 +5,16 @@
 #include "tomb4/game/tomb4fx.h"
 #include "tomb4/specific/function_stubs.h"
 #include "tomb4/specific/3dmath.h"
+#include "tomb4/specific/file.h"
+#include "tomb4/game/laraskin.h"
+#include "tomb4/game/setup.h"
+#include "tomb4/specific/drawroom.h"
+#include "trng/zPatchesTomb4.h"
+#include "trng/trng_elevator.h"
+#include "trng/Oggetti.h"
+#include "trng/Tomb_NextGeneration.h"
+#include "tomb4/game/objects.h"
+#include "tomb4/game/collide.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -45,6 +55,16 @@ static void Inject(bool replace) {
     Inject_Tomb4fx(replace);
     Inject_FunctionStubs(replace);
     Inject_3dmath(replace);
+    Inject_File(replace);
+    Inject_Laraskin(replace);
+    Inject_Setup(replace);
+    Inject_Drawroom(replace);
+    Inject_ZPatchesTomb4(replace);
+    Inject_TrngElevator(replace);
+    Inject_Oggetti(replace);
+    Inject_TombNextGeneration(replace);
+    Inject_Objects(replace);
+    Inject_Collide(replace);
 }
 
 static LPSTR __stdcall CallInject() {

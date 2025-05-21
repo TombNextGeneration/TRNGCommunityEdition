@@ -93,7 +93,14 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tomb4\game\collide.h" />
+    <ClInclude Include="tomb4\game\control.h" />
+    <ClInclude Include="tomb4\game\laraskin.h" />
+    <ClInclude Include="tomb4\game\objects.h" />
+    <ClInclude Include="tomb4\game\setup.h" />
     <ClInclude Include="tomb4\specific\3dmath.h" />
+    <ClInclude Include="tomb4\specific\drawroom.h" />
+    <ClInclude Include="tomb4\specific\file.h" />
     <ClInclude Include="tomb4\specific\function_stubs.h" />
     <ClInclude Include="tomb4\game\croc.h" />
     <ClInclude Include="tomb4\game\draw.h" />
@@ -105,19 +112,35 @@
     <ClInclude Include="tomb4\game\types.h" />
     <ClInclude Include="tomb4\specific\math_tbls.h" />
     <ClInclude Include="trng\bass.h" />
+    <ClInclude Include="trng\DefTomb4Funct.h" />
+    <ClInclude Include="trng\MyConstants.h" />
+    <ClInclude Include="trng\MyStructures.h" />
+    <ClInclude Include="trng\Oggetti.h" />
     <ClInclude Include="trng\structures.h" />
-    <ClInclude Include="trng\tomb_nextgeneration.h" />
+    <ClInclude Include="trng\Tomb_NextGeneration.h" />
+    <ClInclude Include="trng\trng_elevator.h" />
+    <ClInclude Include="trng\zPatchesTomb4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="tomb4\game\collide.cpp" />
+    <ClCompile Include="tomb4\game\control.cpp" />
+    <ClCompile Include="tomb4\game\laraskin.cpp" />
+    <ClCompile Include="tomb4\game\objects.cpp" />
+    <ClCompile Include="tomb4\game\setup.cpp" />
     <ClCompile Include="tomb4\specific\3dmath.cpp" />
+    <ClCompile Include="tomb4\specific\drawroom.cpp" />
+    <ClCompile Include="tomb4\specific\file.cpp" />
     <ClCompile Include="tomb4\specific\function_stubs.cpp" />
     <ClCompile Include="tomb4\game\croc.cpp" />
     <ClCompile Include="tomb4\game\draw.cpp" />
     <ClCompile Include="tomb4\game\lara.cpp" />
     <ClCompile Include="tomb4\game\sound.cpp" />
     <ClCompile Include="tomb4\game\tomb4fx.cpp" />
-    <ClCompile Include="trng\tomb_nextgeneration.cpp" />
+    <ClCompile Include="trng\Oggetti.cpp" />
+    <ClCompile Include="trng\Tomb_NextGeneration.cpp" />
+    <ClCompile Include="trng\trng_elevator.cpp" />
+    <ClCompile Include="trng\zPatchesTomb4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />

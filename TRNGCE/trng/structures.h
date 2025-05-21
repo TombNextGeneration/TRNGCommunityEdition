@@ -849,7 +849,113 @@ namespace trng {
 	inline constexpr int TT_PAUSED_MENU_ITEMS = 25;    //Text for paused menu, "Statistics", "Options", "Exit to Title"
 	inline constexpr int TT_MAIN_MENU_ON = 26;  // testi menu principale selezionati
 	inline constexpr int TT_CAMERA_VIEW = 27;  // messaggio di LoadCamera quando si preme F1
-	inline constexpr int TT_MAX_TEXT_TYPES = 28;  
+	inline constexpr int TT_MAX_TEXT_TYPES = 28;
+
+	inline constexpr int PANEL_START = 472;
+	inline constexpr int PANEL_END = 479;
+
+	// LIST OF CALLBACK THAT YOU CAN REQUIRE:
+
+	// ------------ CALLBACKS WITH NO FLAGS, NO PARAMETERS --------------------------
+	inline constexpr int CB_INIT_PROGRAM = 0; // DEFAULT. You have already it. Look for "cbInitProgram" procedure in Plugin_trng.cpp source
+	inline constexpr int CB_SAVING_GAME = 1; // DEFAULT. You have already it. Look for "cbSaveMyData" procedure in Plugin_trng.cpp source
+	inline constexpr int CB_LOADING_GAME = 2; // DEFAULT. You have already it. Look for "cbLoadMyData" procedure in Plugin_trng.cpp
+	inline constexpr int CB_INIT_GAME = 3; // DEFAULT. You have already it. Look for "cbInitGame" procedure in Plugin_trng.cpp source
+	inline constexpr int CB_INIT_LOAD_NEW_LEVEL = 4; // DEFAULT. You have already it. Look for "cbInitLoadNewLevel" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_FLIPEFFECT_MINE = 5; // DEFAULT. You have already it. Look for "cbFlipEffectMine" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_ACTION_MINE = 6; // DEFAULT. You have already it. Look for "cbActionMine" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_CONDITION_MINE = 7; // DEFAULT. You have already it. Look for "cbConditionMine" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_CUSTOMIZE_MINE = 8; // DEFAULT. You have already it. Look for "cbCustomizeMine" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_PARAMETER_MINE = 9; // DEFAULT. You have already it. Look for "cbParametersMine" procedure in Pluging_trng.cpp source
+	inline constexpr int CB_CYCLE_BEGIN = 10; // DEFAULT. You have already it. Look for "cbCycleBegin" procedure in Plugin_trng.cpp
+	inline constexpr int CB_CYCLE_END = 11; // callback called at end of every game cycle
+	inline constexpr int CB_GLOBAL_TRIGGER = 12; // callback to give the result about a global trigger GT_... (yours or old of trng)
+	inline constexpr int CB_INIT_OBJECTS = 13; // it will be called just completed the loading of object slots from tr4 level. (CALL_VOID) You can use it to initialise your objects (moveables) or to change the settings of other moveables
+	inline constexpr int CB_PROGR_ACTION_MINE = 14; // DEFAULT: You have already it. Look for "cbProgrActionMine" procedure in Plugin_trng.cpp source
+	inline constexpr int CB_PROGR_ACTION_DRAW_MINE = 15; // callback to perform your progressive actions that requires a direct draw on screen (meshes, images, windows font texts, sprites)
+	inline constexpr int CB_INIT_LEVEL = 16; // DEFAULT: you have already it. Look for "cbInitLevel" procedure. it will be performed just a moment before entering in main game cycle. All items have already been initialized
+	inline constexpr int CB_COMPLETED_PROGR_ACTION = 17; // callback called when a trng progressive action has been just completed.
+	inline constexpr int CB_VEHICLE = 18; // callback for vehicle management
+	inline constexpr int CB_ASSIGN_SLOT_MINE = 19; // DEFAULT: You have already it. Look for "cbAssignSlotMine() procedure. It receives and stores all AssignSlot= data about your OBJ_ values
+	inline constexpr int CB_FMV_MANAGER = 20; // callback to replace playing fmv management
+	inline constexpr int CB_INPUT_MANAGER = 21; // callback to read in advance input command and, optionally remove them
+	inline constexpr int CB_SAVEGAME_MANAGER = 22; // callback for procedure to handle savegame list to load/save savegames
+												   // it works like "replace": you replace the original/trng management
+												   // about savegame selection
+	inline constexpr int CB_PAUSE_MANAGER = 23; // callback to handle pause menu phase. it works as a replace callback
+	inline constexpr int CB_STATISTICS_MANAGER = 24; // callback to the procedure to show statistics screen.
+	inline constexpr int CB_TITLE_MENU_MANAGER = 25; // callback for the menu of title level
+	inline constexpr int CB_WINDOWS_FONT_CREATE = 26; // callback to replace the creation of windows font for printing window text
+	inline constexpr int CB_WINDOWS_UNICODE_CONVERT = 27; // callback to convert from text of script to unicode text for windows text printing
+	inline constexpr int CB_WINDOWS_TEXT_PRINT = 28; // callback to replace print windows text trng function
+	inline constexpr int CB_DIAGNOSTIC = 29; // callback to add own diagnostic on screen or to monitor current trng diagnostic text
+
+	// --------- CALLBACKS WITH FLAGS (CBT_FIRST, CBT_AFTER,CBT_REPLACE) but NO PARAMETERS -----------------
+	inline constexpr int CB_LARA_CONTROL = 33; // callback for main control procedure of lara that swap environment:
+											   //                                      ground, water surface, underwater, vehicle
+	inline constexpr int CB_LARA_DRAW = 34; // callback for draw lara procedure
+	inline constexpr int CB_LARA_HAIR_DRAW = 35; // callback for draw hair procedure
+	inline constexpr int CB_LARA_HAIR_CONTROL = 36; // callback for control hair procedure
+	inline constexpr int CB_INVENTORY_MAIN = 37; // callback for procedure that shows inventory and handles it
+	inline constexpr int CB_INVENT_BACKGROUND_CREATE = 38; // callback for procedure ( CreateMonoScreen) that creates a backgroup (allocating resources if necessary)
+	inline constexpr int CB_INVENT_BACKGROUND_DRAW = 39; // callback for procedure (S_DisplayMonoScreen) that updates graphic for background
+	inline constexpr int CB_INVENT_BACKGROUND_QUIT = 40; // callback for procedure (FreeMonoScreen) that free futher resource allocated by BACKGROUND_CREATE
+	inline constexpr int CB_ANIMATE_LARA = 41; // callback for procedure AnimateLaran that update frames and change animations of lara
+	inline constexpr int CB_OPTIONS_MANAGER = 42; // callback to the procedure to show/edit options
+												  // note: it accepts only CBT_REPLACE and CBT_LOOPED flags
+
+	// ---------- CALLBACKS WITH FLAGS AND PARAMETERS -----------------------------------------------------
+	inline constexpr int CB_FLIPEFFECT = 100; // callback for a tomb_nextgeneration (old, not yours) FLIPEFFECT trigger
+	inline constexpr int CB_ACTION = 101; // callback for a tomb_nextgeneration (old, not yours) ACTION trigger
+	inline constexpr int CB_CONDITION = 102; // callback for a tomb_nextgeneration (old, not yours) CONDITION trigger. WARNING: condition triggers have a particular management, see infos about this kind of callback
+	inline constexpr int CB_VEHICLE_CONTROL = 103; // calback for vehicles not handled by common slot control procedures
+												   // set as parameter the slot of vehicle (jeep, sidecar or kayak)
+	inline constexpr int CB_PROGR_ACTION = 105; // callback for a tomb_nextgeneration (old, not yours) PROGRESSIVE ACTION. Type the AZ_ constant to choose it.
+	inline constexpr int CB_NUMERIC_TRNG_PATCH = 106; // callback affects a given MOV AX , Number  / Call dword [TrngPatcher]  patch of trng (see tomb4 patched code source for their position and target)
+	inline constexpr int CB_SLOT_INITIALISE = 107; // callboack for Initialise procedure of given slot object
+	inline constexpr int CB_SLOT_CONTROL = 108; // callback for Control procedure of given slot object
+	inline constexpr int CB_SLOT_COLLISION = 109; // callback for Collision procedure of given slot object
+	inline constexpr int CB_SLOT_DRAW = 110; // callback for Draw procedure of given slot object
+	inline constexpr int CB_SLOT_FLOOR = 111; // callback for floor procedure of given slot object
+	inline constexpr int CB_SLOT_CEILING = 112; // callback fro ceiling procedure of given slot object
+	inline constexpr int CB_SLOT_DRAW_EXTRA = 113; // callback for drawextra procedure of given slot object
+	inline constexpr int CB_STATE_ID_LARA_CTRL = 114; // callback for control state-id lara, parameter the state-id
+	inline constexpr int CB_STATE_ID_LARA_COLLISION = 115; // callbacks for collision state-id lara, parameter the state-id
+
+	// CallBack Types
+	// note: not all callbacks support all following types
+	inline constexpr int CBT_FIRST = 0x0001; // your callback code it will be performed FIRST of orginal trng code, then it will be performed original trng code
+	inline constexpr int CBT_AFTER = 0x0002; // your callback code it will be performed AFTER that the original trng code has been performed
+	inline constexpr int CBT_REPLACE = 0x0004; // this callback will REPLACE totally original trng code.
+	inline constexpr int CBT_ASM = 0x0008; // this callback will be handled by your assembly code at low level.
+										   //      CBT_ASM works only for CB_NUMERIC_TRNG_PATCH
+										   //      if you omit the CBT_ASM flag, the callback should be handled
+										   // by your c++ code (see the prototype for C++ callback to CB_NUMERIC_TRNG_PATCH
+										   // in DefTomb4Funct.h file).
+	inline constexpr int CBT_PRESENT = 0x0010; // do not use, reserved
+	inline constexpr int CBT_LOOPED = 0x0020; // performed togheter with original code, it works with management that has not a precise start and end but when it is in progress
+	inline constexpr int CBT_ANY = 0xFFFF; // do not use, reserved
+
+	// flag NEF ossia flag ng per comando script Enemy=
+	inline constexpr int NEF_NONE = 0;
+	inline constexpr int NEF_EXPLODE = 0x0001;
+	inline constexpr int NEF_EXPLODE_AFTER = 0x0002;
+	inline constexpr int NEF_NON_TARGET = 0x0004;
+	inline constexpr int NEF_HIT_DEFAULT = 0x0008;
+	inline constexpr int NEF_SET_AS_CREATURE = 0x0010;
+	inline constexpr int NEF_SET_AS_BRIDGE_FLAT = 0x0020;
+	inline constexpr int NEF_SET_AS_BRIDGE_TILT1 = 0x0040;
+	inline constexpr int NEF_SET_AS_BRIDGE_TILT2 = 0x0080;
+	inline constexpr int NEF_EASY_HEAVY_ENABLING = 0x0100;
+	inline constexpr int NEF_HIT_BLOOD = 0x0400;
+	inline constexpr int NEF_HIT_SMOKE = 0x0800;
+	inline constexpr int NEF_HIT_FRAGMENTS = 0x0C00;
+	inline constexpr int NEF_ONLY_EXPLODE = 0x1000;
+	inline constexpr int NEF_SET_AS_MORTAL = 0x2000;
+	inline constexpr int NEF_SAVE_MESH_VISIBILITY = 0x4000;
+	inline constexpr int NEF_SET_AS_SEMIGOD = 0x8000;
+
+	inline constexpr int SCRIPT_IGNORE = 0xFFFF;
 
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
@@ -975,7 +1081,7 @@ namespace trng {
 		bool TestScriptPresenti; // se entrambi i file script sono presenti
 		char MexMissing[1024]; // avvisi file mancanti o NULL
 		char MexLoadCamera[256];
-		bool TestErrori; // errori 
+		bool TestErrori; // errori
 		bool TestAvvisi;
 		bool TestErroreLoadCamera;
 		int Reserved[80]; // to change when I add new field to this structure
@@ -1011,7 +1117,7 @@ namespace trng {
 		short Reserved_36;				// 36
 		short Reserved_38;				// 38
 		short Reserved_3A;				// 3A
-		void *pZonaSavegame;		// 3C	or pCreatureInfo structure for enemies				
+		void *pZonaSavegame;		// 3C	or pCreatureInfo structure for enemies
 		DWORD  CordX;					// 40
 		int  CordY;					// 44
 		DWORD  CordZ;					// 48
@@ -1065,7 +1171,7 @@ namespace trng {
 	struct StrScaleItem {
 		WORD IdScale;
 		WORD Dynamic;
-		short ItemIndex; 
+		short ItemIndex;
 		WORD Flags;   // fst_
 		short BeginPerc;
 		short FinalPerc;
@@ -1099,7 +1205,7 @@ namespace trng {
 	struct StrBaseRollBoat {
 		WORD TotRollBoats;
 		StrRollBoat VetRollBoats[MAX_ROLL_BOATS];
-		// variabili per accesso rapido a presenza di rolling per 
+		// variabili per accesso rapido a presenza di rolling per
 		// rubberboat o motorboat
 		bool TestRubberBoat;
 		bool TestMotorBoat;
@@ -1160,7 +1266,7 @@ namespace trng {
 	};
 
 	struct StrBaseShowSprite {
-		WORD TotShowSprites;	
+		WORD TotShowSprites;
 		StrShowSprite VetShowSprites[MAX_SHOW_SPRITES];
 		short VetIdShowSprites[MAX_SHOW_SPRITES*10];
 	};
@@ -1356,7 +1462,7 @@ namespace trng {
 		BYTE Copy_169_1AC[0x44]; // copia secondo blocco savegame
 		WORD FlagsRoom; // flag di stanza dove si trova lara
 		DWORD OffsetLara; // offset in inizio savegae di dove parte strutturalara
-		BYTE SegretiTrovati_1FB; // bytre di segreti 
+		BYTE SegretiTrovati_1FB; // bytre di segreti
 		BYTE NonUsato;
 		DWORD Distanza;
 		BYTE ByteAlign;
@@ -1369,7 +1475,7 @@ namespace trng {
 		WORD Flags; // dati peridentificare in modo univoco questo trigger  SCANF_... scanf flags
 
 		DWORD OffsetFloorData;
-		// distanza da inizio floor data di record 
+		// distanza da inizio floor data di record
 		//						<TRIGGER WHAT=flipeffect> <NUMERO FLIP>
 		WORD Indice; // indice item che ha eseguito questo flipeffect
 		WORD PluginId; // 0= trng, or id of plugin owner of this trigger
@@ -1476,7 +1582,7 @@ namespace trng {
 	};
 
 	struct StrTempWindowsFont {
-		HFONT hFontInTombHdc; 
+		HFONT hFontInTombHdc;
 		StrWindowsFont FontNow;
 	};
 
@@ -1484,10 +1590,10 @@ namespace trng {
 		int TotFonts;
 		StrWindowsFont VetFonts[MAX_FONTS];
 		short VetID[MAX_FONTS*10];
-		bool TestUsaWindowsFont; 
-		StrWindowsFont DefWindowsFont; // this is the windowsfont for all prints 
+		bool TestUsaWindowsFont;
+		StrWindowsFont DefWindowsFont; // this is the windowsfont for all prints
 		WORD FlagDWF;
-		StrTempWindowsFont TempFont;  // used by current single print string 
+		StrTempWindowsFont TempFont;  // used by current single print string
 		short VetOffsetPosY[POFF_COUNTER]; // changes for y position of system menus
 		short LineSpacing;  // value to modify height of character row
 	};
@@ -1496,7 +1602,7 @@ namespace trng {
 		char *pTesto; // allocato dinamicamente  (lista savegames per panello)
 		char *pTitolo; // allocato dinamicamente (non usata in pannello savegame)
 		char *pInfoSave; // allocato dinamicamente, usata solo da panello savegame
-		RECT FrameText1;  // se saveagame panel lista savegame 
+		RECT FrameText1;  // se saveagame panel lista savegame
 		RECT FrameText2;  // se savegame panel info text
 		RECT FrameTitle;  // solo in savegame panel
 		RECT FrameImg;
@@ -1515,7 +1621,7 @@ namespace trng {
 		WORD TotStringhe;
 		WORD VetStringhe[MAX_STRINGHE_DIARIO]; // indici ng
 		int SizeTestoDiario;
-		char* pTestoDiario; 
+		char* pTestoDiario;
 		StrWindowsFont FontTitle;
 		StrWindowsFont FontText;
 		StrWindowsFont FontInfoSave; // usato solo per panello savegame
@@ -1609,7 +1715,7 @@ namespace trng {
 		WORD DefMinFog;
 		WORD DefMaxFog;
 		BYTE DefVolumetricFX; // valore di setup
-		BYTE DefBumpMapping; 
+		BYTE DefBumpMapping;
 		int Reserved[80]; // to change when I modify this structure
 	};
 
@@ -1685,7 +1791,7 @@ namespace trng {
 		WORD Posizione; // STRING_...
 		WORD Flags;  // FT_...
 		BYTE BlinkSpeed;   // default era 0x10
-		BYTE FlagsMicro;  
+		BYTE FlagsMicro;
 		BYTE DefFlagsMicro;  // per livello al di fuori di setting per ogni flipeffect
 		BYTE DefALLFlagsMicro;  // per title e roba menu
 		WORD DefColore;
@@ -1791,7 +1897,7 @@ namespace trng {
 	};
 
 	struct StrMiniShot {
-		bool TestRGB; 
+		bool TestRGB;
 		DWORD ShotSizeX;
 		DWORD ShotSizeY;
 		bool TestSalvaMiniShot; // salva in savegame i mini shot
@@ -1909,8 +2015,8 @@ namespace trng {
 			BYTE *pSizeY;
 			int SizeY;
 		};
-		DWORD DefColor1; 
-		DWORD DefColor2;  
+		DWORD DefColor1;
+		DWORD DefColor2;
 	};
 
 	struct StrHeaderTimer {
@@ -1954,7 +2060,7 @@ namespace trng {
 	};
 
 	struct StrParBar {
-		int JumpPower; 
+		int JumpPower;
 		int GiriCompleti;
 		WORD ParallelBarFlags; //copiati da customize
 		DWORD TotFrames;  //numero di frame in fase di rotazione
@@ -2126,7 +2232,7 @@ namespace trng {
 
 	struct StrColorRGB {
 		WORD IdColor;
-		union {		
+		union {
 			DWORD Colore;
 			StrSingleColors Single;
 			WORD Dynamic;
@@ -2272,7 +2378,7 @@ namespace trng {
 		int IndiceAnimRubberBoat;	// dati per nuovo oggetto RUBBER BOAT
 		int IndiceRubberBoat;
 		int IndiceAnimMotorBoat;
-		int IndiceMotorBoat;	
+		int IndiceMotorBoat;
 	};
 
 	struct StrDatiDiagAnim {
@@ -2410,7 +2516,7 @@ namespace trng {
 		short OrgX;   // 0x00
 		short OrgY;   // 0x02
 		WORD SizeX;   // 0x04
-		BYTE SizeY;   // 0x06  
+		BYTE SizeY;   // 0x06
 		WORD Flags;   // 0x07
 		DWORD Color1;  // 0x09 (non piu' id ma colore rgb gia' espanso)
 		DWORD Color2;  // 0x0D (non id ma colore)
@@ -2594,7 +2700,7 @@ namespace trng {
 		StrBaseAnimMorte BaseAddAnimMorte;
 		StrBarraCust VetBar[BAR_CUST_TOT];
 		WORD ParallelBarFlags; // PB_...
-		WORD ParalledSpeedSlide; 
+		WORD ParalledSpeedSlide;
 		WORD ParallelMaxTurns;
 		DWORD BugsToFix;  // BUGF_...
 		StrCustCamera CameraCust;
@@ -2843,7 +2949,7 @@ namespace trng {
 		float LightOut;   // 16
 		float LightLenght;  // 1A
 		float LightCutOff;  // 1e
-		float TargetX;   // targets are not absolute coordinates but they seem degrees 
+		float TargetX;   // targets are not absolute coordinates but they seem degrees
 		float TargetY;  // 26
 		float TargetZ;  // 2a
 	};
@@ -2875,7 +2981,7 @@ namespace trng {
 		char FlipMapIndex;    // 35
 		char IndexTabWater;			// 36
 		BYTE TestFlagsBound;        // 37
-		short  SizeXScreenOther;           // 38 
+		short  SizeXScreenOther;           // 38
 		short rm_Mistery3A;			// 3A
 		short  SizeYScreenOther;		    // 3C
 		short rm_Mistery3E;			// 3E
@@ -2935,11 +3041,11 @@ namespace trng {
 		BYTE PuzzleItem11;		//  quantity
 		BYTE PuzzleItem12;		//  quantity
 		WORD ComboItems;		//  COMBO_ values to test with "&" operator (bit flags)
-		WORD Keys;				//  EX16_ values to test with "&" operator (bit flags) 
+		WORD Keys;				//  EX16_ values to test with "&" operator (bit flags)
 		WORD KeyCombo;			//  KCOMBO_ values to test with "&" operator (bit flags)
-		short PickupItems;		//  EX16_ values to test with "&" operator (bit flags) 
-		short PickupCombo;		//  PCOMBO_ values to test with "&" operator (bit flags) 
-		short QuestItems;		//  EX16_ values to test with "&" operator (bit flags) 
+		short PickupItems;		//  EX16_ values to test with "&" operator (bit flags)
+		short PickupCombo;		//  PCOMBO_ values to test with "&" operator (bit flags)
+		short QuestItems;		//  EX16_ values to test with "&" operator (bit flags)
 		short MediPackSmall;		//  quantity (-1 = unlimited)
 		short MediPackLarge;		// quantity (-1 = unlimited)
 		short Flares;		// quantity (-1 = unlimited)
@@ -2963,12 +3069,12 @@ namespace trng {
 		int   IndexFirstTree;	// 4
 		int   IndexFirstFrame;  // 8
 		void *pProcInitialise;	// 0C
-		void *pProcControl;		// 10	
+		void *pProcControl;		// 10
 		void *pProcFloor;		// 14
 		void *pProcCeiling;		// 18
 		void *pProcDraw;		// 1C
 		void *pProcCollision;   // 20
-		WORD  DistanceForMIP;      // 24  
+		WORD  DistanceForMIP;      // 24
 		WORD  IndexFirstAnim;   // 26
 		short Vitality;			// 28
 		WORD DistanceDetectLara;		// 2A
@@ -2977,7 +3083,7 @@ namespace trng {
 		WORD  TestGuard;		// 30
 		WORD Flags;				// 32  (FSLOT_ flags)
 		void *pProcDrawExtras;	// 34
-		int  ShatterableMeshes;		// 38  
+		int  ShatterableMeshes;		// 38
 		int  ss_Unknown5;		// 3C
 	};
 
@@ -3023,10 +3129,10 @@ namespace trng {
 	// super mega struttura per dati collisione
 	struct StrCollisionLara {
 		StrDatiCollSettore  VetInfoSettori[6];  // 0x000
-		int LaraSizeX;		// 0x048    
-		int LaraBottomY;		// 0x04C  
-		int LaraTopY;			// 0x050   
-		int LaraSizeZ;			// 0x054 
+		int LaraSizeX;		// 0x048
+		int LaraBottomY;		// 0x04C
+		int LaraTopY;			// 0x050
+		int LaraSizeZ;			// 0x054
 
 		int GridShiftX;			// 0x058 ??
 		int GridShiftY;			// 0x05C  ??
@@ -3038,7 +3144,7 @@ namespace trng {
 
 		WORD StateIdOld;		// 0x070
 		WORD AnimNowOld;		// 0x072
-		WORD FrameNowOld;		// 0x074  
+		WORD FrameNowOld;		// 0x074
 		WORD OrientHOld;		// 0x076
 		WORD Direzione;		// 0x078
 		WORD EsitoColl;		// 0x07A  1=hang bordo
@@ -3082,7 +3188,7 @@ namespace trng {
 		StrCameraTr4 *pVetCamera;
 		short *pIndexCameraNext;
 		short *pIndexCameraNow;
-		StrItemTr4 **pTargetCameraNext;	
+		StrItemTr4 **pTargetCameraNext;
 		StrItemTr4 **pTargetCameraNow;
 		GAME_VECTOR *pCameraSrc;
 		GAME_VECTOR *pCameraTarget;
@@ -3195,7 +3301,7 @@ namespace trng {
 		StrInventoryItems *pInventory;
 		StrSlot* pVetSlot;
 		int *pSlopeType; // SLOPE_ values
-		int *pSlopeX; 
+		int *pSlopeX;
 		int *pSlopeZ;
 		StrBaseHandle BaseHandles;
 		StrAnimationTr4 *pVetAnimations;
@@ -3205,14 +3311,14 @@ namespace trng {
 		StrMeshTr4 **VetMeshPointer; // tutte le mesh del wad
 		StrMeshTr4 **VetMeshLara; // punta alle 15 mesh che formano corpo di lara
 		WORD *pFlagsLaraHands;
-		WORD *pObjInLaraHandsNow; 
-		WORD *pObjInLaraHandsNext; 
-		WORD *pWeaponSelected; 
+		WORD *pObjInLaraHandsNow;
+		WORD *pObjInLaraHandsNext;
+		WORD *pWeaponSelected;
 		WORD *pLaraLocationFlags;  // LLF_ values to test with == operator
 		short *pVehicleIndex;
 		short *pWeaponHolding;
 		short *pDashBarValue;
-		BYTE *pVetDrip;  
+		BYTE *pVetDrip;
 		WORD *pPoison1;
 		WORD *pPoison2;
 		DWORD *pInputExtGameCommands;
@@ -3300,14 +3406,14 @@ namespace trng {
 		WORD *pFlashRed;
 		WORD *pFlashGreen;
 		WORD *pFlashBlue;
-		WORD *pFlashDurate; // it affects also the intensity, 
+		WORD *pFlashDurate; // it affects also the intensity,
 							// value in tick frames 1/30 of seconds, only even numbers
 		BYTE *pLevelNext; // new level that is going to be loaded
 		DWORD *pInputCommandFlags; // altra variabile con tasti premuti
 		DWORD *pFadeCurtain;
 		StrMeshTr4 *pVonCroyMeshFreeHand; // right free hand
 		StrMeshTr4 *pVonCroyMeskKnifeHand; // right hand with knife
-		int TotItemsMax; // tot moveable + new created items 
+		int TotItemsMax; // tot moveable + new created items
 		int *pInventoryRequiredSlotItem; // item that lara requires to engage some moveable: example: crowbar, jeep's key
 		int *pInventoryChosenItem; // item selected in inventory
 	};
@@ -3358,12 +3464,12 @@ namespace trng {
 	// in modalita' radar
 	struct StrTargetDetector {
 		short Fase;  // FTR_ 0= nascita / 1 = lampeggio fisso / -1 non attivo
-		short DifY;  // distanza da floor sotto lara 
+		short DifY;  // distanza da floor sotto lara
 		WORD  Orient; // orient rispetto a lara nord
-		short DifX;   // distanza su cord x in metri da lara 
+		short DifX;   // distanza su cord x in metri da lara
 		short DifZ;   // distanza su cordz
 		int Distanza3d; // distanza 3d in metri (valore assoluto)
-		short VPos;  // 0 = piano di lara, +1 = sopra lara, -1 = sotto lara 
+		short VPos;  // 0 = piano di lara, +1 = sopra lara, -1 = sotto lara
 		short Incremento; // usato per lampeggio fisso
 		short DurataFase; // GlobTomb4.Adr.VetTexInfomentare e azionare prossima fase solo a 0
 		short DurataTotale; // click ancora da eseguire con target visibile
@@ -3373,7 +3479,7 @@ namespace trng {
 	struct StrDetector {
 		bool TestMostra;  // se mostrato sullo schermo
 		bool TestAttivo; // se impostato in script
-		int Distanza; // distanza in metri 
+		int Distanza; // distanza in metri
 		int DistanzaY; // minore di zero se target e' piu' in alto
 		WORD OrientLast; // ultimo orientamento impostato (magari diverso per oscillazione)
 		WORD OrientRealLast;  // orientamento effettivo di ago
@@ -3382,7 +3488,7 @@ namespace trng {
 		DWORD LastFrame; // dipressione f8
 		short IncOscillazione;
 		WORD RangeMetri; // mostrarlo quando si e' entro i...metri
-		WORD MaxDifVMetri; 
+		WORD MaxDifVMetri;
 		WORD MaxDifHMetri;
 		WORD Indice;
 		WORD SlotDetector;
@@ -3399,13 +3505,13 @@ namespace trng {
 		WORD ItemIndex;
 		WORD Flags; // dati peridentificare in modo univoco questo trigger
 					//Byte basso: numero stanza
-					//  Byte alto: flags 
+					//  Byte alto: flags
 					//		0x0100 = attivato con heavy
 					//		0x0200 = One-shot solo temporaneo
 					//      0x0400 = Pulsante one-shot di trigger del flipeffect
 					//      0x0800 = Ancora da eseguire
 		DWORD OffsetFloorData;
-		// distanza da inizio floor data di record 
+		// distanza da inizio floor data di record
 		//						<TRIGGER WHAT=Action>
 		WORD PluginId; // 0= trng, or plugin owns this trigger
 	};
@@ -3508,7 +3614,7 @@ namespace trng {
 		WORD Max_Rain;
 		WORD Min_Rain;
 		WORD Flags; // FR_ ...
-		short SoundSFX; 
+		short SoundSFX;
 		int  LastIntensita;
 		DWORD SplashRain;
 	};
@@ -3550,7 +3656,7 @@ namespace trng {
 	};
 
 	struct StrRecordPoint {
-		int Valore; // usato per #POINT# 
+		int Valore; // usato per #POINT#
 		int Operazione; // usato per #POINT#
 		DWORD OffsetBreak;
 		BYTE Originale; // valore originale
@@ -3559,7 +3665,7 @@ namespace trng {
 	};
 
 	struct StrRecordDGN {
-		void *pIndirizzo;  // 
+		void *pIndirizzo;  //
 		int  OldValue; // per confronto con precedente scansione
 		int CodiceCostante; // se e' una variabile mnemonica qui c'e' OFF_...
 		WORD FlagsType;  // (mascherato a byte, word, long o struct)
@@ -3602,7 +3708,7 @@ namespace trng {
 		DWORD SommaTempo; // usato per le medie
 		int TotCicli;  // numero di cicli scanditi
 		WORD FlagsDgx; // DGX_.. cosa mostrare e cosa no
-		WORD DgxExtra; // eventuale parametro extra 
+		WORD DgxExtra; // eventuale parametro extra
 		StrRecordDGN  VetWatch[MAX_WATCH];
 		StrLogItem  LogItem;
 		StrDgxInfoSlot  InfoSlot;
@@ -3667,7 +3773,7 @@ namespace trng {
 		BYTE SalvaVolumetric; // salva stato prima di sospensione all fog
 		BYTE TestHardFog; // usare questo solo come segnalato di esistnza di campi
 						  // successivi e usare in futuro questa tecnica
-		BYTE TestMostraDetector; 
+		BYTE TestMostraDetector;
 		BYTE NonUsatoByte;
 		short FogEnd;
 		BYTE FogColors[4];  // in realta' solo i primi 3 sono usati
@@ -3686,7 +3792,7 @@ namespace trng {
 	struct StrRecordEnemyScript {
 		WORD  SlotId;
 		WORD  FlagsNEF;  // NEF_...
-		WORD  Health; 
+		WORD  Health;
 		short  Damage;  // danno arrecato a lara
 		WORD  TombFlags;  //TCF_ in campo flags di slot
 		short Extra; // word extra per setting particolari
@@ -3738,7 +3844,7 @@ namespace trng {
 		int  CordMirror;
 		int MinCordMirror;
 		int MaxCordMirror;
-		int IndiceNow;			
+		int IndiceNow;
 		RecordMirror *pRecNow;
 		DWORD CordX;
 		int CordY;
@@ -3805,7 +3911,7 @@ namespace trng {
 	// struttura con dati dinamici di ascensore da salvare in savegame
 	struct StrElevator {
 		int  IncY;  // praticamente velocita', positiva o negativa
-		int OrgYTarget; // coordinata y da raggiungere 
+		int OrgYTarget; // coordinata y da raggiungere
 		BYTE Status;  // EST_ .. in attesa, in movimento, in pausa, in partenza
 		BYTE FloorNow; // 0 = primo piano
 		BYTE FloorTarget; // a che piano si  sta andando
@@ -3888,7 +3994,7 @@ namespace trng {
 
 	// struttura per gestione di triggergroup con flag TGROUP_SINGLE_SHOT_RESUMED
 	struct StrSingleShotResumTG {
-		int TotTGResumed; // id dei tg with flag resumed nello script 
+		int TotTGResumed; // id dei tg with flag resumed nello script
 		WORD VetTGResumed[MAX_TRIGGER_GROUPS];
 		int TGEseguiti; // id dei triggergroup eseguiti nell'ultimo ciclo da F118
 		WORD VetTGEseguiti[MAX_TRIGGER_GROUPS];
@@ -3923,7 +4029,7 @@ namespace trng {
 		int Cd_Track;   // -1 = no audio track
 		WORD Flags;   // BKGDF_ flags
 		short Parameter;
-		bool TestLoop;   
+		bool TestLoop;
 		bool TestTrasparente;
 	};
 
@@ -3999,7 +4105,7 @@ namespace trng {
 		WORD MaxChars;
 		short SfxSound;
 		WORD RIB_Flags; // FIB_ flags, in the script
-		int ExtraParam; 
+		int ExtraParam;
 	};
 
 	struct StrExtraCode {
@@ -4033,7 +4139,7 @@ namespace trng {
 		int LastIncY;
 		int ValoreZoomProgresso; // viene usato sempre in codice tomb4
 		float ZoomInc;
-		float ZoomInc2; 
+		float ZoomInc2;
 		float ZoomMax;
 		DWORD OldTastiPremuti;
 	};
@@ -4076,12 +4182,12 @@ namespace trng {
 		StrMiniItemData Lara;
 		int VetMeshLaraOffset[15];  // differenza tra indirizzo prima mesh di lara e valori impostati nelle varie mesh di lara
 		int InventoryItemIndex; // item currently selected
-		BYTE pLevelNow; 
+		BYTE pLevelNow;
 		BYTE VetDrip[16];  // status gocce lara
 		WORD FlagsLaraHands;
-		WORD ObjInLaraHandsNow; 
-		WORD ObjInLaraHandsNext; 
-		WORD WeaponSelected; 
+		WORD ObjInLaraHandsNow;
+		WORD ObjInLaraHandsNext;
+		WORD WeaponSelected;
 		WORD LaraLocationFlags;
 		short VehicleIndex;
 		short WeaponHolding;
@@ -4153,7 +4259,7 @@ namespace trng {
 		bool TestAllocata; // catturata una fixed camera (poi si dovra' ripristinarla)
 		bool TestAttiva; // attualmente si sta usando cutscene camera
 		bool TestFreeze; // sospesa esecxuzione
-		WORD Flags; // FCT_...  
+		WORD Flags; // FCT_...
 		DWORD FreezeEndFrame; // momento di fine freeze
 		int IndexCamera; // indice di camera usata per cutscene
 		int TargetIndex; // indice di target attuale
@@ -4168,7 +4274,7 @@ namespace trng {
 		DWORD HeightEndFrame; // quando sara'finito l'effetto di movimento up/down in demo frames
 		int Rotate;  // new degree to add to have a rotation around the target
 		int RotateInc;  // change of Rotate increment
-		DWORD RotateEndFrame; 
+		DWORD RotateEndFrame;
 
 		DWORD LastPerformedFrame; // to avoid double performing in same frame number
 		StrCameraTr4 CameraNow; // used only to save in savegaem position of cutscene camera and then restore it
@@ -4181,7 +4287,7 @@ namespace trng {
 	};
 
 	struct StrBaseCutscene {
-		bool TestDemoIntroDone; //gia' eseguita prima esecuzione di cutscene intro 
+		bool TestDemoIntroDone; //gia' eseguita prima esecuzione di cutscene intro
 		StrBaseSaveActors BaseSaveActors;
 		StrCutsceneCamera BaseCamera;
 		int LeadingActorIndex;
@@ -4241,7 +4347,7 @@ namespace trng {
 		WORD VetCommands[MAX_SPEECH_COMMANDS];
 	};
 
-	// variabili globali per mantenenere effetto speech 
+	// variabili globali per mantenenere effetto speech
 	struct StrPlaySpeech {
 		bool TestAttivo;
 		WORD Flags;  // SPCF_ flags
@@ -4258,7 +4364,7 @@ namespace trng {
 		bool TestAbs;  // se mesh in SpeechIndexNow e' di tipo assoluto (comando MESH o comando SEQUENCE) = true
 
 		int IndiceSecondarioSpeech; // da 0 incrementato di uno dopo ogni fase
-		int IndiceSecondarioRotateH; // da 0 a 1 tipo fase 
+		int IndiceSecondarioRotateH; // da 0 a 1 tipo fase
 		int IndiceSecondarioRotateV;  // da 0 a 1 tipo fase: muovi tieni fermo in quella posizione
 		int FrameRateSpeech;  // impostato da utente o uguale a framerate standard
 
@@ -4274,10 +4380,10 @@ namespace trng {
 		DWORD FrameEndSpeech; // frame when complete current speech command
 
 		int  OrientHTurnNow;
-		int	 OrientHTurnInc;  	
+		int	 OrientHTurnInc;
 		int  OrientHTurnEnd;
 		int OrientHLastCommand;
-		int OrientHTimes; 
+		int OrientHTimes;
 		DWORD FrameEndHTurn;  // frame when complete current horizontal turn head (shake)
 
 		int  OrientVTurnNow;
@@ -4361,7 +4467,7 @@ namespace trng {
 		int TotMaxAIRecords;
 		int TotOldAIRecords;
 		int TotItemOlds; // original number of moveables loaded from tr4 file
-		int TotAsmTtngPatches; // number of numeric trng patches 
+		int TotAsmTtngPatches; // number of numeric trng patches
 	};
 
 	// global structure with all data for tomb4 and trng
@@ -4382,7 +4488,7 @@ namespace trng {
 		StrBasevehicles BaseVeicoli;
 		StrBaseRollBoat BaseRollBoats;
 		StrLaraHp BaseOldHpLara;
-		StrRobaKayak BaseKayak;	
+		StrRobaKayak BaseKayak;
 		bool TestFmvTitlePerformed;
 		StrBaseShowSprite BaseShowSprites;
 		StrBaseParamTriangles BaseTriangles;
@@ -4410,7 +4516,7 @@ namespace trng {
 		StrBaseFloodRooms BaseFloodRooms;
 		StrBaseFreeze BaseFreeze;
 		WORD  HangForbidden;  // 0 se e' permesso, altrimnti bit NO_HANG_....
-		WORD HangCounter; // se 0 azzera a inizio ciclo, altrimenti decremnta 
+		WORD HangCounter; // se 0 azzera a inizio ciclo, altrimenti decremnta
 		int DebugModeCounter; // se > 0 mostra debug
 		int TotBigNumbers;
 		WORD VetBigNumbers[256];
@@ -4462,7 +4568,7 @@ namespace trng {
 		StrBaseTriggerGroups *pBaseTriggerGroups;
 		short ScrollingEndIndex;  // indice di stringa ng (senza 0x8000) appena terminata
 		short ScrollingLastIndex; // indice di ng string con ultima riga visibile
-		StrBaseItemGroup BaseItemGroup;	
+		StrBaseItemGroup BaseItemGroup;
 		StrBaseColoraItem BaseColoraItem;
 		short TestPosLastID;  // -1 o indice di ultimo testposition di script usato
 		StrItemTr4 *TestPosLastItem; // item detected in ultima TestLaraPosition
@@ -4497,7 +4603,7 @@ namespace trng {
 		StrFontBaseSetting BaseFontBinary;
 		StrBasePushables BasePushables;
 		StrBaseColorRGB BaseColoriRGB;
-		StrCercaStatic VetRemapStatics[6000+1]; 
+		StrCercaStatic VetRemapStatics[6000+1];
 		int TotScanFlipEffects;
 		StrBaseImportFile BaseImportedFiles;
 		StrEnemiesNotAimable BaseEnemiesNotAimable;
@@ -4534,10 +4640,10 @@ namespace trng {
 										  // di valore indice
 		StrBaseSalvaCollisioni  BaseSalvaCollisioni;
 		StrBaseSalvaCollisioni  BaseSalvaOldCollisioni;
-		bool TestDiagnosticaNow;  // attivato quando in watch.txt c'e' 
+		bool TestDiagnosticaNow;  // attivato quando in watch.txt c'e'
 								  // when = ON_FLAG_ATTIVO
 		void *pAdrDiagnostica; // punta a memoria da controllare
-							   // quando tipo e' 
+							   // quando tipo e'
 		int OperazioneNext;  // ON_...
 		int OperazioneNext2;
 
@@ -4561,7 +4667,7 @@ namespace trng {
 		int TotSizeDemoData;  // numero di suoni solo se tabella estesa
 		StrScanAction VetScanActions[64];
 		StrBaseEffects *pBaseEffects;
-		int VetInventory[128];  // slot di item inventario	
+		int VetInventory[128];  // slot di item inventario
 		StrOldTrigger VetOldFlipEffects[MAX_OLD_FLIPEFFECT];
 		int TotOldFlipEffects;
 		StrOldTrigger VetOldActions[MAX_OLD_ACTIONS];
@@ -4632,9 +4738,9 @@ namespace trng {
 		WORD TotExtraInfoRoom; // numero di stanze effettivamente presenti
 		StrExtraInfoRoom VetExtraInfoRoom[0x400];
 		int TotExtraStrings;
-		StrExtraLangugage VetExtraStrings[0x400];  
+		StrExtraLangugage VetExtraStrings[0x400];
 		char LinguaNow[30];  // conterra' "italian" o "english" ecc.
-		StrScriptOpzioni ScriptOptions; 
+		StrScriptOpzioni ScriptOptions;
 		StrScriptLevel *pScriptLevelNow;
 
 		WORD FlagsLevelTr4;   // FLT_
@@ -4669,7 +4775,7 @@ namespace trng {
 		StrEnvForEnemy BaseEnvEnemy; // extra check points when the env is for enemy
 		StrSingleShotResumTG BaseTG_SingleShotResumed;
 		StrBaseLightning BaseParamLightning;
-		StrBaseImgMonoScreen BaseImgMonoScreen;  
+		StrBaseImgMonoScreen BaseImgMonoScreen;
 		StrBaseImgBackGround BaseImgLoadingLevel;
 		StrBaseImgBackGround BaseImgTitle;
 		StrBaseImgBackGround BaseImgBinocular;
@@ -4677,14 +4783,14 @@ namespace trng {
 		COLORREF VetTextColors[9];  // colors used for print string with windowsfont (index to FC_ color constants)
 		short  ColorWhiteStep;  // signed incrfement to change color FC_BIANCO_MOD (1), from white and black slowly
 		short  ColorGradientNow; // from 0 to 255 to use for any gradient of pulsing white
-		StrOffsetRanges VetStringOffsets[POFF_COUNTER]; // ranges of origin code for system strings 
+		StrOffsetRanges VetStringOffsets[POFF_COUNTER]; // ranges of origin code for system strings
 		int TotStringOffset;  // number of ranges of above vector
 		StrBaseParamWText BaseParamWText;
 		StrBaseDgxErrors BaseDgxErrors;
 		int TestStopNotifyThread;  // for sound audio track
 		bool TestOldLaserSight; // in previous cycle it was enabled
 		bool TestOldBinoculars;	 // in previous cycle it was enabled
-		bool TestFirstLoadTitle; // true = showing load.bmp from boot strap game, otherwise 
+		bool TestFirstLoadTitle; // true = showing load.bmp from boot strap game, otherwise
 								 // coming back to title from some level
 		bool TestWindowedModeRegister; // se nel registro era imposta modo windowed (se false=exlcusive full screen)
 		StrDisablePushAway BaseDisablePushAway; // anim about when disable push away animation
@@ -4692,24 +4798,24 @@ namespace trng {
 		StrBaseMyRect BaseParamMyRects;
 		StrBaseInputBox BaseInputBoxes;
 		bool TestStartDiary;  // required to show diary (waiting to be in main initpolylist()/outputpolylist() cycle)
-		int DiaryIDToStart;   // id of diary to show 
+		int DiaryIDToStart;   // id of diary to show
 		int DiaryPage;       // first page to show for diary
 		DWORD LastAdrFloorData; // saved at begin of testtrigger, usato da catturaflipeffect
 		GAME_VECTOR TargetBinoculars; // last point find before obstacle
 
 		StrTiming Timing;  // used for performance analyses about timing
 		int EmergencySettings; // ES_...
-		bool TestForceSetup; 
+		bool TestForceSetup;
 		bool TestOverlapImage; // full screen image is currently drawn on screen
 		StrGlobalBinoculars GlobBinoculars;
 		SalvaSliderInput SliderMusic; // last input values , to fix problem in title custom image
 		SalvaSliderInput SliderSfx;
-		StrAnchoredBoat BoatAnchored; 
+		StrAnchoredBoat BoatAnchored;
 		DWORD LastTimeBinoculars; // to stop inventory when exiting from binoculars
 		char *pMexLastTGCaller; // text about who called last time triggergroup() procedure (for diagnostic)
 		StrItemTr4 *pItemAdrToIgnoreLOF;  // Adr structure to ignore in the objectonlos2() procedure (or NULL=0)
 		StrRecording *pBaseDemo;  // to record or play demo
-		StrMyDirectInput BaseDirectInputMine; // to temporize fake direct input outside of common game 
+		StrMyDirectInput BaseDirectInputMine; // to temporize fake direct input outside of common game
 		StrDemo *pDemoTitle;
 		StrDemo *pDemoLevel;
 		StrDemo *pDemoNow;  // points to demolevel or demotitle or NULL if missing
@@ -4720,7 +4826,7 @@ namespace trng {
 		StrBaseCutscene *pBaseCutscene;  // data about cutscene and demos
 		StrSalvaGlobFloor BaseSalvaFloor; // to save/restore some global variables affected from getheight/getceiling
 		StrBaseSwapAnim *pBaseSwapAnim;
-		StrBaseMemSwapAnim *pBaseMemSwapAnim; // to save/reload from savegame the last swapping to restore situation 
+		StrBaseMemSwapAnim *pBaseMemSwapAnim; // to save/reload from savegame the last swapping to restore situation
 		StrBaseSpeechActor *pBaseSpeechActor; // to store PARAM_ACTOR_SPEECH
 		bool TestEditingDemo; // if true demo is recording now or is playing after F10 key
 		bool TestDisableDemoOrganizer; // if true while is playing or recording (in editing mode) the organizer will be ignore
@@ -4742,11 +4848,33 @@ namespace trng {
 		int *pVetStandardSwapMesh;
 		int *pVetSlotMeshMoveables;
 		int TestOrizzonteVisibile;
-		bool TestAlignmentInProgress;  // "true" there is a serie of calling to MoveLaraPosition() 
+		bool TestAlignmentInProgress;  // "true" there is a serie of calling to MoveLaraPosition()
 									   // to align in front of ObjectActive
 		StrGlobMisc *pMisc; // global miscellanous
 							// check control value for 1.3.0.0 version
 		DWORD CheckValue1_3_0_0;  // value will be 0x01234567
+	};
+
+	// valida per tomb4 e tomb5
+	struct StrStateChange {
+		WORD StateId;
+		WORD N_AnimDispatches;
+		WORD AnimDispatchIndex;
+	};
+
+	// valida per tomb4 o tomb5
+	struct StrAnimDispatch {
+		WORD Low;
+		WORD High;
+		WORD Animation;
+		WORD Frame;
+	};
+
+	struct StrRecordMemZone {
+		DWORD OldAddress;  // original address in tomb4
+		DWORD SizeOldMemory;
+		DWORD NewAddress;  // new address of allocated memory
+		DWORD SizeNewMemory;
 	};
 #pragma pack(pop)
 }

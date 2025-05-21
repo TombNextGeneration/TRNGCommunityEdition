@@ -16,19 +16,15 @@ namespace trng {
 
 	// ------------------ DEFINIZIONI PUNTATORI DI FUNZIONI --------------
 
-	typedef BOOL (WINAPI *TYPE_BASS_Init)
-	(int device, DWORD freq, DWORD flags, HWND win, const GUID *dsguid);
+	typedef BOOL (WINAPI *TYPE_BASS_Init)(int device, DWORD freq, DWORD flags, HWND win, const GUID *dsguid);
 
 	typedef BOOL (WINAPI *TYPE_BASS_Free)(void);
 
-	typedef BOOL (WINAPI *TYPE_BASS_ChannelSlideAttribute)
-	(DWORD handle, DWORD attrib, float value, DWORD time);
+	typedef BOOL (WINAPI *TYPE_BASS_ChannelSlideAttribute)(DWORD handle, DWORD attrib, float value, DWORD time);
 
-	typedef BOOL (WINAPI *TYPE_BASS_ChannelSetAttribute)
-	(DWORD handle, DWORD attrib, float value);
+	typedef BOOL (WINAPI *TYPE_BASS_ChannelSetAttribute)(DWORD handle, DWORD attrib, float value);
 
-	typedef HSTREAM (WINAPI *TYPE_BASS_StreamCreateFile)
-	(BOOL mem, const void *file, QWORD offset, QWORD length, DWORD flags);
+	typedef HSTREAM (WINAPI *TYPE_BASS_StreamCreateFile)(BOOL mem, const void *file, QWORD offset, QWORD length, DWORD flags);
 
 	typedef BOOL (WINAPI *TYPE_BASS_ChannelPlay)(DWORD handle, BOOL restart);
 
@@ -44,8 +40,7 @@ namespace trng {
 
 	typedef BOOL (WINAPI * TYPE_BASS_Stop)();
 
-	typedef BOOL (WINAPI * TYPE_BASS_ChannelSetPosition) (DWORD handle,
-		QWORD pos, DWORD mode);
+	typedef BOOL (WINAPI * TYPE_BASS_ChannelSetPosition) (DWORD handle,	QWORD pos, DWORD mode);
 
 	typedef QWORD (WINAPI * TYPE_BASS_ChannelGetPosition) (DWORD handle, DWORD mode);
 

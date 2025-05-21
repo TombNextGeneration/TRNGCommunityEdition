@@ -348,5 +348,139 @@ namespace tomb4
 		char highest_location;
 		char locationPad;
 	};
+
+	struct COLL_INFO
+	{
+		long mid_floor;
+		long mid_ceiling;
+		long mid_type;
+		long front_floor;
+		long front_ceiling;
+		long front_type;
+		long left_floor;
+		long left_ceiling;
+		long left_type;
+		long right_floor;
+		long right_ceiling;
+		long right_type;
+		long left_floor2;
+		long left_ceiling2;
+		long left_type2;
+		long right_floor2;
+		long right_ceiling2;
+		long right_type2;
+		long radius;
+		long bad_pos;
+		long bad_neg;
+		long bad_ceiling;
+		PHD_VECTOR shift;
+		PHD_VECTOR old;
+		short old_anim_state;
+		short old_anim_number;
+		short old_frame_number;
+		short facing;
+		short quadrant;
+		short coll_type;
+		short* trigger;
+		char tilt_x;
+		char tilt_z;
+		char hit_by_baddie;
+		char hit_static;
+		ushort slopes_are_walls : 2;
+		ushort slopes_are_pits : 1;
+		ushort lava_is_pit : 1;
+		ushort enable_baddie_push : 1;
+		ushort enable_spaz : 1;
+		ushort hit_ceiling : 1;
+	};
+
+	struct OBJECT_INFO
+	{
+		short nmeshes;
+		short mesh_index;
+		long bone_index;
+		short* frame_base;
+		void (*initialise)(short item_number);
+		void (*control)(short item_number);
+		void (*floor)(ITEM_INFO* item, long x, long y, long z, long* height);
+		void (*ceiling)(ITEM_INFO* item, long x, long y, long z, long* height);
+		void (*draw_routine)(ITEM_INFO* item);
+		void (*collision)(short item_num, ITEM_INFO* laraitem, COLL_INFO* coll);
+		short object_mip;
+		short anim_index;
+		short hit_points;
+		short pivot_length;
+		short radius;
+		short shadow_size;
+		ushort bite_offset;
+		ushort loaded : 1;
+		ushort intelligent : 1;
+		ushort non_lot : 1;
+		ushort save_position : 1;
+		ushort save_hitpoints : 1;
+		ushort save_flags : 1;
+		ushort save_anim : 1;
+		ushort semi_transparent : 1;
+		ushort water_creature : 1;
+		ushort using_drawanimating_item : 1;
+		ushort HitEffect : 2;
+		ushort undead : 1;
+		ushort save_mesh : 1;
+		void (*draw_routine_extra)(ITEM_INFO* item);
+		ulong explodable_meshbits;
+		ulong padfuck;
+	};
+
+	struct STATIC_INFO
+	{
+		short mesh_number;
+		short flags;
+		short x_minp;
+		short x_maxp;
+		short y_minp;
+		short y_maxp;
+		short z_minp;
+		short z_maxp;
+		short x_minc;
+		short x_maxc;
+		short y_minc;
+		short y_maxc;
+		short z_minc;
+		short z_maxc;
+	};
+
+	struct CHANGE_STRUCT
+	{
+		short goal_anim_state;
+		short number_ranges;
+		short range_index;
+	};
+
+	struct RANGE_STRUCT
+	{
+		short start_frame;
+		short end_frame;
+		short link_anim_num;
+		short link_frame_num;
+	};
+
+	struct ANIM_STRUCT
+	{
+		short* frame_ptr;
+		short interpolation;
+		short current_anim_state;
+		long velocity;
+		long acceleration;
+		long Xvelocity;
+		long Xacceleration;
+		short frame_base;
+		short frame_end;
+		short jump_anim_num;
+		short jump_frame_num;
+		short number_changes;
+		short change_index;
+		short number_commands;
+		short command_index;
+	};
 #pragma pack(pop)
 }

@@ -7,7 +7,7 @@
     <ClInclude Include="trng\structures.h">
       <Filter>trng</Filter>
     </ClInclude>
-    <ClInclude Include="trng\tomb_nextgeneration.h">
+    <ClInclude Include="trng\Tomb_NextGeneration.h">
       <Filter>trng</Filter>
     </ClInclude>
     <ClInclude Include="trng\bass.h">
@@ -46,6 +46,45 @@
     <ClInclude Include="tomb4\specific\math_tbls.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\file.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\objects.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\control.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\laraskin.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\setup.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\drawroom.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\zPatchesTomb4.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\DefTomb4Funct.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\MyStructures.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\MyConstants.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\trng_elevator.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\collide.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\Oggetti.h">
+      <Filter>trng</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -70,7 +109,37 @@
     <ClCompile Include="tomb4\specific\3dmath.cpp">
       <Filter>tomb4\specific</Filter>
     </ClCompile>
-    <ClCompile Include="trng\tomb_nextgeneration.cpp">
+    <ClCompile Include="trng\Tomb_NextGeneration.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\file.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\objects.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\control.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\laraskin.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\setup.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\drawroom.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\zPatchesTomb4.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\trng_elevator.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\collide.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\Oggetti.cpp">
       <Filter>trng</Filter>
     </ClCompile>
   </ItemGroup>

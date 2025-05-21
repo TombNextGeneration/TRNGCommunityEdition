@@ -1,0 +1,52 @@
+#include "../inject.h"
+#include "structures.h"
+#include "Tomb_NextGeneration.h"
+#include "../tomb4/game/types.h"
+
+namespace trng {
+	// nuova gestione di twoblockplatform quando ci sono ascensori
+	void ControlTwoBlockPlatform(short ItemIndex)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// sostituisce TwoBlockPlatformFloor
+	void TwoBlockPlatformFloor(tomb4::ITEM_INFO *item, long x, long y, long z, long *height)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// sostituisce TwoBlockPlatformCeiling:
+	//	;esp+14= LONG* (puntatore a long)  nuova cordy
+	//	;esp+10=long  cordz
+	//	;esp+C=long   cordy
+	//	;esp+8=long    cordx
+	//	;esp+4 = ITEM_INFO* di piattaforma
+	void TwoBlockPlatformCeiling(tomb4::ITEM_INFO *item, long x, long y, long z, long *height)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// when there are elevator= command in the script, the twoblockplatform object will be redirected
+	// to our custom procedure to transform it in the trng elevator
+	// #callback#
+	void SetSlotElevator(void)
+	{
+		StrSlot *pSlotNow;
+
+		if (GlobTomb4.BaseElevator.TotElelevators > 0) {
+			pSlotNow = &GlobTomb4.pAdr->pVetSlot[150];
+			pSlotNow->pProcCeiling = &TwoBlockPlatformCeiling;
+			pSlotNow->pProcFloor = &TwoBlockPlatformFloor;
+			pSlotNow->pProcControl = &ControlTwoBlockPlatform;
+		}
+	}
+}
+
+void Inject_TrngElevator(bool replace)
+{
+	ProcessInject(0x10096116, (unsigned int)trng::ControlTwoBlockPlatform, false);
+	ProcessInject(0x100973F2, (unsigned int)trng::TwoBlockPlatformFloor, false);
+	ProcessInject(0x10097457, (unsigned int)trng::TwoBlockPlatformCeiling, false);
+	ProcessInject(0x100989A4, (unsigned int)trng::SetSlotElevator, replace);
+}

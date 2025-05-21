@@ -7,7 +7,7 @@
 #include "tomb4fx.h"
 #include "../specific/function_stubs.h"
 #include "../specific/3dmath.h"
-#include "../../trng/tomb_nextgeneration.h"
+#include "../../trng/Tomb_NextGeneration.h"
 
 namespace tomb4
 {
@@ -24,6 +24,7 @@ namespace tomb4
 		short angles[2];
 		short max_turn;
 
+		// patch per fare freeze di locuste
 		if (trng::GlobTomb4.TestFreezeAll)
 			return;
 
