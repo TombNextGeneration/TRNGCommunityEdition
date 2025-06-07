@@ -5,6 +5,7 @@ namespace tomb4
 {
 	extern long &malloc_free;
 	extern char* &malloc_ptr;
+	extern char* &malloc_buffer;
 
 	long GetRandomControl();
 	void SeedRandomControl(long seed);

@@ -93,11 +93,22 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tomb4\game\camera.h" />
     <ClInclude Include="tomb4\game\collide.h" />
     <ClInclude Include="tomb4\game\control.h" />
+    <ClInclude Include="tomb4\game\gameflow.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
+    <ClInclude Include="tomb4\game\newinv.h" />
     <ClInclude Include="tomb4\game\objects.h" />
+    <ClInclude Include="tomb4\game\rope.h" />
+    <ClInclude Include="tomb4\game\savegame.h" />
+    <ClInclude Include="tomb4\game\scarab.h" />
+    <ClInclude Include="tomb4\game\senet.h" />
     <ClInclude Include="tomb4\game\setup.h" />
+    <ClInclude Include="tomb4\game\spotcam.h" />
+    <ClInclude Include="tomb4\game\switch.h" />
+    <ClInclude Include="tomb4\game\traps.h" />
+    <ClInclude Include="tomb4\game\voncroy.h" />
     <ClInclude Include="tomb4\specific\3dmath.h" />
     <ClInclude Include="tomb4\specific\drawroom.h" />
     <ClInclude Include="tomb4\specific\file.h" />
@@ -123,11 +134,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="tomb4\game\camera.cpp" />
     <ClCompile Include="tomb4\game\collide.cpp" />
     <ClCompile Include="tomb4\game\control.cpp" />
+    <ClCompile Include="tomb4\game\gameflow.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
+    <ClCompile Include="tomb4\game\newinv.cpp" />
     <ClCompile Include="tomb4\game\objects.cpp" />
+    <ClCompile Include="tomb4\game\rope.cpp" />
+    <ClCompile Include="tomb4\game\savegame.cpp" />
+    <ClCompile Include="tomb4\game\scarab.cpp" />
+    <ClCompile Include="tomb4\game\senet.cpp" />
     <ClCompile Include="tomb4\game\setup.cpp" />
+    <ClCompile Include="tomb4\game\spotcam.cpp" />
+    <ClCompile Include="tomb4\game\switch.cpp" />
+    <ClCompile Include="tomb4\game\traps.cpp" />
+    <ClCompile Include="tomb4\game\voncroy.cpp" />
     <ClCompile Include="tomb4\specific\3dmath.cpp" />
     <ClCompile Include="tomb4\specific\drawroom.cpp" />
     <ClCompile Include="tomb4\specific\file.cpp" />

@@ -7,7 +7,10 @@ namespace tomb4
 	typedef unsigned short ushort;
 	typedef unsigned long ulong;
 
-	inline constexpr int W2V_SHIFT	= 14;
+	inline constexpr int W2V_SHIFT = 14;
+
+	struct DIRECT3DVERTEXBUFFER;
+	struct D3DVECTOR;
 
 #pragma pack(push, 1)
     struct PHD_3DPOS
@@ -481,6 +484,259 @@ namespace tomb4
 		short change_index;
 		short number_commands;
 		short command_index;
+	};
+
+	struct FLOOR_INFO
+	{
+		ushort index;
+		ushort fx : 4;
+		ushort box : 11;
+		ushort stopper : 1;
+		uchar pit_room;
+		char floor;
+		uchar sky_room;
+		char ceiling;
+	};
+
+	struct LIGHTINFO
+	{
+		long x;
+		long y;
+		long z;
+		uchar r;
+		uchar g;
+		uchar b;
+		uchar Type;
+		short Intensity;
+		float Inner;
+		float Outer;
+		float Length;
+		float Cutoff;
+		float nx;
+		float ny;
+		float nz;
+	};
+
+	struct MESH_INFO
+	{
+		long x;
+		long y;
+		long z;
+		short y_rot;
+		short shade;
+		short Flags;
+		short static_number;
+	};
+
+	struct PCLIGHT_INFO
+	{
+		float x;
+		float y;
+		float z;
+		float r;
+		float g;
+		float b;
+		long shadow;
+		float Inner;
+		float Outer;
+		float InnerAngle;
+		float OuterAngle;
+		float Cutoff;
+		float nx;
+		float ny;
+		float nz;
+		long ix;
+		long iy;
+		long iz;
+		long inx;
+		long iny;
+		long inz;
+		uchar Type;
+		uchar Pad;
+	};
+
+	struct ROOM_INFO
+	{
+		short* data;
+		short* door;
+		FLOOR_INFO* floor;
+		LIGHTINFO* light;
+		MESH_INFO* mesh;
+		long x;
+		long y;
+		long z;
+		long minfloor;
+		long maxceiling;
+		short x_size;
+		short y_size;
+		long ambient;
+		short num_lights;
+		short num_meshes;
+		uchar ReverbType;
+		uchar FlipNumber;
+		char MeshEffect;
+		char bound_active;
+		short left;
+		short right;
+		short top;
+		short bottom;
+		short test_left;
+		short test_right;
+		short test_top;
+		short test_bottom;
+		short item_number;
+		short fx_number;
+		short flipped_room;
+		ushort flags;
+		long nVerts;
+		long nWaterVerts;
+		long nShoreVerts;
+		DIRECT3DVERTEXBUFFER* SourceVB;
+		short* FaceData;
+		float posx;
+		float posy;
+		float posz;
+		D3DVECTOR* vnormals;
+		D3DVECTOR* fnormals;
+		long* prelight;
+		long* prelightwater;
+		long watercalc;
+		D3DVECTOR* verts;
+		long gt3cnt;
+		long gt4cnt;
+		PCLIGHT_INFO* pclight;
+	};
+
+	struct BIKEINFO
+	{
+		short right_front_wheelrot;
+		short right_back_wheelrot;
+		long left_wheelrot;
+		long velocity;
+		long unused1;
+		long pitch1;
+		short move_angle;
+		short extra_rotation;
+		short rot_thing;
+		long bike_turn;
+		long pitch2;
+		short flags;
+		short light_intensity;
+	};
+
+	struct JEEPINFO
+	{
+		short right_front_wheelrot;
+		short left_front_wheelrot;
+		short left_back_wheelrot;
+		short right_back_wheelrot;
+		long velocity;
+		long unused1;
+		long pitch1;
+		long turn_rate;
+		long camera_angle;
+		short move_angle;
+		short extra_rotation;
+		short rot_thing;
+		long pitch2;
+		short flags;
+		short unused2;
+		short gear;
+	};
+
+	struct ROPE_STRUCT
+	{
+		PHD_VECTOR Segment[24];
+		PHD_VECTOR Velocity[24];
+		PHD_VECTOR NormalisedSegment[24];
+		PHD_VECTOR MeshSegment[24];
+		PHD_VECTOR Position;
+		long Coords[24][3];
+		long SegmentLength;
+		long Active;
+	};
+
+	struct PENDULUM
+	{
+		PHD_VECTOR Position;
+		PHD_VECTOR Velocity;
+		long node;
+		ROPE_STRUCT* Rope;
+	};
+
+	struct GAME_VECTOR
+	{
+		long x;
+		long y;
+		long z;
+		short room_number;
+		short box_number;
+	};
+
+	struct OBJECT_VECTOR
+	{
+		long x;
+		long y;
+		long z;
+		short data;
+		short flags;
+	};
+
+	struct CAMERA_INFO
+	{
+		GAME_VECTOR pos;
+		GAME_VECTOR target;
+		camera_type type;
+		camera_type old_type;
+		long shift;
+		long flags;
+		long fixed_camera;
+		long number_frames;
+		long bounce;
+		long underwater;
+		long target_distance;
+		short target_angle;
+		short target_elevation;
+		short actual_elevation;
+		short actual_angle;
+		short number;
+		short last;
+		short timer;
+		short speed;
+		ITEM_INFO* item;
+		ITEM_INFO* last_item;
+		OBJECT_VECTOR* fixed;
+		long mike_at_lara;
+		PHD_VECTOR mike_pos;
+	};
+
+	struct SPOTCAM
+	{
+		long x;
+		long y;
+		long z;
+		long tx;
+		long ty;
+		long tz;
+		uchar sequence;
+		uchar camera;
+		short fov;
+		short roll;
+		short timer;
+		short speed;
+		short flags;
+		short room_number;
+		short pad;
+	};
+
+	struct SCARAB_STRUCT
+	{
+		PHD_3DPOS pos;
+		short room_number;
+		short speed;
+		short fallspeed;
+		uchar On;
+		uchar flags;
 	};
 #pragma pack(pop)
 }

@@ -10,8 +10,11 @@
 #include "MyStructures.h"
 #include "../tomb4/game/objects.h"
 #include "../tomb4/game/draw.h"
+#include "../tomb4/game/savegame.h"
 
 namespace trng {
+	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
+
 	void * MallocMine(DWORD Size, const char *pDescrizione)
 	{
 		__try { throw __func__; } __finally {}
@@ -294,7 +297,7 @@ namespace trng {
 
 		RiassegnaAssignSlotNew();
 
-		GlobTomb4.BaseEnemiesNotAimable.TotSlot=0;
+		GlobTomb4.BaseEnemiesNotAimable.TotSlot = 0;
 
 		// ----------------- MODIFICA Enemy ------------------------
 		// effettuare modifiche di Enemy
@@ -399,6 +402,183 @@ namespace trng {
 		// modifica gli eventuali oggetti enemy per quel che riguarda damage
 		ImpostaEnemyDamage();
 	}
+
+	// verfica se nemico di tipo Slot aveva flag per esplosione
+	bool IsNemicoEsploso(WORD SlotId)
+	{
+		int i;
+		StrRecordEnemyScript *pEnemy;
+		int TotEnemy;
+
+		// se gia' esiste il flag in slot per morte solo con esplosione (come
+		// scheletri o mummia) dire si
+		if (GlobTomb4.pAdr->pVetSlot[SlotId].Flags & 0x1000)
+			return true;
+
+		TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
+		if (TotEnemy == 0)
+			return false;
+		pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[0];
+
+		for (i = 0; i < TotEnemy; i++) {
+			if (SlotId == pEnemy->SlotId && (pEnemy->FlagsNEF & (NEF_EXPLODE_AFTER + NEF_EXPLODE + NEF_ONLY_EXPLODE)) != 0) {
+				return true;
+			}
+			// fixed bug
+			pEnemy++;
+		}
+		return false;
+	}
+
+	// receive in input absolute slot value of some moveable and returns the further reassigned slot
+	// in the case there was no AssignSlot for that slot, it will return the same SlotNow value
+	WORD ConvertiSlotAssigned(WORD SlotNow)
+	{
+		int i;
+
+		for (i = 0; i < GlobTomb4.BaseAssignSlot.TotNewAssign; i++) {
+			if (GlobTomb4.BaseAssignSlot.VetNewAssign[i].MioSlot == SlotNow) {
+				return GlobTomb4.BaseAssignSlot.VetNewAssign[i].TipoSlot;
+			}
+		}
+		return SlotNow;
+	}
+
+	bool SlotSempreAttivo(WORD Slot)
+	{
+		// se e' uno slot di quegli oggetti che non vanno attivati ma sono sempre attivi
+		// allora restituire true
+		// se rope polerope firerope o raising block o pushable objects
+		if (Slot >= 146 && Slot <= 160)
+			return true;
+
+		// se animatings
+		if (Slot >= 427 && Slot <= 458)
+			return true;
+
+		return false;
+	}
+
+	// analizza se questo e' uno degli oggetti da salvare
+	// esclude dardi e scarabeo meccanico
+	// se e' flare restiuiwce 0
+	// se e' torcia restituisce 1
+	// se e' un altro oggetto restituisce 2
+	// se non e' da salvare restituisce -1
+	short DaSalvare(StrItemTr4 *pItem)
+	{
+		WORD Slot;
+
+		Slot = pItem->SlotID;
+		if ((pItem->FlagsMain & 1) == 0) {
+			// non e' stato attivato ma se e' un pushable o un animating salvarlo ugualmente
+			if (SlotSempreAttivo(Slot) == false)
+				return -1;
+		}
+
+		switch (Slot) {
+		case 0x174:
+			// flare
+			return 0;
+		case 0xf7:
+			// torcia
+			return 1;
+		case 0xf8:
+			// scarabeo meccanico
+			return -1;
+
+		case 0x72:
+			// dardo
+			return -1;
+		}
+
+		return 2;
+	}
+
+	// chiamata prima di salvare in savegame gli item creati
+	// deve contare quanti item verranno salvati e restituire quel numero
+	WORD ContaItemCreatiDaSalvare(void)
+	{
+		StrItemTr4 *pItem;
+		int i;
+		int TotItems;
+		WORD TotNuovi;
+
+		TotItems = BaseGlobMisc.TotItemOlds + 256;
+		if (TotItems > 1024)
+			TotItems = 1024;
+		TotNuovi = 0;
+
+		for (i = BaseGlobMisc.TotItemOlds; i < TotItems; i++) {
+			pItem = &GlobTomb4.pAdr->pVetItems[i];
+			if (DaSalvare(pItem) != -1) {
+				TotNuovi++;
+			}
+		}
+
+		return TotNuovi;
+	}
+
+	void SalvaItemCreati(void)
+	{
+		StrItemTr4 *pItem;
+		int i;
+		int TotItems;
+		TYPE_SalvaInBuffer SalvaInBuffer;
+		short Tipo;
+
+		SalvaInBuffer = (TYPE_SalvaInBuffer) tomb4::WriteSG;
+		TotItems = BaseGlobMisc.TotItemOlds + 256;
+		if (TotItems > 1024)
+			TotItems = 1024;
+
+		for (i = BaseGlobMisc.TotItemOlds; i < TotItems; i++) {
+			pItem = &GlobTomb4.pAdr->pVetItems[i];
+			Tipo = DaSalvare(pItem);
+
+			if (Tipo != -1) {
+				// salvare il tipo di dato
+				SalvaInBuffer(&Tipo, 1);
+				// coordinate e orientamneto
+				SalvaInBuffer(&pItem->CordX, 0x12);
+				// room
+				SalvaInBuffer(&pItem->Room, 2);
+				// velocita' orizzontale
+				SalvaInBuffer(&pItem->SpeedH, 2);
+				// velocita' verticale
+				SalvaInBuffer(&pItem->SpeedV, 2);
+
+				// valori diversi a seconda di tipo
+				switch (Tipo) {
+				case 0:
+					// flare
+					SalvaInBuffer(&pItem->pZonaSavegame, 4);
+					break;
+				case 1:
+					// torcia
+					SalvaInBuffer(&pItem->Reserved_3A, 2);
+					break;
+				case 2:
+					// tutti gli altri item
+					// slot
+					SalvaInBuffer(&pItem->SlotID, 2);
+					// health
+					SalvaInBuffer(&pItem->Health, 2);
+					// object timer e object buttons
+					SalvaInBuffer(&pItem->ObjectTimer, 4);
+					// flagsmain
+					SalvaInBuffer(&pItem->FlagsMain, 4);
+					// meshvisibilitymask
+					SalvaInBuffer(&pItem->MeshVisibilityMask, 4);
+
+					// tutti e 4 i valori reserved
+					SalvaInBuffer(&pItem->Reserved_34, 8);
+					// state id, state next, stateid ai, animazione e frame
+					SalvaInBuffer(&pItem->StateIdCurrent, 10);
+				}
+			}
+		}
+	}
 }
 
 void Inject_ZPatchesTomb4(bool replace)
@@ -415,4 +595,10 @@ void Inject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100AFC45, (unsigned int)trng::EsisteDirectCB, replace);
 	ProcessInject(0x100BB6C8, (unsigned int)trng::RiassegnaAssignSlotNew, false);
 	ProcessInject(0x100BBE7F, (unsigned int)trng::InitSlot, replace);
+	ProcessInject(0x100BF7CA, (unsigned int)trng::IsNemicoEsploso, replace);
+	ProcessInject(0x100D386D, (unsigned int)trng::ConvertiSlotAssigned, replace);
+	ProcessInject(0x100D14CB, (unsigned int)trng::SlotSempreAttivo, replace);
+	ProcessInject(0x100D151A, (unsigned int)trng::DaSalvare, replace);
+	ProcessInject(0x100D15B0, (unsigned int)trng::ContaItemCreatiDaSalvare, replace);
+	ProcessInject(0x100D1636, (unsigned int)trng::SalvaItemCreati, replace);
 }

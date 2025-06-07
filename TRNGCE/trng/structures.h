@@ -957,6 +957,8 @@ namespace trng {
 
 	inline constexpr int SCRIPT_IGNORE = 0xFFFF;
 
+	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone

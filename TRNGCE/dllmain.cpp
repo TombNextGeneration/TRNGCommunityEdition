@@ -15,6 +15,7 @@
 #include "trng/Tomb_NextGeneration.h"
 #include "tomb4/game/objects.h"
 #include "tomb4/game/collide.h"
+#include "tomb4/game/savegame.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -65,6 +66,7 @@ static void Inject(bool replace) {
     Inject_TombNextGeneration(replace);
     Inject_Objects(replace);
     Inject_Collide(replace);
+    Inject_Savegame(replace);
 }
 
 static LPSTR __stdcall CallInject() {

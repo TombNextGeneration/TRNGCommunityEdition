@@ -8,6 +8,7 @@ namespace tomb4
 	extern RANGE_STRUCT* &ranges;
 	extern short* &commands;
 	extern short* &frames;
+	extern long &number_cameras;
 
 	bool LoadObjects();
 }

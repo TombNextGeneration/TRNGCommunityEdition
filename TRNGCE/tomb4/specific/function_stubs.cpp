@@ -10,6 +10,7 @@ namespace tomb4
 
 	long &malloc_free = *reinterpret_cast<decltype(&malloc_free)>(0x7E70C4);
 	char* &malloc_ptr = *reinterpret_cast<decltype(&malloc_ptr)>(0x7E70AC);
+	char* &malloc_buffer = *reinterpret_cast<decltype(&malloc_buffer)>(0x7E70D4);
 
 	long GetRandomControl()
 	{

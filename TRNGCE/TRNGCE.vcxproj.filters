@@ -85,6 +85,39 @@
     <ClInclude Include="trng\Oggetti.h">
       <Filter>trng</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\game\savegame.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\newinv.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\traps.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\switch.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\camera.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\spotcam.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\senet.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\scarab.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\gameflow.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\voncroy.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\rope.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -141,6 +174,39 @@
     </ClCompile>
     <ClCompile Include="trng\Oggetti.cpp">
       <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\savegame.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\newinv.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\traps.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\switch.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\camera.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\spotcam.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\senet.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\scarab.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\gameflow.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\voncroy.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\rope.cpp">
+      <Filter>tomb4\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

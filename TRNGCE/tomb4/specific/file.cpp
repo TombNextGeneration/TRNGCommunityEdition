@@ -22,6 +22,7 @@ namespace tomb4
 	RANGE_STRUCT* &ranges = *reinterpret_cast<decltype(&ranges)>(0x533940);
 	short* &commands = *reinterpret_cast<decltype(&commands)>(0x53395C);
 	short* &frames = *reinterpret_cast<decltype(&frames)>(0x533954);
+	long &number_cameras = *reinterpret_cast<decltype(&number_cameras)>(0x7FE820);
 
 	bool LoadObjects()
 	{
