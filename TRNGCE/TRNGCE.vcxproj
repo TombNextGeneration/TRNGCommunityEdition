@@ -90,6 +90,10 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="flep\patches\types.h" />
+    <ClInclude Include="flep\patches\vehicles\main.h" />
+    <ClInclude Include="flep\patches\vehicles\minecart.h" />
+    <ClInclude Include="flep\patches\vehicles\quadbike.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
@@ -134,6 +138,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="flep\patches\vehicles\main.cpp" />
+    <ClCompile Include="flep\patches\vehicles\minecart.cpp" />
+    <ClCompile Include="flep\patches\vehicles\quadbike.cpp" />
     <ClCompile Include="tomb4\game\camera.cpp" />
     <ClCompile Include="tomb4\game\collide.cpp" />
     <ClCompile Include="tomb4\game\control.cpp" />

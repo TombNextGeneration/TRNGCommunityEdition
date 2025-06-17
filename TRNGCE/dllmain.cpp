@@ -16,6 +16,9 @@
 #include "tomb4/game/objects.h"
 #include "tomb4/game/collide.h"
 #include "tomb4/game/savegame.h"
+#include "flep/patches/vehicles/main.h"
+#include "flep/patches/vehicles/minecart.h"
+#include "flep/patches/vehicles/quadbike.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -67,6 +70,9 @@ static void Inject(bool replace) {
     Inject_Objects(replace);
     Inject_Collide(replace);
     Inject_Savegame(replace);
+    Inject_VehiclesMain(replace);
+    Inject_VehiclesMinecart(replace);
+    Inject_VehiclesQuadbike(replace);
 }
 
 static LPSTR __stdcall CallInject() {

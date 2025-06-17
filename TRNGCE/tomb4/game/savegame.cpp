@@ -18,6 +18,7 @@
 #include "rope.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "../../flep/patches/vehicles/main.h"
 
 namespace tomb4
 {
@@ -335,9 +336,13 @@ namespace tomb4
 						{
 							creature = (CREATURE_INFO*)item->data;
 
-							creature->enemy = (ITEM_INFO*)((long)creature->enemy - (long)malloc_buffer);
+							if (creature->enemy)
+								creature->enemy = (ITEM_INFO*)((long)creature->enemy - (long)malloc_buffer);
+
 							WriteSG(item->data, 22);
-							creature->enemy = (ITEM_INFO*)((long)creature->enemy + (long)malloc_buffer);
+
+							if (creature->enemy)
+								creature->enemy = (ITEM_INFO*)((long)creature->enemy + (long)malloc_buffer);
 
 							WriteSG(&creature->ai_target.object_number, sizeof(short));
 							WriteSG(&creature->ai_target.room_number, sizeof(short));
@@ -360,6 +365,8 @@ namespace tomb4
 						WriteSG(&item->mesh_bits, sizeof(ulong));
 						WriteSG(&item->meshswap_meshbits, sizeof(ulong));
 					}
+
+					flep::SaveVehicle(item);
 
 					if (item->object_number == (long)object_types::MOTORBIKE)
 						WriteSG(item->data, sizeof(BIKEINFO));
@@ -485,14 +492,11 @@ namespace tomb4
 				}
 			}
 
-			if (lara.RopePtr != -1)
-			{
-				WriteSG(&RopeList[lara.RopePtr], sizeof(ROPE_STRUCT));
-				CurrentPendulum.Rope = (ROPE_STRUCT*)((char*)CurrentPendulum.Rope - (char*)RopeList);
+			WriteSG(RopeList, 5 * sizeof(ROPE_STRUCT));
+			CurrentPendulum.Rope = (ROPE_STRUCT*)((char*)CurrentPendulum.Rope - (char*)RopeList);
 
-				WriteSG(&CurrentPendulum, sizeof(PENDULUM));
-				CurrentPendulum.Rope = (ROPE_STRUCT*)((char*)CurrentPendulum.Rope + (long)RopeList);
-			}
+			WriteSG(&CurrentPendulum, sizeof(PENDULUM));
+			CurrentPendulum.Rope = (ROPE_STRUCT*)((char*)CurrentPendulum.Rope + (long)RopeList);
 		}
 	}
 }
