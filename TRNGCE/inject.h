@@ -1,3 +1,3 @@
 #pragma once
 
-void WriteProcess(unsigned int from, unsigned int to, bool replace);
+void ProcessInject(unsigned int from, unsigned int to, bool replace);

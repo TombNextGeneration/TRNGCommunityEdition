@@ -54,6 +54,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;TRNGCE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -74,6 +75,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;TRNGCE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -88,12 +90,86 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="flep\patches\types.h" />
+    <ClInclude Include="flep\patches\vehicles\main.h" />
+    <ClInclude Include="flep\patches\vehicles\minecart.h" />
+    <ClInclude Include="flep\patches\vehicles\quadbike.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tomb4\game\camera.h" />
+    <ClInclude Include="tomb4\game\collide.h" />
+    <ClInclude Include="tomb4\game\control.h" />
+    <ClInclude Include="tomb4\game\gameflow.h" />
+    <ClInclude Include="tomb4\game\laraskin.h" />
+    <ClInclude Include="tomb4\game\newinv.h" />
+    <ClInclude Include="tomb4\game\objects.h" />
+    <ClInclude Include="tomb4\game\rope.h" />
+    <ClInclude Include="tomb4\game\savegame.h" />
+    <ClInclude Include="tomb4\game\scarab.h" />
+    <ClInclude Include="tomb4\game\senet.h" />
+    <ClInclude Include="tomb4\game\setup.h" />
+    <ClInclude Include="tomb4\game\spotcam.h" />
+    <ClInclude Include="tomb4\game\switch.h" />
+    <ClInclude Include="tomb4\game\traps.h" />
+    <ClInclude Include="tomb4\game\voncroy.h" />
+    <ClInclude Include="tomb4\specific\3dmath.h" />
+    <ClInclude Include="tomb4\specific\drawroom.h" />
+    <ClInclude Include="tomb4\specific\file.h" />
+    <ClInclude Include="tomb4\specific\function_stubs.h" />
+    <ClInclude Include="tomb4\game\croc.h" />
+    <ClInclude Include="tomb4\game\draw.h" />
+    <ClInclude Include="tomb4\game\enums.h" />
+    <ClInclude Include="tomb4\game\lara.h" />
+    <ClInclude Include="tomb4\game\math.h" />
+    <ClInclude Include="tomb4\game\sound.h" />
+    <ClInclude Include="tomb4\game\tomb4fx.h" />
+    <ClInclude Include="tomb4\game\types.h" />
+    <ClInclude Include="tomb4\specific\math_tbls.h" />
+    <ClInclude Include="trng\bass.h" />
+    <ClInclude Include="trng\DefTomb4Funct.h" />
+    <ClInclude Include="trng\MyConstants.h" />
+    <ClInclude Include="trng\MyStructures.h" />
+    <ClInclude Include="trng\Oggetti.h" />
+    <ClInclude Include="trng\structures.h" />
+    <ClInclude Include="trng\Tomb_NextGeneration.h" />
+    <ClInclude Include="trng\trng_elevator.h" />
+    <ClInclude Include="trng\zPatchesTomb4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="flep\patches\vehicles\main.cpp" />
+    <ClCompile Include="flep\patches\vehicles\minecart.cpp" />
+    <ClCompile Include="flep\patches\vehicles\quadbike.cpp" />
+    <ClCompile Include="tomb4\game\camera.cpp" />
+    <ClCompile Include="tomb4\game\collide.cpp" />
+    <ClCompile Include="tomb4\game\control.cpp" />
+    <ClCompile Include="tomb4\game\gameflow.cpp" />
+    <ClCompile Include="tomb4\game\laraskin.cpp" />
+    <ClCompile Include="tomb4\game\newinv.cpp" />
+    <ClCompile Include="tomb4\game\objects.cpp" />
+    <ClCompile Include="tomb4\game\rope.cpp" />
+    <ClCompile Include="tomb4\game\savegame.cpp" />
+    <ClCompile Include="tomb4\game\scarab.cpp" />
+    <ClCompile Include="tomb4\game\senet.cpp" />
+    <ClCompile Include="tomb4\game\setup.cpp" />
+    <ClCompile Include="tomb4\game\spotcam.cpp" />
+    <ClCompile Include="tomb4\game\switch.cpp" />
+    <ClCompile Include="tomb4\game\traps.cpp" />
+    <ClCompile Include="tomb4\game\voncroy.cpp" />
+    <ClCompile Include="tomb4\specific\3dmath.cpp" />
+    <ClCompile Include="tomb4\specific\drawroom.cpp" />
+    <ClCompile Include="tomb4\specific\file.cpp" />
+    <ClCompile Include="tomb4\specific\function_stubs.cpp" />
+    <ClCompile Include="tomb4\game\croc.cpp" />
+    <ClCompile Include="tomb4\game\draw.cpp" />
+    <ClCompile Include="tomb4\game\lara.cpp" />
+    <ClCompile Include="tomb4\game\sound.cpp" />
+    <ClCompile Include="tomb4\game\tomb4fx.cpp" />
+    <ClCompile Include="trng\Oggetti.cpp" />
+    <ClCompile Include="trng\Tomb_NextGeneration.cpp" />
+    <ClCompile Include="trng\trng_elevator.cpp" />
+    <ClCompile Include="trng\zPatchesTomb4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />

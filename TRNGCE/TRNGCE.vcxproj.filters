@@ -4,11 +4,256 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="trng\structures.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\Tomb_NextGeneration.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\bass.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\croc.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\types.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\lara.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\enums.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\math.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\sound.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\draw.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\tomb4fx.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\function_stubs.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\3dmath.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\math_tbls.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\file.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\objects.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\control.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\laraskin.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\setup.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\drawroom.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\zPatchesTomb4.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\DefTomb4Funct.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\MyStructures.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\MyConstants.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\trng_elevator.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\collide.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\Oggetti.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\savegame.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\newinv.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\traps.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\switch.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\camera.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\spotcam.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\senet.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\scarab.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\gameflow.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\voncroy.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\rope.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\vehicles\main.h">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\vehicles\quadbike.h">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\vehicles\minecart.h">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\types.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="tomb4\game\croc.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\lara.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\sound.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\draw.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\tomb4fx.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\function_stubs.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\3dmath.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\Tomb_NextGeneration.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\file.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\objects.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\control.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\laraskin.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\setup.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\drawroom.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\zPatchesTomb4.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\trng_elevator.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\collide.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\Oggetti.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\savegame.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\newinv.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\traps.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\switch.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\camera.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\spotcam.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\senet.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\scarab.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\gameflow.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\voncroy.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\rope.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\vehicles\main.cpp">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\vehicles\quadbike.cpp">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\vehicles\minecart.cpp">
+      <Filter>flep\patches\vehicles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="tomb4">
+      <UniqueIdentifier>{a08dd1d4-bbc0-4af7-a7cd-0242f3ebd82b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="trng">
+      <UniqueIdentifier>{8163c0a7-4c5a-40d0-ac99-bb58762a1214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tomb4\game">
+      <UniqueIdentifier>{3653bb14-2c62-4305-bd71-30178509951a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tomb4\specific">
+      <UniqueIdentifier>{96a11696-fb26-4e75-b3bb-ed95a56687ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="flep">
+      <UniqueIdentifier>{59080101-fe0c-4c60-8b30-63ee6360f2b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="flep\patches">
+      <UniqueIdentifier>{3582134a-9ba5-446e-838c-69668fc768f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="flep\patches\vehicles">
+      <UniqueIdentifier>{e41d319e-238d-41ea-b022-fa8fb43a47c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
