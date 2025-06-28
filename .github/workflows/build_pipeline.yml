@@ -1,0 +1,34 @@
+name: Build Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Configuration
+        required: true
+        type: choice
+        options:
+          - Debug
+          - Release
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - run: |
+          msbuild /t:Rebuild /p:Configuration=${{ inputs.configuration }} TRNGCommunityEdition.sln
+      - uses: actions/upload-artifact@v4
+        id: artifact
+        with:
+          name: TRNGCE
+          path: ${{ inputs.configuration }}/*
+      - if: ${{ inputs.configuration == 'Debug' }}
+        run: |
+          $version = (Get-Item -Path Debug\TRNGCE.dll).VersionInfo
+          curl -F "payload_json=$('${{ vars.BUILD_DEBUG_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", '${{ github.ref_name }}', (git rev-parse --short HEAD), '${{ github.sha }}', '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_DEBUG_WEBHOOK }}
+      - if: ${{ inputs.configuration == 'Release' }}
+        run: |
+          $version = (Get-Item -Path Release\TRNGCE.dll).VersionInfo
+          curl -F "payload_json=$('${{ vars.BUILD_RELEASE_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", (Get-Date -Format 'yyyy-MM-dd'), '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_RELEASE_WEBHOOK }}
