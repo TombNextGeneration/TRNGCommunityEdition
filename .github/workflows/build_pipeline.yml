@@ -26,7 +26,7 @@ jobs:
           path: ${{ inputs.configuration }}/*
       - run: |
           Compress-Archive -Path ${{ inputs.configuration }}\* -DestinationPath TRNGCE.zip
-          $version = (Get-Item -Path Debug\TRNGCE.dll).VersionInfo
+          $version = (Get-Item -Path ${{ inputs.configuration }}\TRNGCE.dll).VersionInfo
           switch ('${{ inputs.configuration }}') {
               'Debug' {
                   curl -F "payload_json=$('${{ vars.BUILD_DEBUG_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", '${{ github.ref_name }}', (git rev-parse --short HEAD), '${{ github.sha }}', '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_DEBUG_WEBHOOK }}
