@@ -9,8 +9,8 @@ Currently a dynamic library, TRNG-CE replaces and improves TRNG from the bottom 
 TRNG-CE requires a TRNG project with FLEP installed.
 To setup TRNG-CE download the corresponding tomb4.exe executable:
 
-- Old workflow: [tomb4.exe](binaries/old/tomb4.exe).
-- New workflow: [tomb4.exe](binaries/new/tomb4.exe).
+- Old workflow: [tomb4.exe](https://raw.githubusercontent.com/TombNextGeneration/TRNGCommunityEdition/master/binaries/old/tomb4.exe).
+- New workflow: [tomb4.exe](https://raw.githubusercontent.com/TombNextGeneration/TRNGCommunityEdition/master/binaries/new/tomb4.exe).
 
 Also download the [latest TRNG-CE release](https://github.com/TombNextGeneration/TRNGCommunityEdition/releases/latest).
 In your existing game folder (normally named Engine), replace tomb4.exe and extract the compressed release folder.

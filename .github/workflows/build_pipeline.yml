@@ -24,11 +24,14 @@ jobs:
         with:
           name: TRNGCE
           path: ${{ inputs.configuration }}/*
-      - if: ${{ inputs.configuration == 'Debug' }}
-        run: |
+      - run: |
+          Compress-Archive -Path ${{ inputs.configuration }}\* -DestinationPath TRNGCE.zip
           $version = (Get-Item -Path Debug\TRNGCE.dll).VersionInfo
-          curl -F "payload_json=$('${{ vars.BUILD_DEBUG_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", '${{ github.ref_name }}', (git rev-parse --short HEAD), '${{ github.sha }}', '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_DEBUG_WEBHOOK }}
-      - if: ${{ inputs.configuration == 'Release' }}
-        run: |
-          $version = (Get-Item -Path Release\TRNGCE.dll).VersionInfo
-          curl -F "payload_json=$('${{ vars.BUILD_RELEASE_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", (Get-Date -Format 'yyyy-MM-dd'), '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_RELEASE_WEBHOOK }}
+          switch (${{ inputs.configuration }}) {
+              'Debug' {
+                  curl -F "payload_json=$('${{ vars.BUILD_DEBUG_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", '${{ github.ref_name }}', (git rev-parse --short HEAD), '${{ github.sha }}', '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_DEBUG_WEBHOOK }}
+              }
+              'Release' {
+                  curl -F "payload_json=$('${{ vars.BUILD_RELEASE_MESSAGE }}' -f "$($version.FileMajorPart).$($version.FileMinorPart).$($version.FileBuildPart)", (Get-Date -Format 'yyyy-MM-dd'), '${{ steps.artifact.outputs.artifact-url }}')" -F file1=@TRNGCE.zip ${{ secrets.BUILD_RELEASE_WEBHOOK }}
+              }
+          }
