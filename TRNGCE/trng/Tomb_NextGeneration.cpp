@@ -14,9 +14,21 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// chiamata nel momento in  cui la libreria viene collegata
+	// se restituisce false bisogna abortire il programma
+	bool Inizializza(void)
+	{
+		return false;
+	}
 }
 
 void Inject_TombNextGeneration(bool replace)
 {
 	ProcessInject(0x10069407, (unsigned int)trng::ImpostaEnemyDamage, false);
+}
+
+void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
+{
+	ProcessInject(0x100461EB, (unsigned int)trng::Inizializza, replace);
 }

@@ -10,6 +10,8 @@ namespace trng {
 	extern StrGlobMisc &BaseGlobMisc;
 
 	void ImpostaEnemyDamage(void);
+	bool Inizializza(void);
 }
 
 void Inject_TombNextGeneration(bool replace);
+void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

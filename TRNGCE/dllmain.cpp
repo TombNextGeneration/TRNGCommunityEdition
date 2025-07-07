@@ -27,6 +27,27 @@ struct Jump {
 };
 #pragma pack(pop)
 
+struct LDR_DLL_LOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+};
+
+struct LDR_DLL_UNLOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+};
+
+union LDR_DLL_NOTIFICATION_DATA {
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+};
+
 static LPSTR (__stdcall *&GetCommandLineBinding)() = *reinterpret_cast<decltype(&GetCommandLineBinding)>(0x4A7128);
 
 #pragma comment(linker, "/EXPORT:_DummyFunction,@1,NONAME")
@@ -50,6 +71,15 @@ void ProcessInject(unsigned int from, unsigned int to, bool replace) {
         ProcessInjectJump(from, to);
     else
         ProcessInjectJump(to, from);
+}
+
+static void LoadTombNextGenerationInject(bool replace) {
+    LoadTombNextGenerationInject_TombNextGeneration(replace);
+}
+
+static void __stdcall LoadInject(ULONG NotificationReason, LDR_DLL_NOTIFICATION_DATA *NotificationData, PVOID Context) {
+    if (NotificationReason == 1 && !lstrcmpiW(NotificationData->Loaded.BaseDllName->Buffer, L"Tomb_NextGeneration.dll"))
+        LoadTombNextGenerationInject(true);
 }
 
 static void Inject(bool replace) {
@@ -81,16 +111,20 @@ static LPSTR __stdcall CallInject() {
     return GetCommandLineA();
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
-{
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
+    NTSTATUS (__stdcall *LdrRegisterDllNotification)(ULONG, void (__stdcall *)(ULONG, LDR_DLL_NOTIFICATION_DATA *, PVOID), PVOID, PVOID *);
+    HMODULE module;
+    PVOID cookie;
+
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
+        module = GetModuleHandle("ntdll.dll");
+        if (!module)
+            return FALSE;
+        LdrRegisterDllNotification = (NTSTATUS (__stdcall *)(ULONG, void (__stdcall *)(ULONG, LDR_DLL_NOTIFICATION_DATA *, PVOID), PVOID, PVOID *)) GetProcAddress(module, "LdrRegisterDllNotification");
+        if (!LdrRegisterDllNotification)
+            return FALSE;
+        LdrRegisterDllNotification(0, LoadInject, NULL, &cookie);
         GetCommandLineBinding = CallInject;
-        break;
     }
     return TRUE;
 }
