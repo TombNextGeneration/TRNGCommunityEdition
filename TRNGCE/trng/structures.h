@@ -1,5 +1,6 @@
 #pragma once
-#include "../framework.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "bass.h"
 
 namespace trng {
@@ -956,6 +957,32 @@ namespace trng {
 	inline constexpr int NEF_SET_AS_SEMIGOD = 0x8000;
 
 	inline constexpr int SCRIPT_IGNORE = 0xFFFF;
+
+	// costranti per tipo di exe
+
+	inline constexpr int EXE_TOMB4 = 1;
+	inline constexpr int EXE_EDITOR = 2;
+	inline constexpr int EXE_TOM2PC = 3;
+	inline constexpr int EXE_TOMB5 = 4;
+	inline constexpr int EXE_TOMB3 = 5;
+
+	// flag per tipo di diagnostica
+	inline constexpr int DGX_LARA = 0x0001;
+	inline constexpr int DGX_ANIMATION = 0x0002;
+	inline constexpr int DGX_SFX_SOUNDS = 0x0004;
+	inline constexpr int DGX_FAR_VIEW = 0x0008;
+	inline constexpr int DGX_AUDIO_TRACKS = 0x0010;
+	inline constexpr int DGX_CHEATS = 0x0020;
+	inline constexpr int DGX_FOG = 0x0040;
+	inline constexpr int DGX_COMMON_VARIABLES = 0x0080;
+	inline constexpr int DGX_STORE_VARIABLES = 0x0100;
+	inline constexpr int DGX_FLYBY = 0x0200;
+	inline constexpr int DGX_TEXT_VARIABLES = 0x0400;
+	inline constexpr int DGX_LOG_SCRIPT_COMMANDS = 0x0800;
+	inline constexpr int DGX_WEAPON_ANIMATION = 0x1000;
+	inline constexpr int DGX_ADJUSTMENT_MODE = 0x2000;
+	inline constexpr int DGX_FPS = 0x4000;
+	inline constexpr int DGX_ERRORS = 0x8000;
 
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
@@ -4877,6 +4904,26 @@ namespace trng {
 		DWORD SizeOldMemory;
 		DWORD NewAddress;  // new address of allocated memory
 		DWORD SizeNewMemory;
+	};
+
+	struct StrMemAllocata {
+		void *pBaseMem;
+		int ThreadId;
+		WORD TestFree; // richiesta di liberare memoria
+		char *pDescrizione; // testo per ricordare cosa sta allocando
+	};
+
+	struct StrBaseMemAllocata {
+		int TotAllocata;
+		StrMemAllocata VetAllocata[MAX_ALLOCATA];
+	};
+
+	struct StrSalvaVettoriRemap {
+		short VetObjRemap[6000];
+		int  TotRooms;
+		short VetRoomRemap[400];
+		bool  TestAttivo;
+		char NomeFileTom[256];
 	};
 #pragma pack(pop)
 }

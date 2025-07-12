@@ -2,7 +2,7 @@
 
 namespace tomb4
 {
-	inline constexpr short rcossin_tbl[8192] =
+	inline short rcossin_tbl[8192] =
 	{
 		0, 4096, 6, 4096, 13, 4096, 19, 4096,
 		25, 4096, 31, 4096, 38, 4096, 44, 4096,

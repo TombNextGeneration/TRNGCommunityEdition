@@ -14,6 +14,7 @@
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
+	StrBaseMemAllocata &BaseAlloc = *reinterpret_cast<decltype(&BaseAlloc)>(0x10658848);
 
 	void * MallocMine(DWORD Size, const char *pDescrizione)
 	{
@@ -113,7 +114,7 @@ namespace trng {
 	void InitSlot(void)
 	{
 		StrIndiciAssign *pAssign;
-		int i,j;
+		int i, j;
 		WORD FlagSlot;
 		CALL_VOID CallInitObjects;
 		WORD NewFlags;

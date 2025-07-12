@@ -1,10 +1,11 @@
 #pragma once
-#include "../framework.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "MyConstants.h"
 #include "structures.h"
 
 namespace trng {
-	typedef BOOL (__cdecl *TYPE_DebugPresente) (VOID);
+	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);
 
 #pragma pack(push, 1)
 	// reocrd per memorizzare callback richieste dai plugin

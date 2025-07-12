@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0), 
 
 ## Unreleased
 
+### Removed
+
+- Removed creation of warm up log files.
+
 ## 0.1.0 - 2025-07-06
 
 ### Changed

@@ -1,6 +1,6 @@
 #include "../../inject.h"
-#include "../game/types.h"
-#include "math_tbls.h"
+#include "../types.h"
+#include "../math_tbls.h"
 
 namespace tomb4
 {

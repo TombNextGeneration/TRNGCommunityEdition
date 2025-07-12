@@ -3,6 +3,7 @@
 
 namespace trng {
 	extern DWORD &OffsetPosLara;
+	extern StrBaseMemAllocata &BaseAlloc;
 
 	void * MallocMine(DWORD Size, const char *pDescrizione);
 	bool FreeMine(void *pMemory);

@@ -1,5 +1,6 @@
 #pragma once
-#include "../framework.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 namespace trng {
 	typedef unsigned __int64 QWORD;

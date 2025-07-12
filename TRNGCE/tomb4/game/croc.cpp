@@ -1,7 +1,7 @@
+#include <math.h>
 #include "../../inject.h"
-#include "types.h"
+#include "../types.h"
 #include "lara.h"
-#include "math.h"
 #include "sound.h"
 #include "draw.h"
 #include "tomb4fx.h"
@@ -68,8 +68,8 @@ namespace tomb4
 					lara_item->pos.z_pos + (fx->ZTarget << 3) - fx->pos.z_pos,
 					angles);
 
-				ox = square(lara_item->pos.x_pos - fx->pos.x_pos);
-				oz = square(lara_item->pos.z_pos - fx->pos.z_pos);
+				ox = SQUARE(lara_item->pos.x_pos - fx->pos.x_pos);
+				oz = SQUARE(lara_item->pos.z_pos - fx->pos.z_pos);
 
 				if (ox + oz < closestdist)
 				{

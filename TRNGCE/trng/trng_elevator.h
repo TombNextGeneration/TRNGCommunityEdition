@@ -1,5 +1,5 @@
 #pragma once
-#include "../tomb4/game/types.h"
+#include "../tomb4/types.h"
 
 namespace trng {
 	void ControlTwoBlockPlatform(short ItemIndex);

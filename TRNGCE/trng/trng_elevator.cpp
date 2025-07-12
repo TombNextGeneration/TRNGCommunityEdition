@@ -1,7 +1,7 @@
 #include "../inject.h"
 #include "structures.h"
 #include "Tomb_NextGeneration.h"
-#include "../tomb4/game/types.h"
+#include "../tomb4/types.h"
 
 namespace trng {
 	// nuova gestione di twoblockplatform quando ci sono ascensori

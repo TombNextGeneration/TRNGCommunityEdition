@@ -1,6 +1,6 @@
+#include <string.h>
 #include "../../inject.h"
-#include "../game/types.h"
-#include "../../framework.h"
+#include "../types.h"
 
 namespace tomb4
 {

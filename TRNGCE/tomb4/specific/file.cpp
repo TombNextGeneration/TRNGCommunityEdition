@@ -1,6 +1,6 @@
+#include <string.h>
 #include "../../inject.h"
-#include "../game/types.h"
-#include "../../framework.h"
+#include "../types.h"
 #include "function_stubs.h"
 #include "../game/objects.h"
 #include "../game/draw.h"
@@ -13,8 +13,6 @@
 
 namespace tomb4
 {
-	static long &num_meshes = *reinterpret_cast<decltype(&num_meshes)>(0x533920);
-	static long &num_anims = *reinterpret_cast<decltype(&num_anims)>(0x533930);
 	static char* &FileData = *reinterpret_cast<decltype(&FileData)>(0x4A6D34);
 
 	short* &mesh_base = *reinterpret_cast<decltype(&mesh_base)>(0x53394C);
@@ -26,6 +24,8 @@ namespace tomb4
 
 	bool LoadObjects()
 	{
+		static long num_meshes, num_anims;
+
 		OBJECT_INFO* obj;
 		STATIC_INFO* stat;
 		short** mesh;

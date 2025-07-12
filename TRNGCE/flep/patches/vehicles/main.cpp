@@ -1,9 +1,9 @@
 #include "../../../inject.h"
-#include "../../../tomb4/game/types.h"
+#include "../../../tomb4/types.h"
 #include "minecart.h"
 #include "quadbike.h"
 #include "../../../tomb4/game/savegame.h"
-#include "../types.h"
+#include "../../types.h"
 
 namespace flep
 {

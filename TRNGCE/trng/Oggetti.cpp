@@ -1,6 +1,6 @@
 #include "../inject.h"
 #include "structures.h"
-#include "../tomb4/game/types.h"
+#include "../tomb4/types.h"
 
 namespace trng {
 	// usa sottoprocedura SubBridgeTilt(pBridge, CordX, CordZ)

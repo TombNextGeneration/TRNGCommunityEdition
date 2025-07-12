@@ -1,6 +1,6 @@
 #pragma once
 #include "structures.h"
-#include "../tomb4/game/types.h"
+#include "../tomb4/types.h"
 
 namespace trng {
 	void ProcMyBridgeFloor(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);
