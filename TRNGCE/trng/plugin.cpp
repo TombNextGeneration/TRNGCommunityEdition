@@ -1,5 +1,5 @@
+#include "plugin.h"
 #include "../inject.h"
-#include "structures.h"
 #include "../tomb4/specific/winmain.h"
 #include "Tomb_NextGeneration.h"
 
@@ -13,11 +13,15 @@ namespace trng {
 		__try { throw __func__; } __finally {}
 	}
 
-	void Tomb4MessageBox(const char *pMessaggio, char *pTitolo)
+	// se TestMsgBox=true visusaliza anche messagebox se e' possibile
+	void InviaErroreLog(const char *pMessage, DWORD PluginID, bool TestMsgBox)
 	{
-		static HWND* pTombWind4 = &tomb4::App.hWnd;  //  ;HandleWindowMai
-
-		MessageBox(*pTombWind4, pMessaggio, pTitolo, MB_APPLMODAL);
+		if (TestMsgBox) {
+			// vedere se si puo' mandare message box
+			TryMessageBox(pMessage, PluginID);
+		} else {
+			InviaLog(pMessage);
+		}
 	}
 
 	// se modo non e' esclusivo visualizza message box, altrimenti restituisce false
@@ -34,22 +38,18 @@ namespace trng {
 		return false;
 	}
 
-	// se TestMsgBox=true visusaliza anche messagebox se e' possibile
-	void InviaErroreLog(const char *pMessage, DWORD PluginID, bool TestMsgBox)
+	void Tomb4MessageBox(const char *pMessaggio, char *pTitolo)
 	{
-		if (TestMsgBox) {
-			// vedere se si puo' mandare message box
-			TryMessageBox(pMessage, PluginID);
-		} else {
-			InviaLog(pMessage);
-		}
+		static HWND* pTombWind4 = &tomb4::App.hWnd;  //  ;HandleWindowMai
+
+		MessageBox(*pTombWind4, pMessaggio, pTitolo, MB_APPLMODAL);
 	}
 }
 
 void LoadTombNextGenerationInject_Plugin(bool replace)
 {
 	ProcessInject(0x10034C21, (unsigned int)trng::InizializzaPluginTrng, false);
-	ProcessInject(0x1002B845, (unsigned int)trng::Tomb4MessageBox, replace);
-	ProcessInject(0x1002B863, (unsigned int)trng::TryMessageBox, replace);
 	ProcessInject(0x1002B8F0, (unsigned int)trng::InviaErroreLog, replace);
+	ProcessInject(0x1002B863, (unsigned int)trng::TryMessageBox, replace);
+	ProcessInject(0x1002B845, (unsigned int)trng::Tomb4MessageBox, replace);
 }

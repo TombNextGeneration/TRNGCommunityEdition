@@ -1,3 +1,4 @@
+#include "inject.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winternl.h>
@@ -24,6 +25,7 @@
 #include "trng/zRoomEditor.h"
 #include "trng/plugin.h"
 #include "trng/ListTr4Patch.h"
+#include "trng/trng_weather.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -83,10 +85,13 @@ static void LoadTombNextGenerationInject(bool replace) {
 	LoadTombNextGenerationInject_ZRoomEditor(replace);
 	LoadTombNextGenerationInject_Plugin(replace);
 	LoadTombNextGenerationInject_ListTr4Patch(replace);
+	LoadTombNextGenerationInject_TrngWeather(replace);
+	LoadTombNextGenerationInject_ZPatchesTomb4(replace);
+	LoadTombNextGenerationInject_Oggetti(replace);
 }
 
 static void __stdcall LoadInject(ULONG NotificationReason, LDR_DLL_NOTIFICATION_DATA *NotificationData, PVOID Context) {
-	if (NotificationReason == 1 && !lstrcmpiW(NotificationData->Loaded.BaseDllName->Buffer, L"Tomb_NextGeneration.dll"))
+	if (NotificationReason == 1 && !_wcsicmp(NotificationData->Loaded.BaseDllName->Buffer, L"Tomb_NextGeneration.dll"))
 		LoadTombNextGenerationInject(true);
 }
 

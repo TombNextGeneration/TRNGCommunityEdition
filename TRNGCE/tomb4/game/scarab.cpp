@@ -1,4 +1,4 @@
-#include "../types.h"
+#include "scarab.h"
 
 namespace tomb4
 {

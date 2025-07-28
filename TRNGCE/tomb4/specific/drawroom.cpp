@@ -1,3 +1,4 @@
+#include "drawroom.h"
 #include "../../inject.h"
 
 namespace tomb4

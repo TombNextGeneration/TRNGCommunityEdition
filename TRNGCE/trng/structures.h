@@ -984,6 +984,129 @@ namespace trng {
 	inline constexpr int DGX_FPS = 0x4000;
 	inline constexpr int DGX_ERRORS = 0x8000;
 
+	// costanti usate per settare il tipo di cambio alt_enter
+	inline constexpr int OAE_NORMALE = 0;
+	inline constexpr int OAE_SHOW_FILM = 1;
+	inline constexpr int OAE_REFRESH_FULL_SCREEN = 2;
+
+	// flag di posizione
+	inline constexpr int STRING_BOTTOM_CENTER = 1;
+	inline constexpr int STRING_TOP_CENTER = 2;
+	inline constexpr int STRING_CENTER_CENTER = 3;
+	inline constexpr int STRING_TOP_LEFT = 4;
+	inline constexpr int STRING_TOP_RIGHT = 5;
+	inline constexpr int STRING_BOTTOM_LEFT = 6;
+	inline constexpr int STRING_BOTTOM_RIGHT = 7;
+	inline constexpr int STRING_DOWN_DAMAGE_BAR = 8;
+	inline constexpr int STRING_DOWN_COLD_BAR = 9;
+	inline constexpr int STRING_DOWN_LEFT_BARS = 10;
+	inline constexpr int STRING_DOWN_RIGHT_BARS = 11;
+
+	// valori per flags da passare a printstring
+	inline constexpr int FTS_ALIGN_LEFT = 0x0000;
+	inline constexpr int FTS_STRETCH_TEXT = 0x1000;
+	inline constexpr int FTS_BLINK = 0x2000;
+	inline constexpr int FTS_ALIGN_RIGHT = 0x4000;
+	inline constexpr int FTS_ALIGN_CENTER = 0x8000;
+
+	// valore per colori di print string
+	inline constexpr int FC_WHITE_PULSE = 1;
+	inline constexpr int FC_WHITE = 2;
+	inline constexpr int FC_RED = 3;
+	inline constexpr int FC_BLUE = 4;
+	inline constexpr int FC_LIGHT_GRAY = 5;
+	inline constexpr int FC_GOLD = 6;
+	inline constexpr int FC_DARK_GRAY = 7;
+	inline constexpr int FC_YELLOW = 8;
+
+	inline constexpr int FPT_NONE = 0;
+	inline constexpr int FPT_NO_RESUME_CRASH = 1;
+
+	// flag per extra field di DiagnosticType command
+
+	inline constexpr int EDGX_CONCISE_SCRIPT_LOG = 0x0001;
+	inline constexpr int EDGX_SLOW_MOTION = 0x0002;
+	inline constexpr int EDGX_SWAP_VIEW = 0x0004;
+	inline constexpr int EDGX_LARA_CORD_IN_LOG = 0x0008;
+	inline constexpr int EDGX_TRIGGER_TIMING = 0x0010;
+	inline constexpr int EDGX_RECORDING_DEMO = 0x0020;
+	inline constexpr int EDGX_CUTSCENE_LOG = 0x0040;
+	inline constexpr int EDGX_ANIMATION_SLOT = 0x0080;
+
+	inline constexpr int SIZE_RAIN_BUFFER = MAX_RAIN_PARTICLES * 0x14;
+	inline constexpr int SIZE_SNOW_BUFFER = MAX_SNOW_PARTICLES * 0x14;
+
+	// flag per collisione di bike con nemici
+	inline constexpr int HIT_KILL = 0x0400;
+	inline constexpr int HIT_PUSH_AWAY = 0x0800;
+	inline constexpr int HIT_HURT = 0x1000;
+	inline constexpr int HIT_WALL = 0x2000;
+	inline constexpr int HIT_EXPLODE = 0x4000;
+	inline constexpr int HIT_BIKE_EXPLODE = 0x8000;
+	inline constexpr int HIT_MASK_SLOT = 0x03ff;
+	inline constexpr int HIT_MASK_FLAGS = 0xFC00;
+
+	// valori per comando script HAIR=
+	inline constexpr int HAIR_PAGE_BOY = 1;
+	inline constexpr int HAIR_TWO_PLAITS = 2;
+	inline constexpr int HAIR_ONE_PONYTAIL = 3;
+	inline constexpr int HAIR_ONE_TR5_PONYTAIL = 4;
+	inline constexpr int HAIR_NON_CAMBIARE = 0xff;
+
+	// costanti per tipo di customizzazione di salvatggio di cd con single-playback
+	inline constexpr int CDM_NO_SAVE = 1;
+	inline constexpr int CDM_RESTORE_FROM_MIDDLE = 2;
+	inline constexpr int CDM_RESTORE_FROM_BEGIN = 3;
+
+	// costanti per tipo di estensione da usare
+	inline constexpr int SEXT_WAV = 0;
+	inline constexpr int SEXT_OGG = 1;
+	inline constexpr int SEXT_MP3 = 2;
+	inline constexpr int SEXT_MP2 = 3;
+	inline constexpr int SEXT_MP1 = 4;
+	inline constexpr int SEXT_AIFF = 5;
+	inline constexpr int SEXT_MULTIPLE = 100;
+
+	// questo e' il valore usato per cicli effettuati ogni secondi
+	inline constexpr int FRAME_SECONDO = 30;
+
+	inline constexpr int TS_DIARY_CHANGE_PAGE = 1;  // 7
+	inline constexpr int TS_DIARY_NO_PAGE = 2;      // 2
+	inline constexpr int TS_DIARY_ZOOM_START = 3;  // 76
+	inline constexpr int TS_SCREENSHOT_CAPTURE = 4; // 9
+	inline constexpr int TS_VIBRATE_RESUME_FROM_FROZEN = 5; // 0
+	inline constexpr int TS_AFTER_FALLING_AS_INVULNERABLE = 6; // 1
+	inline constexpr int TS_SAVEGAME_PANEL_SELECTED = 7; // 109
+	inline constexpr int TS_DAMAGE_ROOM_SCREAM_BURNING = 8; // 0x1e
+	inline constexpr int TS_DAMAGE_ROOM_BEEP_ALERT = 9; // 0x70
+	inline constexpr int TS_WHIRLPOOL_SINKED_LARA = 10; // 33
+	inline constexpr int TS_MISSING_REQUIRED_ITEM = 11; // 2
+	inline constexpr int TS_ANIMATING_DOOR_OPEN = 12; // 162
+	inline constexpr int TS_ANIMATING_DOOR_CLOSE = 13; // 162
+	inline constexpr int TS_DETECTOR_SHOW = 14; // 0x27
+	inline constexpr int TS_ELEVATOR_SQUASHED_LARA = 15; // 0x1f
+	inline constexpr int TS_MIST_EMITTER_WITH_OCB = 16; // 0x4f
+	inline constexpr int TS_PUSHED_ITEM_IMPACT = 17; // 72
+	inline constexpr int TS_BINOCULAR_ZOOM = 18;  // 309 mapper_move
+	inline constexpr int TS_BINOCULAR_LIGHT = 19;  // 369 LARA_CLICK_SWITCH
+	inline constexpr int TS_SHOT_HARPOON_UW = 20;  // 68 PENDULUM_BLADES
+
+	// flag per comando script Settings=
+	inline constexpr int SET_DISABLE_CHEATS = 0x0001;
+	inline constexpr int SET_BLIND_SAVEGAMES = 0x0002;
+	inline constexpr int SET_PERFORM_FROM_CD = 0x0004;
+	inline constexpr int SET_CRYPT_SCRIPT = 0x0008;
+	inline constexpr int SET_FORCE_SOFT_FULL_SCREEN = 0x0010;
+	inline constexpr int SET_ACCEPT_EXTRA_TAILINFOS = 0x0020;
+	inline constexpr int SET_FORCE_NO_WAITING_REFRESH = 0x0040;
+
+	// values for Emergeny Settings (in register of windows)
+	inline constexpr int ES_DISABLED = 0;
+	inline constexpr int ES_SOFT_FULL_SCREEN = 1;
+	inline constexpr int ES_NO_WAITING_REFRESH = 2;
+
+	inline constexpr char BLACK_FIELD[] = "Black Background";
+
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
 #pragma pack(push, 1)
@@ -3354,7 +3477,7 @@ namespace trng {
 		int *pRopeNowIndex;
 		BYTE *pVetInputKeyboard;
 		StrAIDataTr4 *pVetAIData;
-		int *pTotAIData;
+		short *pTotAIData;
 		WORD *pInputGameCommands;
 		BYTE *pFlagsLara;
 		BYTE *pFlagsLara2;
@@ -3376,7 +3499,7 @@ namespace trng {
 		WORD *pTotRooms;
 		StrAdrCamera Camera;
 		StrAdrFlipMap Remap;
-		int *pTotFlyBy;
+		short *pTotFlyBy;
 		StrFlyByTr4 *pVetFlyBy;
 		int *pTestFlybyInProgress;
 		BYTE *pTestLoadOrNewLevel;
@@ -3397,7 +3520,7 @@ namespace trng {
 		WORD *pVetRoomOfDestroyedShatter;
 		StrMeshInfo **pVetStructOfDestroyedShatter;
 		WORD *pTotDestroyedShatters;
-		int *pAudioTrackLoop;
+		char *pAudioTrackLoop;
 		BYTE *pTestAudioTrackLoop;
 		BYTE *pTestWorkingOnMoveables;
 		float *pStartFog;
@@ -3439,7 +3562,7 @@ namespace trng {
 							// value in tick frames 1/30 of seconds, only even numbers
 		BYTE *pLevelNext; // new level that is going to be loaded
 		DWORD *pInputCommandFlags; // altra variabile con tasti premuti
-		DWORD *pFadeCurtain;
+		WORD *pFadeCurtain;
 		StrMeshTr4 *pVonCroyMeshFreeHand; // right free hand
 		StrMeshTr4 *pVonCroyMeskKnifeHand; // right hand with knife
 		int TotItemsMax; // tot moveable + new created items
@@ -4924,6 +5047,53 @@ namespace trng {
 		short VetRoomRemap[400];
 		bool  TestAttivo;
 		char NomeFileTom[256];
+	};
+
+	struct StrRecordRigaConst {
+		int Numero;
+		char *pDescrizione;
+		char *pMexRemark;  // puntatore a sola parte di eventuale #remark# (senza codice #remark#)
+		char *pMexHelp;     //  puntatore a sola di parte di eventuale testo #START_DOC# (senza codici inziialei e finali)
+	};
+
+	struct StrRecordSezione {
+		int TipoSezione;  // valori SEZ_...
+		int NumeroSezione;  // codice trigger relativo a sezione
+		int ListPredefinito;  // 0 = no, altrimenti tipo di costante LST_
+		int TipoListaShow;  // dove copiare lista SHOW_IN.. valori
+		int TotValori;
+		WORD Flags;  // flag FTL_
+		StrRecordRigaConst *pVetValori;
+	};
+
+	struct StrNGConstants {
+		int TotSezioni;
+		StrRecordSezione *pVetSezioni;
+		int IndiceSezTesti; // indice a pvetsezioni per testi
+	};
+
+	struct StrWeather {
+		WORD LevelFlags;  // for level flags about rain/snow  fngl_
+		BYTE RainBuffer[SIZE_RAIN_BUFFER];
+		BYTE SnowBuffer[SIZE_SNOW_BUFFER];
+		DWORD ContaFrameSnow;
+		float Rain_Float_1;
+		float Rain_Float_2;  // spessore goccia
+		float Rain_Float_4;  // inclinazione
+		float Rain_Float_8;
+		float Rain_Float_16;
+		float Rain_Float_20480; // ancora non so cos'e'
+		short Max_Rain;
+		short Min_Rain;
+		DWORD Splash_Rain;  // numero di splash per pioggia che tocca terreno
+		short Max_Snow;
+		short Min_Snow;
+		float VettoreSizeSnow[32]; // 16 min max ranges
+		int Reserved[100];
+	};
+
+	struct StrListaFiles {
+		char Testo[80];  // era 64
 	};
 #pragma pack(pop)
 }

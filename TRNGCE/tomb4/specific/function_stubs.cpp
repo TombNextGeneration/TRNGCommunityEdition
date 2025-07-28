@@ -1,6 +1,6 @@
+#include "function_stubs.h"
 #include <string.h>
 #include "../../inject.h"
-#include "../types.h"
 
 namespace tomb4
 {

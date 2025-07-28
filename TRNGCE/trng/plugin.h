@@ -3,9 +3,9 @@
 
 namespace trng {
 	void InizializzaPluginTrng(void);
-	void Tomb4MessageBox(const char *pMessaggio, char *pTitolo);
-	bool TryMessageBox(const char *pMessage, DWORD ID_Plugin);
 	void InviaErroreLog(const char *pMessage, DWORD PluginID, bool TestMsgBox);
+	bool TryMessageBox(const char *pMessage, DWORD ID_Plugin);
+	void Tomb4MessageBox(const char *pMessaggio, char *pTitolo);
 }
 
 void LoadTombNextGenerationInject_Plugin(bool replace);

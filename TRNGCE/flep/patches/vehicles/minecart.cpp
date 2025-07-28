@@ -1,3 +1,4 @@
+#include "minecart.h"
 #include "../../../inject.h"
 #include "../../../tomb4/types.h"
 

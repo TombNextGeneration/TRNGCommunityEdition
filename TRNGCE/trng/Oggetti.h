@@ -15,6 +15,13 @@ namespace trng {
 	void TriggerFish(short ItemIndex);
 	void TorpedoControl(short item_number);
 	void DiverControl(short item_number);
+	void CreaFinestraAvviso(void);
+	bool IsModoWindowed(void);
+	void CreaBlackWindow(void);
+	long FAR PASCAL WindowBlackProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void DisattivaAnimWindow(void);
+	void NascondiTaskBar(void);
 }
 
 void Inject_Oggetti(bool replace);
+void LoadTombNextGenerationInject_Oggetti(bool replace);

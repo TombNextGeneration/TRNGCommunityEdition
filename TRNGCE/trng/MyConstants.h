@@ -27,4 +27,8 @@ namespace trng {
 	inline constexpr int ngfm_ShowLaraInTitle = 0x0040;
 	inline constexpr int ngfm_DisableBASSEngine = 0x0080;
 	inline constexpr int ngfm_Enable_Trlm_Options = 0x0100;
+
+	inline constexpr int LNGC_MAIN = 1;
+	inline constexpr int LNGC_TRANSLATION = 2; // My_NG_Costants.txt
+	inline constexpr int LNGC_PLUGIN = 3; // carica file "plugin_name.trg"
 }

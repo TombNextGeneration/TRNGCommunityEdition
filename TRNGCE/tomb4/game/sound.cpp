@@ -1,8 +1,10 @@
+#include "sound.h"
 #include "../../inject.h"
-#include "../types.h"
 
 namespace tomb4
 {
+	SoundSlot (&LaSlot)[32] = *reinterpret_cast<decltype(&LaSlot)>(0x7F7100);
+
 	long SoundEffect(sound_effect_names sfx, PHD_3DPOS* pos, sfx_options flags)
 	{
 		__try { throw __func__; } __finally {}

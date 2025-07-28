@@ -1,6 +1,6 @@
+#include "Oggetti.h"
 #include "../inject.h"
-#include "structures.h"
-#include "../tomb4/types.h"
+#include "Tomb_NextGeneration.h"
 
 namespace trng {
 	// usa sottoprocedura SubBridgeTilt(pBridge, CordX, CordZ)
@@ -70,6 +70,68 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// visualizzare una piccola finestra al centro dello schermo
+	// solo per informare di prmeere tasto ctrl
+	void CreaFinestraAvviso(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	bool IsModoWindowed(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// questa finestra va fatta:
+	// 1) se siamo in modalita' fullscreen fare schermo nero sotto
+	void CreaBlackWindow(void)
+	{
+		HINSTANCE TombInstance;
+		WNDCLASS wc = {0};
+
+		// trovare handle di instanza
+
+		TombInstance = GetModuleHandle(NULL);
+
+		// ok, ora fare tutto il necessario
+
+		// Set up and register window class
+
+		wc.lpfnWndProc = WindowBlackProc;
+		wc.hInstance = TombInstance;
+		wc.lpszClassName = BLACK_FIELD;
+		if (!RegisterClass(&wc))
+			return;
+
+		GlobTomb4.BaseFMV.WindowBlack = CreateWindowEx(0, BLACK_FIELD, "", WS_POPUP, 0, 0, GlobTomb4.BaseWideScreen.SizeX, GlobTomb4.BaseWideScreen.SizeY, NULL, NULL, TombInstance, 0);
+
+		if (GlobTomb4.BaseFMV.WindowBlack == NULL) {
+			UnregisterClass(BLACK_FIELD, TombInstance);
+			return;
+		}
+
+		DisattivaAnimWindow();
+		ShowWindow(GlobTomb4.BaseFMV.WindowBlack, SW_NORMAL);
+		NascondiTaskBar();
+	}
+
+	long FAR PASCAL WindowBlackProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// disattiva l'animazione delle finestre per evitare lo schifotto
+	// della finestra che si modifica quando avvio fmv in modo full screen
+	void DisattivaAnimWindow(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void NascondiTaskBar(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Oggetti(bool replace)
@@ -86,4 +148,14 @@ void Inject_Oggetti(bool replace)
 	ProcessInject(0x100122A7, (unsigned int)trng::TriggerFish, false);
 	ProcessInject(0x1001FE63, (unsigned int)trng::TorpedoControl, false);
 	ProcessInject(0x1001548E, (unsigned int)trng::DiverControl, false);
+}
+
+void LoadTombNextGenerationInject_Oggetti(bool replace)
+{
+	ProcessInject(0x10025267, (unsigned int)trng::CreaFinestraAvviso, false);
+	ProcessInject(0x10025FE9, (unsigned int)trng::IsModoWindowed, false);
+	ProcessInject(0x1002504C, (unsigned int)trng::CreaBlackWindow, replace);
+	ProcessInject(0x10024EC9, (unsigned int)trng::WindowBlackProc, false);
+	ProcessInject(0x10024FCE, (unsigned int)trng::DisattivaAnimWindow, false);
+	ProcessInject(0x10024E6E, (unsigned int)trng::NascondiTaskBar, false);
 }

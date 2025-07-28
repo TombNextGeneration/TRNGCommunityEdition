@@ -1,5 +1,5 @@
+#include "ListTr4Patch.h"
 #include "../inject.h"
-#include "structures.h"
 
 namespace trng {
 	StrAdrMemory (&VetMemorySavegame)[95] = *reinterpret_cast<decltype(&VetMemorySavegame)>(0x1014D010);

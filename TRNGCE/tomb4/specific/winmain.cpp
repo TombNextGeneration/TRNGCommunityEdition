@@ -1,4 +1,4 @@
-#include "../types.h"
+#include "winmain.h"
 
 namespace tomb4
 {

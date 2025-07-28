@@ -1,4 +1,4 @@
-#include "../types.h"
+#include "voncroy.h"
 
 namespace tomb4
 {

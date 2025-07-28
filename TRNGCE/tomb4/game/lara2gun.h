@@ -3,6 +3,5 @@
 
 namespace tomb4
 {
-	extern DXPTR* &G_dxptr;
-	extern char (&keymap)[256];
+	extern PISTOL_DEF (&PistolTable)[4];
 }

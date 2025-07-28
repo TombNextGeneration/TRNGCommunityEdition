@@ -43,17 +43,39 @@ namespace trng {
 	extern int (&VetStandardSwapMesh)[107];
 	extern int (&VetSlotMeshMoveables)[122];
 	extern TYPE_tombInviaLog &tombInviaLog;
+	extern BYTE &FlagMicroCaratteri;
+	extern char (&MexNewWindowTitle)[256];
+	extern char (&BufferLog)[8192];
 
 	void ImpostaEnemyDamage(void);
+	bool Inizializza(void);
 	void LinkGlobTomb4Structures(void);
 	bool IsAttivoDebugger(void);
 	char *TrovaVersioneFile(const char *NomeFile, char *pBufProductVersion);
 	void CalcolaVersione(StrVersionHeader *pBaseVer);
 	void InizializzaTomb4(void);
-	bool Inizializza(void);
-	void GestioneDgxErrori(const char *pMex);
 	bool InviaLog(const char *pMessaggio);
+	void GestioneDgxErrori(const char *pMex);
 	bool ScopreModoFullScreen(void);
+	void InitStringOffsets(void);
+	void AnalisiWideScreen(void);
+	BYTE *CaricaTomb4Mem(void);
+	void Controllo1FileMancanti(void);
+	bool EsisteFile(const char *NomeFile);
+	void InitPrintTextColors(void);
+	void InitBarDefault(void);
+	void CustDefToCustNow(void);
+	bool LeggeNGScriptDat(char NomeScriptDat[]);
+	void InitDgxErrors(void);
+	void ImpostaCostantiNascoste(void);
+	void InitRemapItemGroup(void);
+	void VerifyImagesPix(void);
+	StrListaFiles *TrovaFiles(const char DirSource[], const char Maschera[], int *pTotFiles);
+	void LeggeMieSettingRegister(void);
+	void VerificaAttivazioneSoftFullScreen(void);
+	void VerificaAttivazioneNoWaitingRefresh(void);
+	void RestyleWindow(void);
+	void InitFmvLog(const char *pMex, bool TestCancellaLog);
 }
 
 void Inject_TombNextGeneration(bool replace);

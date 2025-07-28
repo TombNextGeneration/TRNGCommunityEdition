@@ -1,5 +1,5 @@
+#include "savegame.h"
 #include "../../inject.h"
-#include "../types.h"
 #include "objects.h"
 #include "lara.h"
 #include "control.h"
@@ -24,25 +24,7 @@ namespace tomb4
 	static char* &SGpoint = *reinterpret_cast<decltype(&SGpoint)>(0x4BF5A4);
 	static long &SGcount = *reinterpret_cast<decltype(&SGcount)>(0x4BF5A8);
 
-	void WriteSG(void* pointer, long size)
-	{
-		char* data;
-
-		SGcount += size;
-
-		for (data = (char*)pointer; size > 0; size--)
-			*SGpoint++ = *data++;
-	}
-
-	void ReadSG(void* pointer, long size)
-	{
-		char* data;
-
-		SGcount += size;
-
-		for (data = (char*)pointer; size > 0; size--)
-			*data++ = *SGpoint++;
-	}
+	SAVEGAME_INFO &savegame = *reinterpret_cast<decltype(&savegame)>(0x7F75A0);
 
 	static bool NemicoMorto(ITEM_INFO* item)
 	{
@@ -498,11 +480,31 @@ namespace tomb4
 			CurrentPendulum.Rope = (ROPE_STRUCT*)((char*)CurrentPendulum.Rope + (long)RopeList);
 		}
 	}
+
+	void WriteSG(void* pointer, long size)
+	{
+		char* data;
+
+		SGcount += size;
+
+		for (data = (char*)pointer; size > 0; size--)
+			*SGpoint++ = *data++;
+	}
+
+	void ReadSG(void* pointer, long size)
+	{
+		char* data;
+
+		SGcount += size;
+
+		for (data = (char*)pointer; size > 0; size--)
+			*data++ = *SGpoint++;
+	}
 }
 
 void Inject_Savegame(bool replace)
 {
+	ProcessInject(0x459880, (unsigned int)tomb4::SaveLevelData, replace);
 	ProcessInject(0x45A3C0, (unsigned int)tomb4::WriteSG, replace);
 	ProcessInject(0x45B150, (unsigned int)tomb4::ReadSG, replace);
-	ProcessInject(0x459880, (unsigned int)tomb4::SaveLevelData, replace);
 }

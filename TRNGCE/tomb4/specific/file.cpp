@@ -1,6 +1,6 @@
+#include "file.h"
 #include <string.h>
 #include "../../inject.h"
-#include "../types.h"
 #include "function_stubs.h"
 #include "../game/objects.h"
 #include "../game/draw.h"
@@ -21,6 +21,10 @@ namespace tomb4
 	short* &commands = *reinterpret_cast<decltype(&commands)>(0x53395C);
 	short* &frames = *reinterpret_cast<decltype(&frames)>(0x533954);
 	long &number_cameras = *reinterpret_cast<decltype(&number_cameras)>(0x7FE820);
+	short &nAIObjects = *reinterpret_cast<decltype(&nAIObjects)>(0x7FD0E0);
+#define THREAD THREAD_
+	THREAD &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
+#undef THREAD
 
 	bool LoadObjects()
 	{

@@ -1,4 +1,4 @@
-#include "../types.h"
+#include "switch.h"
 
 namespace tomb4
 {

@@ -1,5 +1,4 @@
 #pragma once
-#include "../../../tomb4/types.h"
 
 namespace flep
 {

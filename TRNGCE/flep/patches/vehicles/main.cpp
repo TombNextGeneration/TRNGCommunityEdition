@@ -1,5 +1,5 @@
+#include "main.h"
 #include "../../../inject.h"
-#include "../../../tomb4/types.h"
 #include "minecart.h"
 #include "quadbike.h"
 #include "../../../tomb4/game/savegame.h"

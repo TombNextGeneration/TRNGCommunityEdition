@@ -1,10 +1,13 @@
+#include "3dmath.h"
 #include "../../inject.h"
-#include "../types.h"
 #include "../math_tbls.h"
 
 namespace tomb4
 {
 	long* &phd_mxptr = *reinterpret_cast<decltype(&phd_mxptr)>(0x7E70C8);
+	long &phd_winwidth = *reinterpret_cast<decltype(&phd_winwidth)>(0x753C60);
+	long &phd_winheight = *reinterpret_cast<decltype(&phd_winheight)>(0x753BB0);
+	float &FogStart = *reinterpret_cast<decltype(&FogStart)>(0x4B2498);
 
 	ulong phd_sqrt(ulong num)
 	{

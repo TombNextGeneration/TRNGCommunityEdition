@@ -1007,6 +1007,131 @@ namespace tomb4
 		HEAVY_CAMERA,
 	};
 
+	enum class invobj_types
+	{
+		INV_UZI_ITEM = 0,
+		INV_PISTOLS_ITEM,
+		INV_SHOTGUN_ITEM,
+		INV_REVOLVER_ITEM,
+		INV_REVOLVER_LASER_ITEM,
+		INV_CROSSBOW_ITEM,
+		INV_CROSSBOW_LASER_ITEM,
+		INV_GRENADEGUN_ITEM,
+		INV_SHOTGUN_AMMO1_ITEM,
+		INV_SHOTGUN_AMMO2_ITEM,
+		INV_GRENADEGUN_AMMO1_ITEM,
+		INV_GRENADEGUN_AMMO2_ITEM,
+		INV_GRENADEGUN_AMMO3_ITEM,
+		INV_CROSSBOW_AMMO1_ITEM,
+		INV_CROSSBOW_AMMO2_ITEM,
+		INV_CROSSBOW_AMMO3_ITEM,
+		INV_REVOLVER_AMMO_ITEM,
+		INV_UZI_AMMO_ITEM,
+		INV_PISTOLS_AMMO_ITEM,
+		INV_LASERSIGHT_ITEM,
+		INV_BIGMEDI_ITEM,
+		INV_SMALLMEDI_ITEM,
+		INV_BINOCULARS_ITEM,
+		INV_FLARE_INV_ITEM,
+		INV_COMPASS_ITEM,
+		INV_MEMCARD_LOAD_ITEM,
+		INV_MEMCARD_SAVE_ITEM,
+		INV_WATERSKIN1_EMPTY_ITEM,
+		INV_WATERSKIN1_1_ITEM,
+		INV_WATERSKIN1_2_ITEM,
+		INV_WATERSKIN1_3_ITEM,
+		INV_WATERSKIN2_EMPTY_ITEM,
+		INV_WATERSKIN2_1_ITEM,
+		INV_WATERSKIN2_2_ITEM,
+		INV_WATERSKIN2_3_ITEM,
+		INV_WATERSKIN2_4_ITEM,
+		INV_WATERSKIN2_5_ITEM,
+		INV_PUZZLE1_ITEM,
+		INV_PUZZLE2_ITEM,
+		INV_PUZZLE3_ITEM,
+		INV_PUZZLE4_ITEM,
+		INV_PUZZLE5_ITEM,
+		INV_PUZZLE6_ITEM,
+		INV_PUZZLE7_ITEM,
+		INV_PUZZLE8_ITEM,
+		INV_PUZZLE9_ITEM,
+		INV_PUZZLE10_ITEM,
+		INV_PUZZLE11_ITEM,
+		INV_PUZZLE12_ITEM,
+		INV_PUZZLE1_COMBO1_ITEM,
+		INV_PUZZLE1_COMBO2_ITEM,
+		INV_PUZZLE2_COMBO1_ITEM,
+		INV_PUZZLE2_COMBO2_ITEM,
+		INV_PUZZLE3_COMBO1_ITEM,
+		INV_PUZZLE3_COMBO2_ITEM,
+		INV_PUZZLE4_COMBO1_ITEM,
+		INV_PUZZLE4_COMBO2_ITEM,
+		INV_PUZZLE5_COMBO1_ITEM,
+		INV_PUZZLE5_COMBO2_ITEM,
+		INV_PUZZLE6_COMBO1_ITEM,
+		INV_PUZZLE6_COMBO2_ITEM,
+		INV_PUZZLE7_COMBO1_ITEM,
+		INV_PUZZLE7_COMBO2_ITEM,
+		INV_PUZZLE8_COMBO1_ITEM,
+		INV_PUZZLE8_COMBO2_ITEM,
+		INV_KEY1_ITEM,
+		INV_KEY2_ITEM,
+		INV_KEY3_ITEM,
+		INV_KEY4_ITEM,
+		INV_KEY5_ITEM,
+		INV_KEY6_ITEM,
+		INV_KEY7_ITEM,
+		INV_KEY8_ITEM,
+		INV_KEY9_ITEM,
+		INV_KEY10_ITEM,
+		INV_KEY11_ITEM,
+		INV_KEY12_ITEM,
+		INV_KEY1_COMBO1_ITEM,
+		INV_KEY1_COMBO2_ITEM,
+		INV_KEY2_COMBO1_ITEM,
+		INV_KEY2_COMBO2_ITEM,
+		INV_KEY3_COMBO1_ITEM,
+		INV_KEY3_COMBO2_ITEM,
+		INV_KEY4_COMBO1_ITEM,
+		INV_KEY4_COMBO2_ITEM,
+		INV_KEY5_COMBO1_ITEM,
+		INV_KEY5_COMBO2_ITEM,
+		INV_KEY6_COMBO1_ITEM,
+		INV_KEY6_COMBO2_ITEM,
+		INV_KEY7_COMBO1_ITEM,
+		INV_KEY7_COMBO2_ITEM,
+		INV_KEY8_COMBO1_ITEM,
+		INV_KEY8_COMBO2_ITEM,
+		INV_PICKUP1_ITEM,
+		INV_PICKUP2_ITEM,
+		INV_PICKUP3_ITEM,
+		INV_PICKUP4_ITEM,
+		INV_PICKUP1_COMBO1_ITEM,
+		INV_PICKUP1_COMBO2_ITEM,
+		INV_PICKUP2_COMBO1_ITEM,
+		INV_PICKUP2_COMBO2_ITEM,
+		INV_PICKUP3_COMBO1_ITEM,
+		INV_PICKUP3_COMBO2_ITEM,
+		INV_PICKUP4_COMBO1_ITEM,
+		INV_PICKUP4_COMBO2_ITEM,
+		INV_QUEST1_ITEM,
+		INV_QUEST2_ITEM,
+		INV_QUEST3_ITEM,
+		INV_QUEST4_ITEM,
+		INV_QUEST5_ITEM,
+		INV_QUEST6_ITEM,
+		INV_BURNING_TORCH_ITEM,
+		INV_CROWBAR_ITEM,
+		INV_CLOCKWORK_BEETLE_ITEM,
+		INV_MECHANICAL_SCARAB_ITEM,
+		INV_WINDING_KEY_ITEM,
+		INV_EXAMINE1_ITEM,
+		INV_EXAMINE2_ITEM,
+		INV_EXAMINE3_ITEM,
+
+		NUM_INVOBJ
+	};
+
 #pragma pack(push, 1)
 	struct PHD_3DPOS
 	{
@@ -1249,22 +1374,32 @@ namespace tomb4
 		short dpoisoned;
 		uchar electric;
 		uchar wet[15];
-		ushort flare_control_left : 1;
-		ushort Unused1 : 1;
-		ushort look : 1;
-		ushort burn : 1;
-		ushort keep_ducked : 1;
-		ushort IsMoving : 1;
-		ushort CanMonkeySwing : 1;
-		ushort Unused2 : 1;
-		ushort OnBeetleFloor : 1;
-		ushort BurnGreen : 1;
-		ushort IsDucked : 1;
-		ushort has_fired : 1;
-		ushort Busy : 1;
-		ushort LitTorch : 1;
-		ushort IsClimbing : 1;
-		ushort Fired : 1;
+
+		union
+		{
+			struct
+			{
+				ushort flare_control_left : 1;
+				ushort Unused1 : 1;
+				ushort look : 1;
+				ushort burn : 1;
+				ushort keep_ducked : 1;
+				ushort IsMoving : 1;
+				ushort CanMonkeySwing : 1;
+				ushort Unused2 : 1;
+				ushort OnBeetleFloor : 1;
+				ushort BurnGreen : 1;
+				ushort IsDucked : 1;
+				ushort has_fired : 1;
+				ushort Busy : 1;
+				ushort LitTorch : 1;
+				ushort IsClimbing : 1;
+				ushort Fired : 1;
+			};
+
+			ushort bitfield;
+		};
+
 		long water_surface_dist;
 		PHD_VECTOR last_pos;
 		FX_INFO* spaz_effect;
@@ -1875,6 +2010,90 @@ namespace tomb4
 		volatile bool fmv;
 		long Desktopbpp;
 		long AutoTarget;
+	};
+
+	struct SoundSlot
+	{
+		long OrigVolume;
+		long nVolume;
+		long nPan;
+		long nPitch;
+		long nSampleInfo;
+		ulong distance;
+		PHD_VECTOR pos;
+	};
+
+	struct STATS
+	{
+		ulong Timer;
+		ulong Distance;
+		ulong AmmoUsed;
+		ulong AmmoHits;
+		ushort Kills;
+		uchar Secrets;
+		uchar HealthUsed;
+	};
+
+	struct CVECTOR
+	{
+		char b;
+		char g;
+		char r;
+		char a;
+	};
+
+	struct SAVEGAME_INFO
+	{
+		LARA_INFO Lara;
+		long cutscene_triggered;
+		uchar HubLevels[10];	//saved level indices. highest one that isn't 0 is the one we are currently in
+		ushort HubOffsets[10];	//offset of each level's data inside the savegame buffer
+		ushort HubSizes[10];	//size of each level's data inside the savegame buffer
+		char CurrentLevel;
+		char Checksum;
+		STATS Game;
+		STATS Level;
+		short WeaponObject;
+		short WeaponAnim;
+		short WeaponFrame;
+		short WeaponCurrent;
+		short WeaponGoal;
+		CVECTOR fog_colour;
+		uchar HubSavedLara : 1;	//flag that we saved Lara's data when we initialised hub, only set to 1 when InitialiseHub is called with 1
+		uchar AutoTarget : 1;
+		uchar HaveBikeBooster : 1;	//have the bike nitro thing
+		char buffer[15410];
+	};
+
+	struct PISTOL_DEF
+	{
+		short ObjectNum;
+		char Draw1Anim2;
+		char Draw1Anim;
+		char Draw2Anim;
+		char RecoilAnim;
+	};
+
+	struct INVOBJ
+	{
+		short object_number;
+		short yoff;
+		short scale1;
+		short yrot;
+		short xrot;
+		short zrot;
+		short flags;
+		short objname;
+		ulong meshbits;
+	};
+
+	struct THREAD
+	{
+		volatile long active;
+		long unk;
+		volatile long ended;
+		ulong handle;
+		ulong address;
 	};
 #pragma pack(pop)
 }

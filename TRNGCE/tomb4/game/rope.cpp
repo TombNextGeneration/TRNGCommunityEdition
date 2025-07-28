@@ -1,4 +1,4 @@
-#include "../types.h"
+#include "rope.h"
 
 namespace tomb4
 {
