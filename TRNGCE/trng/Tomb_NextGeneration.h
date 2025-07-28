@@ -78,5 +78,4 @@ namespace trng {
 	void InitFmvLog(const char *pMex, bool TestCancellaLog);
 }
 
-void Inject_TombNextGeneration(bool replace);
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

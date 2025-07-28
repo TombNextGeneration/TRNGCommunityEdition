@@ -1228,7 +1228,7 @@ namespace trng {
 	}
 }
 
-void Inject_ZPatchesTomb4(bool replace)
+void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 {
 	ProcessInject(0x100B027E, (unsigned int)trng::SalvaDimensioniMesh, replace);
 	ProcessInject(0x100AF989, (unsigned int)trng::FreeMine, false);
@@ -1248,10 +1248,6 @@ void Inject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100D151A, (unsigned int)trng::DaSalvare, replace);
 	ProcessInject(0x100D14CB, (unsigned int)trng::SlotSempreAttivo, replace);
 	ProcessInject(0x100D1636, (unsigned int)trng::SalvaItemCreati, replace);
-}
-
-void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
-{
 	ProcessInject(0x100B0948, (unsigned int)trng::InizializzaAdrImmediati, replace);
 	ProcessInject(0x100BA3E8, (unsigned int)trng::InitCustomize, replace);
 }

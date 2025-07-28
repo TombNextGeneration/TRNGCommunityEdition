@@ -717,13 +717,9 @@ namespace trng {
 	}
 }
 
-void Inject_TombNextGeneration(bool replace)
-{
-	ProcessInject(0x10069407, (unsigned int)trng::ImpostaEnemyDamage, false);
-}
-
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 {
+	ProcessInject(0x10069407, (unsigned int)trng::ImpostaEnemyDamage, false);
 	ProcessInject(0x100461EB, (unsigned int)trng::Inizializza, replace);
 	ProcessInject(0x10044B59, (unsigned int)trng::LinkGlobTomb4Structures, replace);
 	ProcessInject(0x100637E3, (unsigned int)trng::IsAttivoDebugger, replace);

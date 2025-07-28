@@ -43,7 +43,7 @@ namespace trng {
 	}
 }
 
-void Inject_TrngElevator(bool replace)
+void LoadTombNextGenerationInject_TrngElevator(bool replace)
 {
 	ProcessInject(0x100989A4, (unsigned int)trng::SetSlotElevator, replace);
 	ProcessInject(0x10097457, (unsigned int)trng::TwoBlockPlatformCeiling, false);

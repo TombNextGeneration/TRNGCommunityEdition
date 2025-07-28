@@ -23,5 +23,4 @@ namespace trng {
 	void NascondiTaskBar(void);
 }
 
-void Inject_Oggetti(bool replace);
 void LoadTombNextGenerationInject_Oggetti(bool replace);

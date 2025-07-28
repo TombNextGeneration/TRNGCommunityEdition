@@ -8,4 +8,4 @@ namespace trng {
 	void ControlTwoBlockPlatform(short ItemIndex);
 }
 
-void Inject_TrngElevator(bool replace);
+void LoadTombNextGenerationInject_TrngElevator(bool replace);

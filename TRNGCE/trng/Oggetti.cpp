@@ -134,7 +134,7 @@ namespace trng {
 	}
 }
 
-void Inject_Oggetti(bool replace)
+void LoadTombNextGenerationInject_Oggetti(bool replace)
 {
 	ProcessInject(0x1001194A, (unsigned int)trng::ProcMyBridgeFloor, false);
 	ProcessInject(0x10011C6A, (unsigned int)trng::ProcMyBridgeCeiling, false);
@@ -148,10 +148,6 @@ void Inject_Oggetti(bool replace)
 	ProcessInject(0x100122A7, (unsigned int)trng::TriggerFish, false);
 	ProcessInject(0x1001FE63, (unsigned int)trng::TorpedoControl, false);
 	ProcessInject(0x1001548E, (unsigned int)trng::DiverControl, false);
-}
-
-void LoadTombNextGenerationInject_Oggetti(bool replace)
-{
 	ProcessInject(0x10025267, (unsigned int)trng::CreaFinestraAvviso, false);
 	ProcessInject(0x10025FE9, (unsigned int)trng::IsModoWindowed, false);
 	ProcessInject(0x1002504C, (unsigned int)trng::CreaBlackWindow, replace);

@@ -88,6 +88,7 @@ static void LoadTombNextGenerationInject(bool replace) {
 	LoadTombNextGenerationInject_TrngWeather(replace);
 	LoadTombNextGenerationInject_ZPatchesTomb4(replace);
 	LoadTombNextGenerationInject_Oggetti(replace);
+	LoadTombNextGenerationInject_TrngElevator(replace);
 }
 
 static void __stdcall LoadInject(ULONG NotificationReason, LDR_DLL_NOTIFICATION_DATA *NotificationData, PVOID Context) {
@@ -106,10 +107,6 @@ static void Inject(bool replace) {
 	Inject_Laraskin(replace);
 	Inject_Setup(replace);
 	Inject_Drawroom(replace);
-	Inject_ZPatchesTomb4(replace);
-	Inject_TrngElevator(replace);
-	Inject_Oggetti(replace);
-	Inject_TombNextGeneration(replace);
 	Inject_Objects(replace);
 	Inject_Collide(replace);
 	Inject_Savegame(replace);

@@ -28,5 +28,4 @@ namespace trng {
 	void InitCustomize(void);
 }
 
-void Inject_ZPatchesTomb4(bool replace);
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);
