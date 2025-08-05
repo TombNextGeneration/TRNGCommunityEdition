@@ -1,6 +1,4 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include "bass.h"
 
 namespace trng {
@@ -1105,7 +1103,15 @@ namespace trng {
 	inline constexpr int ES_SOFT_FULL_SCREEN = 1;
 	inline constexpr int ES_NO_WAITING_REFRESH = 2;
 
-	inline constexpr char BLACK_FIELD[] = "Black Background";
+	inline constexpr char BLACK_FIELD[17] = "Black Background";
+
+	// valori per tipo import file
+	inline constexpr int IMPORT_MEMORY = 1;
+	inline constexpr int IMPORT_TEMPORARY = 2;
+
+	// constant to check the bit used to recognize extrang strings
+	inline constexpr int STRING_NG = 0x8000;
+	inline constexpr int MASK_STRING_INDEX = 0x7fff;  // bit mask to get index of string removing further STRING_NG flag
 
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
@@ -5094,6 +5100,40 @@ namespace trng {
 
 	struct StrListaFiles {
 		char Testo[80];  // era 64
+	};
+
+	struct StrParseNGField {
+		DWORD NextIndex;
+		WORD *pData;
+		DWORD SizeData;
+		DWORD StartDataIndex;
+		WORD  Type;
+	};
+
+	struct StrLastScriptDat {
+		FILETIME DataLastWrite;
+		DWORD SizeFile;
+	};
+
+	struct StrHeaderImportFile {
+		WORD Id;
+		WORD TipoImport;
+		WORD TipoFile;
+		short NumeroFile;
+		char NomeFile[80];
+		DWORD SizeFile;
+		BYTE VetBytes[1];
+	};
+
+	struct StrFloatPatch {
+		DWORD Offset;
+		float ValDefault;
+		bool TestFloat;
+	};
+
+	struct StrEndNgHeader {
+		DWORD EndCheck;  // it should be number 0x454C474E ( "NGLE")
+		DWORD SizeNgHeader; // size of whole extra ng header
 	};
 #pragma pack(pop)
 }

@@ -1,8 +1,5 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include "MyConstants.h"
-#include "structures.h"
 
 namespace trng {
 	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);

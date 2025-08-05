@@ -26,6 +26,11 @@ namespace trng {
 	void SalvaItemCreati(void);
 	void InizializzaAdrImmediati(void);
 	void InitCustomize(void);
+	void LeggiNG_LanguageDat(char *pNomeFile);
+	void DecryptDatString(char *pTesto);
+	void ImpostaScanCodeInputBox(void);
+	DWORD GetValoreHex(char *pStringaHex, bool *pTestErrore);
+	void * ReallocMine(void * pOldMem, DWORD NewSize, const char *pDescrizione);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

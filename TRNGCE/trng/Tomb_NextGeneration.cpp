@@ -1,9 +1,9 @@
 #include "Tomb_NextGeneration.h"
 #include <stdlib.h>
 #include <time.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <direct.h>
 #include "../inject.h"
 #include "zPatchesTomb4.h"
 #include "zRoomEditor.h"
@@ -16,6 +16,7 @@
 #include "Oggetti.h"
 #include "../tomb4/game/lara.h"
 #include "../tomb4/game/objects.h"
+#include "../tomb4/game/gameflow.h"
 
 namespace trng {
 	StrGlobaliTomb4 &GlobTomb4 = *reinterpret_cast<decltype(&GlobTomb4)>(0x101C9578);
@@ -62,6 +63,8 @@ namespace trng {
 	// usata per nome finestra setup, per quella principale lo si fa in modo immediato
 	char (&MexNewWindowTitle)[256] = *reinterpret_cast<decltype(&MexNewWindowTitle)>(0x103DFC4C);
 	char (&BufferLog)[8192] = *reinterpret_cast<decltype(&BufferLog)>(0x101B73D8);
+	StrFloatPatch (&VetFarWorld)[5] = *reinterpret_cast<decltype(&VetFarWorld)>(0x1015A420);
+#define malloc ((void *(*)(size_t)) 0x10135531)
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -558,7 +561,319 @@ namespace trng {
 
 	bool LeggeNGScriptDat(char NomeScriptDat[])
 	{
-		__try { throw __func__; } __finally {}
+		StrParseNGField ParseField;
+		int Indice;
+		int i;
+		int n;
+		char *pChar;
+		int ContaLivello;
+		StrImportFile *pImpFile;
+		const char *pNome;
+		int IndiceStringa;
+		int j;
+		StrRecPluginScript *pPlugin;
+		int TestIgnora;
+		bool TestEraSetting; // per controllo crypt
+		DWORD EndOffset, StartOffset, NuovaSize;
+		WORD TagScript;
+		WORD * pFirstImport;
+		StrLastScriptDat ScriptDatNow;
+		WORD TotWords;
+		StrHeaderImportFile *pHeader;
+		StrSoundSettings *pSound;
+		FILE *pFile;
+		int Tot;
+		WORD FarView;
+		bool TestExport;
+
+		// prima caricare extrang strings (anche se solo in modo temporaneo)
+		CaricaNGStringTemp();
+
+		// inizializza dati di opzioni script
+		GlobTomb4.ScriptOptions.DisablePatchMem = 0;
+		MyGlobPrivate.TotControlloScriptDat = 0;
+		GlobTomb4.ScriptOptions.MainFlags = 0;
+		GlobTomb4.WorldFarView = -1;
+
+		GlobTomb4.DefSettings.DefMaxFog = 40;
+		GlobTomb4.DefSettings.DefMinFog = 12;
+
+		GlobTomb4.SoundSettings.MusicQuality = SCRIPT_IGNORE;
+		GlobTomb4.SoundSettings.VolumeMusic = -1;
+		GlobTomb4.SoundSettings.VolumeSFX = -1;
+		GlobTomb4.BaseImportedFiles.TotFiles = 0;
+		MyGlobPrivate.SettingScriptDat = 0;
+
+		for (i = 0; i < MAX_IMPORT_FILES * 10; i++) {
+			GlobTomb4.BaseImportedFiles.VetID[i] = -1;
+		}
+
+		GlobTomb4.pDiagnostica->LogItem.ItemIndex = -1;
+		GlobTomb4.pDiagnostica->LogItem.Flags = 0;
+		GlobTomb4.pPluginScriptTable->TotPlugins = 0;
+
+		pFirstImport = NULL;
+
+		if (EsisteFile(NomeScriptDat) == false) {
+			return false;
+		}
+
+		if (ExtractNGHeader(NomeScriptDat, &GlobTomb4.HeaderNG_Script) == false) {
+			MyGlobPrivate.TestNG_NoScript = true;
+			// impostare farview a 40
+			FarView = 40;
+			GlobTomb4.WorldFarView = FarView;
+			ModificaWorldFarView(FarView, true);
+
+			// modificre i valori di ripristino di farview
+			// in modo che siano sempre reimpostrai i valori
+			// previsti per worldfarview
+			VetFarWorld[2].ValDefault = (float) (FarView * 1024);
+			if (FarView < GlobTomb4.DefSettings.DefMaxFog)
+				GlobTomb4.DefSettings.DefMaxFog = FarView;
+
+			// --- fine imposta farview
+
+			return false;
+		}
+
+		MyGlobPrivate.TestNG_NoScript = false;
+		// scoprire data e dimensione di file script.dat
+		// prima scoprire i dati di attuale script.dat
+		TestExport = true;
+		if (fopen_s(&pFile, NomeScriptDat, "rb") != 0)
+			return false;
+
+		ScriptDatNow.SizeFile = QuantoLungo(pFile);
+		fclose(pFile);
+
+		// adesso devo scoprire data
+		GetDataDelFile(NomeScriptDat, &ScriptDatNow.DataLastWrite);
+
+		i = 0;
+		ContaLivello = 0;
+		while (ParseNgField(GlobTomb4.HeaderNG_Script.pNGArray, i, &ParseField)) {
+
+			// analizzare tipo di pacchetto
+			switch (ParseField.Type) {
+			case NGTAG_CONTROLLO_OPTIONS:
+				MyGlobPrivate.TotControlloScriptDat = (WORD) ParseField.SizeData;
+				memcpy(&MyGlobPrivate.VetControlloScriptDat, &ParseField.pData[0], ParseField.SizeData);
+				break;
+
+			case NGTAG_IMPORT_FILE:
+				// elaborare file import.
+				// se e' di tipo memoria salva il contentuto e tutto
+				// se invece e' di tipo temproary lo estrae subito
+				if (pFirstImport == NULL)
+					pFirstImport = ParseField.pData;
+
+				i = 0;
+				pHeader = (StrHeaderImportFile*) &ParseField.pData[i];
+
+				switch (pHeader->TipoImport) {
+				case IMPORT_TEMPORARY:
+					// salvare il file a meno che non sia gia' stato fatto
+					pNome = GetFileTrle(pHeader->NomeFile);
+
+					// se ci sono sotto cartelle nel percorso del file
+					// le crea adesso
+					CreaSottoCartelle(pHeader->NomeFile);
+					// salvare file
+					if (fopen_s(&pFile, pNome, "wb") != 0)
+						break;
+					fwrite(&pHeader->VetBytes[0], pHeader->SizeFile, 1, pFile);
+					fclose(pFile);
+
+					break;
+				case IMPORT_MEMORY:
+					// salvare l'intero contenuto
+					Tot = GlobTomb4.BaseImportedFiles.TotFiles;
+					if (Tot >= MAX_IMPORT_FILES)
+						break;
+					pImpFile = &GlobTomb4.BaseImportedFiles.VetFiles[Tot];
+
+					pImpFile->Id = pHeader->Id;
+					pImpFile->Size = pHeader->SizeFile;
+					pImpFile->Tipo = pHeader->TipoFile;
+					pImpFile->NumeroFile = pHeader->NumeroFile;
+
+					GlobTomb4.BaseImportedFiles.VetID[pImpFile->Id] = Tot;
+
+					// adesso allocare la memora necessaria e spostare i dati
+					pImpFile->pData = (BYTE *) malloc(pHeader->SizeFile);
+					memcpy(pImpFile->pData, &pHeader->VetBytes[0], pHeader->SizeFile);
+					GlobTomb4.BaseImportedFiles.TotFiles++;
+
+					break;
+				}
+				break;
+
+			// aggiungere controllo aqnche per sezione livello per beccare in title il comando WindowTitle
+			// per cmabiare il nome dlela finestra setup
+			case NGTAG_SCRIPT_LEVEL:
+				if (ContaLivello == 0) {
+					ContaLivello++;
+					// livello [Title]
+					// adesso scandire tutti i mini tag presenti
+					i = 0;
+
+					while (ParseField.pData[i] & 0xff) {
+						// prendere da byte alto prima word il codice tag sript
+						// attuale
+						TotWords = ParseField.pData[i] & 0xFF;
+
+						TagScript = ParseField.pData[i++] >> 8;
+						// calcola dove inizia prossimo tag, successivo
+						// a tutti gli argomenti di questo tag
+						Indice = i + TotWords;
+
+						// qui mettere patch per script?
+
+						switch (TagScript) {
+						case ctn_WindowTitle:
+							IndiceStringa = ParseField.pData[i];
+							if (IndiceStringa != -1) {
+								pChar = GetString(IndiceStringa);
+								if (pChar)
+									strcpy_s(MexNewWindowTitle, pChar);
+							}
+							break;
+						}
+						i = Indice;
+					}
+				}
+				break;
+
+			case NGTAG_SCRIPT_OPTIONS:
+				// per ora mi interessa solo questo tag
+				// adesso scandire tutti i mini tag presenti
+				i = 0;
+
+				while (ParseField.pData[i] & 0xFF) {
+					// prendere da byte alto prima word il codice tag sript
+					// attuale
+					TotWords = ParseField.pData[i] & 0xFF;
+
+					TagScript = ParseField.pData[i++] >> 8;
+					Indice = i + TotWords;
+					TestEraSetting = false;
+					TestIgnora = 0;
+
+					switch (TagScript) {
+					case cnt_FlagsOption:
+						// word attuale contiene i flag per opzioni
+
+						GlobTomb4.ScriptOptions.MainFlags = ParseField.pData[i];
+						break;
+
+					case ctn_Settings:
+						// opzione di comando script Settings=
+						GlobTomb4.Settings = ParseField.pData[i];
+						TestEraSetting = true;
+						break;
+
+					case cnt_Plugin:
+						// salvare tutti i comandi Plugin=
+						n = GlobTomb4.pPluginScriptTable->TotPlugins;
+						pPlugin = &GlobTomb4.pPluginScriptTable->VetPlugins[n];
+
+						pPlugin->PluginId = ParseField.pData[i++];
+						// ora dovrei estrarre la stringa ma non so se e' gia' disponibile
+						IndiceStringa = ParseField.pData[i++];
+
+						pNome = GetString(IndiceStringa);
+						if (pNome == NULL)
+							pNome = "UKNOWN_MISSING_STRING";
+						strcpy_s(pPlugin->Name, pNome);
+
+						// ora ci sono flag MPS (dword)
+						pPlugin->MainPluginSettings = *(int*) &ParseField.pData[i];
+						if (pPlugin->MainPluginSettings == -1)
+							pPlugin->MainPluginSettings = 0;
+
+						i += 2;
+
+						// ora ci sarebbe lista di word per disable code
+						pPlugin->TotDisable = TotWords - i + 1;
+						for (j = 0; j < pPlugin->TotDisable; j++) {
+							pPlugin->VetDisable[j] = ParseField.pData[i++];
+						}
+						GlobTomb4.pPluginScriptTable->TotPlugins++;
+						break;
+
+					case cnt_WorldFarView:
+						FarView = ParseField.pData[i];
+						GlobTomb4.WorldFarView = FarView;
+
+						ModificaWorldFarView(FarView, true);
+						if (FarView != SCRIPT_IGNORE) {
+							// modificre i valori di ripristino di farview
+							// in modo che siano sempre reimpostrai i valori
+							// previsti per worldfarview
+							VetFarWorld[2].ValDefault = (float) (FarView * 1024);
+							if (FarView < GlobTomb4.DefSettings.DefMaxFog)
+								GlobTomb4.DefSettings.DefMaxFog = FarView;
+						}
+						break;
+					case ctn_SoundSettings:
+						// impostazioni per settings
+						pSound = &GlobTomb4.SoundSettings;
+
+						pSound->MusicQuality = ParseField.pData[i++];
+						pSound->VolumeMusic = ParseField.pData[i++];
+						pSound->VolumeSFX = ParseField.pData[i];
+						break;
+
+					case ctn_LogItem:
+						// comando LogItem= Flags, Indice
+						GlobTomb4.pDiagnostica->LogItem.Flags = ParseField.pData[i++];
+						if (GlobTomb4.pDiagnostica->LogItem.Flags == SCRIPT_IGNORE)
+							GlobTomb4.pDiagnostica->LogItem.Flags = 0;
+						GlobTomb4.pDiagnostica->LogItem.ItemIndex = ParseField.pData[i];
+						break;
+					case cnt_DiagnosticType:
+						GlobTomb4.pDiagnostica->FlagsDgx = ParseField.pData[i++];
+						GlobTomb4.pDiagnostica->DgxExtra = ParseField.pData[i++];
+						if (GlobTomb4.pDiagnostica->DgxExtra == SCRIPT_IGNORE)
+							GlobTomb4.pDiagnostica->DgxExtra = 0;
+						break;
+					}
+
+					if (TestEraSetting) {
+						// salva una copia di setting script.dat
+						MyGlobPrivate.SettingScriptDat = ParseField.pData[i];
+					}
+					// calcolare prossimo indice
+					i = Indice;
+				}
+				break;
+			}
+			// puntare a chunk successivo
+			i = ParseField.NextIndex;
+		}
+
+		if (pFirstImport) {
+			// c'erano import file
+			// ridurre la memoria allocata in modo da escludere
+			// la parte degli import
+			// dato che pFirstImport punta alla prima word effettiva
+			// di tag, devo ridurre di 3 word, 2 per per la dimensione
+			// e una per il tag ngtag
+			pFirstImport -= 3;
+			// ora azzerare i valori
+			pFirstImport[0] = 0;
+			pFirstImport[1] = 0;
+			pFirstImport += 3;
+			// adesso calcolare la nuova dimensione ridotta
+			EndOffset = (DWORD ) pFirstImport;
+			StartOffset = (DWORD) GlobTomb4.HeaderNG_Script.pNGArray;
+
+			NuovaSize = EndOffset - StartOffset;
+			GlobTomb4.HeaderNG_Script.pNGArray = (WORD *) ReallocMine(GlobTomb4.HeaderNG_Script.pNGArray, NuovaSize, "HeaderNG_Script.pNGArray in LeggeNGScriptDa");
+		}
+
+		return true;
 	}
 
 	void InitDgxErrors(void)
@@ -715,6 +1030,337 @@ namespace trng {
 	{
 
 	}
+
+	// questo e' un cariccamento solo temporaneo di stringhe ng allo scopo di poter
+	// avere i testi dei comandi della sezione [Options] letti prima dell'avvio di tomb4
+
+	void CaricaNGStringTemp(void)
+	{
+		const char *pNomeLingua;
+		char *pNomeFile;
+		StrListaFiles *pVetNomi;
+		int TotNomi;
+		int i;
+
+		// fare diversi tentativi
+		pNomeLingua = "english.dat";
+		pNomeFile = GetFileTrle(pNomeLingua);
+		if (EsisteFile(pNomeFile) == false) {
+			pVetNomi = TrovaFiles(Dir_Trle, "*.dat", &TotNomi);
+			for (i = 0; i < TotNomi; i++) {
+				if (_stricmp(pVetNomi[i].Testo, "script.dat") != 0) {
+					pNomeFile = GetFileTrle(pVetNomi[i].Testo);
+					if (EsisteFile(pNomeFile) == true)
+						break;
+				}
+			}
+			if (i == TotNomi) {
+				MessageBoxTomb("ERROR: cann't find <language>.dat file in current trle path", "Missing english.dat");
+				return;
+			}
+		}
+
+		LeggiNG_LanguageDat(pNomeFile);
+	}
+
+	void MessageBoxTomb(const char *pMessaggio, const char *pTitolo)
+	{
+		MessageBox(NULL, pMessaggio, pTitolo, MB_APPLMODAL);
+	}
+
+	// verifica se in pNomeFile file contiene l'extra ng header
+	//  ed estrae l'extra ng header dal file pNomeFile
+	// il risultato dell'estrazione viene scritto nella struttura puntatata
+	// da pExtractNG
+	// in pExtractNG.Result viene inserito l'esito dell'operazione:
+	// Result = 0   -> Non c'e' un header ng
+	// Result = -1  -> l'header ng e' corrotto
+	// Result - -2  -> errore aprendo il file
+	// Result = 1  -> Header ng e' presente ed e' stato estratto
+	//		nella struttura puntata da pExtractNG saranno impostati tutti i valori
+	//
+	// nota: se la funzione restituisce (true) la funzione chiamante
+	// dovra' al termine di tutte le operazioni, liberare la memoria
+	// contenuta nel campo pExtractNG->pArray
+	// nota: una copia viene salvata nella variabile globale
+	// LastNGHeader
+	bool ExtractNGHeader(char *pNomeFile, StrExtractNG* pExtractNG)
+	{
+		DWORD SizeFile;
+		FILE *pFile;
+		StrEndNgHeader EndNgHeader;
+		DWORD IndexBegin;
+		WORD *pArray;
+		int TotItems;
+		WORD FirstCheckWord;
+		WORD *pArray2;
+
+		memset(pExtractNG, 0, sizeof(StrExtractNG));
+
+		if (fopen_s(&pFile, pNomeFile, "rb") != 0) {
+			// cann't open file
+			pExtractNG->Result = -2;
+			memcpy(&LastNGHeader, pExtractNG, sizeof(StrExtractNG));
+			return false;
+		}
+
+		SizeFile = QuantoLungo(pFile);
+		// trovare punto di inizio di header finale ng
+		IndexBegin = SizeFile - sizeof(StrEndNgHeader);
+		fseek(pFile, IndexBegin, SEEK_SET);
+		fread(&EndNgHeader, sizeof(StrEndNgHeader), 1, pFile);
+		if (EndNgHeader.EndCheck != NG_LONG_CHECK) {
+			// il file non possiede un header ng
+			fclose(pFile);
+			pExtractNG->Result = 0;
+			memcpy(&LastNGHeader, pExtractNG, sizeof(StrExtractNG));
+			return false;
+		}
+		pExtractNG->SizeHeader = EndNgHeader.SizeNgHeader;
+		// allocare vettore WORD in grado di osptiare tutti i dati
+		TotItems = (EndNgHeader.SizeNgHeader - 2 - sizeof(EndNgHeader)) / 2;
+		pArray = (WORD *) MallocMine(TotItems * 2, "pArray in ExtractNGHeader");
+		if (pArray == NULL) {
+			fclose(pFile);
+			pExtractNG->Result = -1;
+			memcpy(&LastNGHeader, pExtractNG, sizeof(StrExtractNG));
+
+			return false;
+		}
+		// liberare eventuale memoria precedente
+		if (pExtractNG->pNGArray != NULL) {
+			FreeMine(pExtractNG->pNGArray);
+			pExtractNG->pNGArray = NULL;
+		}
+		pExtractNG->pNGArray = pArray;
+
+		pExtractNG->NWords = TotItems;
+
+		// localizza inizio di header ng
+		IndexBegin = SizeFile - EndNgHeader.SizeNgHeader;
+		pExtractNG->StartOffset = IndexBegin;
+
+		fseek(pFile, IndexBegin, SEEK_SET);
+		// prima legge word di controllo iniziale
+		fread(&FirstCheckWord, 2, 1, pFile);
+		// adesso carica vettore con i dati
+		fread(pArray, 2, TotItems, pFile);
+		fclose(pFile);
+
+		// verificare che prima word all'inizio dell'header contenga
+		// valore corrispondente a coppia di caratteri "NG"
+		if (FirstCheckWord != NG_SHORT_CHECK) {
+			pExtractNG->Result = -1;
+			FreeMine(pArray);
+			pExtractNG->pNGArray = NULL;
+			memcpy(&LastNGHeader, pExtractNG, sizeof(StrExtractNG));
+			return false;
+		}
+		pExtractNG->Result = 1;
+		// liberare eventuale blocco precedente
+		if (LastNGHeader.pNGArray != NULL) {
+			FreeMine(LastNGHeader.pNGArray);
+			LastNGHeader.pNGArray = NULL;
+		}
+		memcpy(&LastNGHeader, pExtractNG, sizeof(StrExtractNG));
+		// ora cambiare in lastngheader il puntatore a memoria
+		// altrimenti si condivide anche la fine di quella memoria
+		pArray2 = (WORD *) MallocMine(TotItems * 2, "pArray in ExtractNGHeader");
+
+		LastNGHeader.pNGArray = pArray2;
+		memcpy(pArray2, pArray, TotItems * 2);
+
+		return true;
+	}
+
+	// nome: QuantoLungo
+	// input: FILE tempfile
+	// output: long dimfile
+	// scopo: Trova dimensione in byte di file di input. Dopo l'oprazione imposta
+	// scopo: puntatore all'inizio del file.
+	long QuantoLungo(FILE *tempfile)
+	{
+		long tempdim;
+
+		fseek(tempfile, 0, SEEK_END);
+		tempdim = ftell(tempfile);
+		fseek(tempfile, 0, SEEK_SET);
+		return tempdim;
+	}
+
+	// scandisce lista campi ng:
+	// input:
+	//      pNGArray = puntatore a word array dell'intero ng header
+	//		CurrentIndex = Indice che punta a campo attuale da scandire
+	//      pParseNGField = puntatatore a struttura StrParseNGField da
+	//			riempire con i risultati del parsing (vedi sotto)
+	// output:
+	//		scrive i seguenti dati nei campi di struttura puntata da pParseNGField:
+	//		DWORD NextIndex;  // Index where start next chunk
+	//		word *pData;      // pointer to data memory for currentIndex field
+	//		DWORD StartDataIndex // index of first word for currentindex field
+	//		DWORD SizeData;   // size of data (in bytes) pointed by pData
+	//		WORD  Type;       // Type of CurrentIndex chunk
+	//
+	// valore ritornato dalla funzione (bool):
+	//		false = CurrentIndex punta a fine seguenza header
+	//				il parsing deve essere interrotto, i dati scritti
+	//				in pParseNGField non sono significativi
+	//		true = il campo currentIndex e' valido e i dati estratti
+	//				sono stati scritti nella struttura pParseNGField
+	//
+
+	bool ParseNgField(WORD *pNgArray, DWORD CurrentIndex, StrParseNGField* pParseNGField)
+	{
+		DWORD Word1, NumberOfWords;
+		int i;
+		DWORD ExtraWords;
+
+		i = CurrentIndex;
+
+		if (pNgArray[i] & 0x8000) {
+			// size e' DWORD
+			Word1 = pNgArray[i++] & 0x7fff;
+			NumberOfWords = Word1 * 65536 + pNgArray[i++];
+			ExtraWords = 3;
+		} else {
+			// size e' WORD
+			NumberOfWords = pNgArray[i++];
+			ExtraWords = 2;
+		}
+
+		if (NumberOfWords == NGTAG_END_SEQUENCE)
+			return false;
+
+		pParseNGField->NextIndex = CurrentIndex + NumberOfWords;
+		pParseNGField->Type = pNgArray[i++];
+		pParseNGField->pData = &pNgArray[i];
+		pParseNGField->StartDataIndex = i;
+		pParseNGField->SizeData = (NumberOfWords - ExtraWords) * 2;
+
+		return true;
+	}
+
+	// restituisce puntaotre a stringa ng con valore indice
+	// se non la trova restituisce messaggio d'errore "ERROR Missing Extra String %d"
+	char *GetStringaNG(int Indice)
+	{
+		static char BufMissing[80];
+
+		int i;
+
+		Indice &= 0x7fff;
+
+		// stringa NG
+		for (i = 0; i < GlobTomb4.TotExtraStrings; i++) {
+			if (GlobTomb4.VetExtraStrings[i].Indice == Indice) {
+				return GlobTomb4.VetExtraStrings[i].pTesto;
+
+			}
+		}
+
+		if (Indice == 666)
+			return NULL;
+
+		sprintf_s(BufferLog, "ERROR: cann't locate extra ng string with index = %d", Indice);
+		InviaLog(BufferLog);
+
+		sprintf_s(BufMissing, "ERROR Missing Extra String %d", Indice);
+		return BufMissing;
+	}
+
+	// modifica tutti i valori di tomb4 dove e' presente un riferimento
+	// a worldfarview usando come valore
+	// se TestHardware=true modifica tutto, sia valori hard che soft
+	// nel caso invece sia soft ignora quelli hard e modifica quelli soft
+	void ModificaWorldFarView(WORD NumBlocchi, bool TestHardware)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// riceve un percorso come "help\bin\readme.txt
+	// e (se mancanti) crea le sottocartelle  "help" e poi "help\bin"
+
+	void CreaSottoCartelle(char *pNomeFile)
+	{
+		// dividiere il percorso secondo separatori dicartelle
+
+		char **pVetParti;
+		int TotParti;
+		char NomeDir[256];
+		int i;
+
+		pVetParti = Split(pNomeFile, '\\', &TotParti, NULL, NULL, false);
+
+		if (TotParti < 2)
+			return;
+
+		for (i = 0; i < TotParti - 1; i++) {
+			sprintf_s(NomeDir, "%s\\%s", Dir_Trle, pVetParti[i]);
+			if (EsisteDirectory(NomeDir) == false) {
+				// creare questa directory
+				CreaDirectory(NomeDir);
+			}
+		}
+	}
+
+	bool EsisteDirectory(char *NomeDir)
+	{
+		return EsisteFile(NomeDir);
+	}
+
+	bool CreaDirectory(char *NomeDir)
+	{
+		if (_mkdir(NomeDir) == -1)
+			return false;
+		return true;
+	}
+
+	// restituisce puntatore carattere di stringa di valore IndiceStringa
+	// nel formato usato da script.dat, ossia, se c'e' bit 0x8000 attivo
+	// e' una stringa NG, altrimenti e' una stringa standard
+	char * GetString(int IndiceStringa)
+	{
+		static char MexNotFound[17] = "STRING NOT FOUND";
+
+		char *pChar;
+		int i;
+		WORD Indice;
+		WORD *pIndiceStringheDat;
+		char *pStringheScriptDat;
+
+		pIndiceStringheDat = tomb4::gfStringOffset;
+		pStringheScriptDat = tomb4::gfStringWad;
+
+		if (IndiceStringa & STRING_NG) {
+			Indice = IndiceStringa & MASK_STRING_INDEX;
+
+			// stringa NG
+			for (i = 0; i < GlobTomb4.TotExtraStrings; i++) {
+				if (GlobTomb4.VetExtraStrings[i].Indice == Indice) {
+					pChar = GlobTomb4.VetExtraStrings[i].pTesto;
+
+					return pChar;
+				}
+			}
+			// non e' stata trovata stringa
+
+			sprintf_s(BufferLog, "ERROR: cann't locate extra ng string with index = %d", IndiceStringa & MASK_STRING_INDEX);
+			InviaLog(BufferLog);
+
+			return NULL;
+		}
+
+		// stringa e' di tipo standard
+		if (pIndiceStringheDat == NULL || pStringheScriptDat == NULL) {
+			sprintf_s(BufferLog, "ERROR: cann't locate standard string with index = %d (standard strings have not yet been loaded)", IndiceStringa);
+			InviaLog(BufferLog);
+			return NULL;
+		}
+		Indice = pIndiceStringheDat[IndiceStringa];
+		pChar = &pStringheScriptDat[Indice];
+		return pChar;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -737,7 +1383,7 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x100447BD, (unsigned int)trng::InitPrintTextColors, replace);
 	ProcessInject(0x10044360, (unsigned int)trng::InitBarDefault, false);
 	ProcessInject(0x1006C17C, (unsigned int)trng::CustDefToCustNow, replace);
-	ProcessInject(0x1004318A, (unsigned int)trng::LeggeNGScriptDat, false);
+	ProcessInject(0x1004318A, (unsigned int)trng::LeggeNGScriptDat, replace);
 	ProcessInject(0x1004485D, (unsigned int)trng::InitDgxErrors, replace);
 	ProcessInject(0x10043C84, (unsigned int)trng::ImpostaCostantiNascoste, replace);
 	ProcessInject(0x100440ED, (unsigned int)trng::InitRemapItemGroup, replace);
@@ -748,4 +1394,15 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10044B02, (unsigned int)trng::VerificaAttivazioneNoWaitingRefresh, false);
 	ProcessInject(0x100445F6, (unsigned int)trng::RestyleWindow, false);
 	ProcessInject(0x1006581A, (unsigned int)trng::InitFmvLog, replace);
+	ProcessInject(0x100430A8, (unsigned int)trng::CaricaNGStringTemp, replace);
+	ProcessInject(0x10037B09, (unsigned int)trng::MessageBoxTomb, replace);
+	ProcessInject(0x10037B9A, (unsigned int)trng::ExtractNGHeader, replace);
+//	ProcessInject(0x1003780E, (unsigned int)trng::QuantoLungo, replace);
+	ProcessInject(0x10068E37, (unsigned int)trng::ParseNgField, replace);
+	ProcessInject(0x1007BF63, (unsigned int)trng::GetStringaNG, replace);
+	ProcessInject(0x10068F1A, (unsigned int)trng::ModificaWorldFarView, false);
+	ProcessInject(0x10042BEC, (unsigned int)trng::CreaSottoCartelle, replace);
+	ProcessInject(0x10038336, (unsigned int)trng::EsisteDirectory, replace);
+	ProcessInject(0x10038347, (unsigned int)trng::CreaDirectory, replace);
+	ProcessInject(0x10041EF5, (unsigned int)trng::GetString, replace);
 }

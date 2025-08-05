@@ -15,6 +15,10 @@ namespace trng {
 	char ** Split(char *pStringa, char Separatore, int* pTotPezzi, char *pBufferHost, char **pVetPtr, bool TestSoloPrimo);
 	int InStr(DWORD Start, char *pTesto, const char *pFind);
 	void CaricaNGConstants(WORD TipoLoading, StrNGConstants * pBaseCostanti, char *pNomeFile);
+	char *GetFileTrle(const char *pNomeFile);
+	char *SoloNomeSenzaExt(char FileName[]);
+	char * SoloNome(char FileName[]);
+	void GetDataDelFile(char *pNomeFile, FILETIME *pFileTime);
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace);

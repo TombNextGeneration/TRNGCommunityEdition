@@ -1,5 +1,6 @@
 #include "zRoomEditor.h"
 #include "../inject.h"
+#include "Tomb_NextGeneration.h"
 
 namespace trng {
 	char (&MexVersione)[30] = *reinterpret_cast<decltype(&MexVersione)>(0x106A4BD0);
@@ -110,6 +111,60 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	char *GetFileTrle(const char *pNomeFile)
+	{
+		static char NomeTrle[256];
+
+		sprintf_s(NomeTrle, "%s\\%s", Dir_Trle, pNomeFile);
+		return NomeTrle;
+	}
+
+	// restituisce solo nome del file, senza cartella e senza estensione
+	char *SoloNomeSenzaExt(char FileName[])
+	{
+		static char BufferTemp[256];
+
+		int i;
+
+		strcpy_s(BufferTemp, SoloNome(FileName));
+		for (i = strlen(BufferTemp) - 1; i >= 0; i--) {
+			if (BufferTemp[i] == '.') {
+				BufferTemp[i] = 0;
+				break;
+			}
+		}
+
+		return BufferTemp;
+	}
+
+	char * SoloNome(char FileName[])
+	{
+		// restituisce solo il nome del file
+		int i;
+
+		for (i = strlen(FileName) - 1; i >= 0; i--) {
+			if (FileName[i] == '\\')
+				break;
+		}
+		if (i > 0 && FileName[i] == '\\') {
+			return &FileName[i + 1];
+		}
+		return FileName;
+	}
+
+	// restituisce la data dell'ultima modifica di pNomeFile
+	void GetDataDelFile(char *pNomeFile, FILETIME *pFileTime)
+	{
+		HANDLE InFile;
+
+		InFile = CreateFile(pNomeFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		if (InFile == INVALID_HANDLE_VALUE)
+			return;
+		GetFileTime(InFile, NULL, NULL, pFileTime);
+		CloseHandle(InFile);
+	}
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
@@ -118,4 +173,8 @@ void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
 	ProcessInject(0x100E905D, (unsigned int)trng::Split, replace);
 	ProcessInject(0x100E88E4, (unsigned int)trng::InStr, replace);
 	ProcessInject(0x100EC199, (unsigned int)trng::CaricaNGConstants, false);
+	ProcessInject(0x100E87AC, (unsigned int)trng::GetFileTrle, replace);
+	ProcessInject(0x100E9626, (unsigned int)trng::SoloNomeSenzaExt, replace);
+	ProcessInject(0x100E95C6, (unsigned int)trng::SoloNome, replace);
+	ProcessInject(0x100FBCEA, (unsigned int)trng::GetDataDelFile, replace);
 }

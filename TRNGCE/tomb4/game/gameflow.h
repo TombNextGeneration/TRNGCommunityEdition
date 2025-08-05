@@ -11,4 +11,6 @@ namespace tomb4
 	extern char &gfLayer1Vel;
 	extern char &gfLayer2Vel;
 	extern uchar &gfLevelComplete;
+	extern ushort* &gfStringOffset;
+	extern char* &gfStringWad;
 }

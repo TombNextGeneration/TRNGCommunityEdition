@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include "structures.h"
 #include "MyStructures.h"
 #include "DefTomb4Funct.h"
@@ -46,6 +47,7 @@ namespace trng {
 	extern BYTE &FlagMicroCaratteri;
 	extern char (&MexNewWindowTitle)[256];
 	extern char (&BufferLog)[8192];
+	extern StrFloatPatch (&VetFarWorld)[5];
 
 	void ImpostaEnemyDamage(void);
 	bool Inizializza(void);
@@ -76,6 +78,17 @@ namespace trng {
 	void VerificaAttivazioneNoWaitingRefresh(void);
 	void RestyleWindow(void);
 	void InitFmvLog(const char *pMex, bool TestCancellaLog);
+	void CaricaNGStringTemp(void);
+	void MessageBoxTomb(const char *pMessaggio, const char *pTitolo);
+	bool ExtractNGHeader(char *pNomeFile, StrExtractNG* pExtractNG);
+	long QuantoLungo(FILE *tempfile);
+	bool ParseNgField(WORD *pNgArray, DWORD CurrentIndex, StrParseNGField* pParseNGField);
+	char *GetStringaNG(int Indice);
+	void ModificaWorldFarView(WORD NumBlocchi, bool TestHardware);
+	void CreaSottoCartelle(char *pNomeFile);
+	bool EsisteDirectory(char *NomeDir);
+	bool CreaDirectory(char *NomeDir);
+	char * GetString(int IndiceStringa);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

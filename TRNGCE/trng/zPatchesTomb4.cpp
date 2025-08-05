@@ -28,6 +28,7 @@
 #include "../tomb4/game/effects.h"
 #include "../tomb4/game/tomb4fx.h"
 #include "../tomb4/specific/audio.h"
+#include "zRoomEditor.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -1226,6 +1227,233 @@ namespace trng {
 		// trasferisce anche in valori correnti le impostazioni di default
 		CustDefToCustNow();
 	}
+
+	// estrae da file language.dat attuale le eventuali extra strings
+	// nota: viene chiamato da tomb4 quando si e' appena caricato il file
+	// lingua.dat
+	// pNomeFile contiene il file lingua nel formato "italian.dat" senza percorso
+
+	void LeggiNG_LanguageDat(char *pNomeFile)
+	{
+		int i;
+		int j;
+		StrParseNGField  ParseField;
+		WORD TotStrings;
+		WORD NWords;
+		char *pChar;
+
+		// se era stato caricato un precedente languagedat con extra strings
+		// liberare la memoria
+		if (GlobTomb4.TotExtraStrings) {
+			FreeMine(GlobTomb4.HeaderNG_Language.pNGArray);
+			GlobTomb4.HeaderNG_Language.pNGArray = NULL;
+		}
+
+		GlobTomb4.TotExtraStrings = 0;
+
+		// salvare nome lingua
+		pChar = SoloNomeSenzaExt(pNomeFile);
+		strcpy_s(GlobTomb4.LinguaNow, pChar);
+
+		if (ExtractNGHeader(pNomeFile, &GlobTomb4.HeaderNG_Language) == false) {
+
+			switch (GlobTomb4.HeaderNG_Language.Result) {
+			case -2:
+
+				sprintf_s(BufferLog, "ERROR: cann't open file: \"%s\" (to read extra ng header)", SoloNome(pNomeFile));
+
+				InviaLog(BufferLog);
+
+				return;
+			case -1:
+
+				InviaLog("WARNING: Extra NG Header appears corrupted");
+
+				return;
+			case 0:
+
+				sprintf_s(BufferLog, "File %s has no extra strings", SoloNome(pNomeFile));
+
+				InviaLog(BufferLog);
+
+				return;
+			}
+		}
+
+		InviaLog("Load extra ng strings");
+
+		// scandire dati, saltando prima word di controllo "NG"
+		i = 0;
+		while (ParseNgField(GlobTomb4.HeaderNG_Language.pNGArray, i, &ParseField)) {
+
+			// analizzare tipo di pacchetto
+			switch (ParseField.Type) {
+			case NGTAG_LANGUAGE_STRINGS:
+				j = 0;
+				TotStrings = ParseField.pData[j++];
+				if (TotStrings >= 0x400) {
+
+					sprintf_s(BufferLog, "WARNING: too much extra strings (%d). It will be loaded only first 1024 strings", TotStrings);
+					InviaLog(BufferLog);
+
+					TotStrings = 0x400;
+				}
+				GlobTomb4.TotExtraStrings = TotStrings;
+				// caricare tutte le stringhe
+				for (i = 0; i < TotStrings; i++) {
+					// caricare indice di stringa
+					GlobTomb4.VetExtraStrings[i].Indice = ParseField.pData[j++];
+					// caricare numero di word che formano stringa
+					NWords = ParseField.pData[j++];
+					// salvare puntatore a stringa
+					GlobTomb4.VetExtraStrings[i].pTesto = (char *) &ParseField.pData[j];
+					DecryptDatString(GlobTomb4.VetExtraStrings[i].pTesto);
+
+					j += NWords;
+				}
+				break;
+			}
+			// puntare a chunk successivo
+			i = ParseField.NextIndex;
+		}
+		// se c'e' striga 666 imposta i valori scan code extra
+		ImpostaScanCodeInputBox();
+	}
+
+	// modifica con xor 0xA5 il testo che corrisponde ad una delle extra
+	// extra string di ng
+	void DecryptDatString(char *pTesto)
+	{
+		DWORD i;
+
+		for (i = 0; i < strlen(pTesto); i++) {
+			pTesto[i] ^= 0xA5;
+		}
+	}
+
+	// chiamato solo una volta (credo) appena caricate le extra ng strings.
+	// imposta valori globali per InputBox con eventuali extra scan codes memorizzati in stringa "666"
+	void ImpostaScanCodeInputBox(void)
+	{
+		char *pChar;
+		char StrHex[10];
+		int i;
+		int j;
+		bool TestErrore;
+		char MioCar;
+		bool TestPrimoByte;
+		DWORD Valore;
+		int z;
+		StrBaseInputBox *pBase;
+		int N;
+
+		pBase = &GlobTomb4.BaseInputBoxes;
+
+		pBase->TotExtraCodes = 0;
+
+		pChar = GetStringaNG(666);
+		if (pChar == NULL)
+			return;
+
+		// verificare che il formato sia quello giusto
+		i = 0;
+		j = 0;
+		TestErrore = false;
+		// attendere primo byte
+		TestPrimoByte = true;
+		while (pChar[i]) {
+			MioCar = pChar[i++];
+			switch (MioCar) {
+			case ' ':
+				// ignorare spazio
+				break;
+			case ',':
+				// separatore
+				// dovremmo avere gia' completato l'inserimento di questo valore
+				// verificare
+				if (j != 0) {
+					// errore di sintassi
+					InviaLog("ERROR parsing 666 ng string. Syntax error: odd number of hex digits");
+					pBase->TotExtraCodes = 0;
+					return;
+				}
+				StrHex[0] = 0;
+				j = 0;
+				TestPrimoByte = true;
+
+				break;
+			default:
+				// dovrebbe essere stringa hex
+				StrHex[j] = MioCar;
+				j++;
+				if (j == 2) {
+					// raggiunta coppia di caratteri
+					StrHex[j] = 0;
+					j = 0;
+
+					Valore = GetValoreHex(StrHex, &TestErrore);
+					if (TestErrore == true) {
+						sprintf_s(BufferLog, "ERROR parsing extra 666 NG string, for extra scan codes for Input Boxes. Syntax error: \"%s\" is not a valid hexadecimal byte", StrHex);
+						InviaLog(BufferLog);
+						pBase->TotExtraCodes = 0;
+						return;
+					}
+
+					// tradurre val byte hex
+					if (TestPrimoByte == true) {
+						// e' il byte ascii
+						z = pBase->TotExtraCodes;
+						pBase->TotExtraCodes++;
+						pBase->VetExtraCodes[z].TotScanCodes = 0;
+
+						pBase->VetExtraCodes[z].ValAscii = (BYTE) Valore;
+						TestPrimoByte = false;
+					} else {
+						// e' uno degli scan code
+						N = pBase->VetExtraCodes[z].TotScanCodes;
+
+						if (N >= 3) {
+							// errore
+							sprintf_s(BufferLog, "Error parsing 666 ng string for input box: there are too  many scancodes in item %d of sequence", z + 1);
+							InviaLog(BufferLog);
+							pBase->TotExtraCodes = 0;
+							return;
+						}
+
+						pBase->VetExtraCodes[z].VetScanCodes[N] = (BYTE) Valore;
+						pBase->VetExtraCodes[z].TotScanCodes++;
+					}
+				}
+				break;
+			}
+		}
+		if (j != 0) {
+			// errore di sintassi
+			InviaLog("ERROR parsing 666 ng string. Syntax error: odd number of hex digits");
+			pBase->TotExtraCodes = 0;
+		}
+	}
+
+	// converte stringa hex (senza "0x" o "$" davanti) in valore numerico assoluto
+	// se c'e' errore imposta pTestErrore=true
+	DWORD GetValoreHex(char *pStringaHex, bool *pTestErrore)
+	{
+		DWORD Numero;
+
+		if (sscanf_s(pStringaHex, "%X", &Numero) != 1) {
+			// non convertito: errore
+			*pTestErrore = true;
+			return 0;
+		}
+
+		*pTestErrore = false;
+		return Numero;
+	}
+
+	void * ReallocMine(void * pOldMem, DWORD NewSize, const char *pDescrizione)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -1250,4 +1478,9 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100D1636, (unsigned int)trng::SalvaItemCreati, replace);
 	ProcessInject(0x100B0948, (unsigned int)trng::InizializzaAdrImmediati, replace);
 	ProcessInject(0x100BA3E8, (unsigned int)trng::InitCustomize, replace);
+	ProcessInject(0x100BD816, (unsigned int)trng::LeggiNG_LanguageDat, replace);
+	ProcessInject(0x100BD53D, (unsigned int)trng::DecryptDatString, replace);
+	ProcessInject(0x100BD5BC, (unsigned int)trng::ImpostaScanCodeInputBox, replace);
+	ProcessInject(0x100BD57C, (unsigned int)trng::GetValoreHex, replace);
+	ProcessInject(0x100AFC13, (unsigned int)trng::ReallocMine, false);
 }
