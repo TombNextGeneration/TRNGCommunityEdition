@@ -88,7 +88,9 @@ namespace trng {
 	void CreaBlackWindow(void)
 	{
 		HINSTANCE TombInstance;
-		WNDCLASS wc = {0};
+		WNDCLASS wc;
+
+		wc = {0};
 
 		// trovare handle di instanza
 

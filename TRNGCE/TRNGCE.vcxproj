@@ -128,6 +128,7 @@
     <ClInclude Include="tomb4\game\tomb4fx.h" />
     <ClInclude Include="tomb4\specific\input.h" />
     <ClInclude Include="tomb4\specific\LoadSave.h" />
+    <ClInclude Include="tomb4\specific\output.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
     <ClInclude Include="tomb4\types.h" />
     <ClInclude Include="tomb4\math_tbls.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="tomb4\game\tomb4fx.cpp" />
     <ClCompile Include="tomb4\specific\input.cpp" />
     <ClCompile Include="tomb4\specific\LoadSave.cpp" />
+    <ClCompile Include="tomb4\specific\output.cpp" />
     <ClCompile Include="tomb4\specific\winmain.cpp" />
     <ClCompile Include="trng\ListTr4Patch.cpp" />
     <ClCompile Include="trng\Oggetti.cpp" />

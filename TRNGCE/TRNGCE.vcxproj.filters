@@ -159,6 +159,9 @@
     <ClInclude Include="tomb4\specific\audio.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\output.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -292,6 +295,9 @@
       <Filter>tomb4\game</Filter>
     </ClCompile>
     <ClCompile Include="tomb4\specific\audio.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\output.cpp">
       <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>

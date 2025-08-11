@@ -2,6 +2,8 @@
 
 namespace tomb4
 {
+	extern char (&HairSkinVertNums)[6][12];
+
 	void CreateSkinningData();
 }
 

@@ -29,6 +29,7 @@
 #include "../tomb4/game/tomb4fx.h"
 #include "../tomb4/specific/audio.h"
 #include "zRoomEditor.h"
+#include "../tomb4/game/laraskin.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -595,6 +596,7 @@ namespace trng {
 					SalvaInBuffer(&pItem->Reserved_34, 8);
 					// state id, state next, stateid ai, animazione e frame
 					SalvaInBuffer(&pItem->StateIdCurrent, 10);
+					break;
 				}
 			}
 		}
@@ -1454,6 +1456,46 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// impostare roba per gestione capelli
+	void ImpostaCapelliLara(WORD *pFlagLivello)
+	{
+		static BYTE VetCodaOld[12] = {0x25, 0x26, 0x27, 0x28, 0xFF, 0, 0, 0, 0, 0, 0, 0};
+		static BYTE VetCodaNew[5] = {0x19, 0x1a, 0x1b, 0x1c, 0xff};
+
+		int TipoHair;
+		int i;
+		int *pNuovoFlagCapelli;
+		BYTE *pVetCodaCavallo;
+
+		pNuovoFlagCapelli = &NuovoFlagCapelli;
+		pVetCodaCavallo = (BYTE *) tomb4::HairSkinVertNums[0];  // DatiCodaCavallo
+
+		TipoHair = GlobTomb4.pBaseCustomize->HairType;
+
+		*pNuovoFlagCapelli = *pFlagLivello;
+
+		// prima impostare sempre come default i valroi di coda di cavallo
+		// vecchia
+		for (i = 0; i < 5; i++) {
+			pVetCodaCavallo[i] = VetCodaOld[i];
+		}
+
+		switch (TipoHair) {
+		case HAIR_TWO_PLAITS:
+			*pNuovoFlagCapelli = 1;
+			break;
+		case HAIR_ONE_PONYTAIL:
+			*pNuovoFlagCapelli = 0;
+			break;
+		case HAIR_ONE_TR5_PONYTAIL:
+			*pNuovoFlagCapelli = 0;
+			for (i = 0; i < 5; i++) {
+				pVetCodaCavallo[i] = VetCodaNew[i];
+			}
+			break;
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -1483,4 +1525,5 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100BD5BC, (unsigned int)trng::ImpostaScanCodeInputBox, replace);
 	ProcessInject(0x100BD57C, (unsigned int)trng::GetValoreHex, replace);
 	ProcessInject(0x100AFC13, (unsigned int)trng::ReallocMine, false);
+	ProcessInject(0x100CCB8E, (unsigned int)trng::ImpostaCapelliLara, replace);
 }

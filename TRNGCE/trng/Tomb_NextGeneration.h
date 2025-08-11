@@ -48,6 +48,7 @@ namespace trng {
 	extern char (&MexNewWindowTitle)[256];
 	extern char (&BufferLog)[8192];
 	extern StrFloatPatch (&VetFarWorld)[5];
+	extern int &NuovoFlagCapelli;
 
 	void ImpostaEnemyDamage(void);
 	bool Inizializza(void);
@@ -89,6 +90,8 @@ namespace trng {
 	bool EsisteDirectory(char *NomeDir);
 	bool CreaDirectory(char *NomeDir);
 	char * GetString(int IndiceStringa);
+	void LeggiNG_ScriptForLevel(void);
+	void SalvaTagFmv(BYTE ValoreFmv);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

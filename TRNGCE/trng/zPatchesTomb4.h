@@ -31,6 +31,7 @@ namespace trng {
 	void ImpostaScanCodeInputBox(void);
 	DWORD GetValoreHex(char *pStringaHex, bool *pTestErrore);
 	void * ReallocMine(void * pOldMem, DWORD NewSize, const char *pDescrizione);
+	void ImpostaCapelliLara(WORD *pFlagLivello);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

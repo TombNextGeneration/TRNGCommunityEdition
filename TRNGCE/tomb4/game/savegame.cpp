@@ -500,6 +500,16 @@ namespace tomb4
 		for (data = (char*)pointer; size > 0; size--)
 			*data++ = *SGpoint++;
 	}
+
+	void sgInitialiseHub(long dont_save_lara)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void sgSaveLevel()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Savegame(bool replace)
@@ -507,4 +517,6 @@ void Inject_Savegame(bool replace)
 	ProcessInject(0x459880, (unsigned int)tomb4::SaveLevelData, replace);
 	ProcessInject(0x45A3C0, (unsigned int)tomb4::WriteSG, replace);
 	ProcessInject(0x45B150, (unsigned int)tomb4::ReadSG, replace);
+	ProcessInject(0x4594E0, (unsigned int)tomb4::sgInitialiseHub, false);
+	ProcessInject(0x45B190, (unsigned int)tomb4::sgSaveLevel, false);
 }

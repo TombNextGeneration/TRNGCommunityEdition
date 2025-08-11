@@ -64,6 +64,7 @@ namespace trng {
 	char (&MexNewWindowTitle)[256] = *reinterpret_cast<decltype(&MexNewWindowTitle)>(0x103DFC4C);
 	char (&BufferLog)[8192] = *reinterpret_cast<decltype(&BufferLog)>(0x101B73D8);
 	StrFloatPatch (&VetFarWorld)[5] = *reinterpret_cast<decltype(&VetFarWorld)>(0x1015A420);
+	int &NuovoFlagCapelli = *reinterpret_cast<decltype(&NuovoFlagCapelli)>(0x4A6E6C);
 #define malloc ((void *(*)(size_t)) 0x10135531)
 
 	// modifica i damage sulla base di elenco Enemy
@@ -1361,6 +1362,19 @@ namespace trng {
 		pChar = &pStringheScriptDat[Indice];
 		return pChar;
 	}
+
+	// chiamata nello stesso momento in cui in tomb4 si carica il file language.dat
+	// Questa funzione carica i dati ng script per livello attuale
+	void LeggiNG_ScriptForLevel(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void SalvaTagFmv(BYTE ValoreFmv)
+	{
+		GlobTomb4.BaseFMV.VetFmv[GlobTomb4.BaseFMV.TotFmv] = ValoreFmv;
+		GlobTomb4.BaseFMV.TotFmv++;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -1405,4 +1419,6 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10038336, (unsigned int)trng::EsisteDirectory, replace);
 	ProcessInject(0x10038347, (unsigned int)trng::CreaDirectory, replace);
 	ProcessInject(0x10041EF5, (unsigned int)trng::GetString, replace);
+	ProcessInject(0x1006CA83, (unsigned int)trng::LeggiNG_ScriptForLevel, false);
+	ProcessInject(0x100469BD, (unsigned int)trng::SalvaTagFmv, replace);
 }
