@@ -21,6 +21,8 @@ namespace trng {
 	long FAR PASCAL WindowBlackProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void DisattivaAnimWindow(void);
 	void NascondiTaskBar(void);
+	HFONT CreaWindowsFontForCB(StrWindowsFont *pFont, bool TestNoResize);
+	HFONT CreaWindowsFont(StrWindowsFont *pFont, bool TestNoResize);
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace);

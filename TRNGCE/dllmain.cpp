@@ -28,6 +28,7 @@
 #include "trng/trng_weather.h"
 #include "tomb4/game/gameflow.h"
 #include "tomb4/specific/output.h"
+#include "tomb4/specific/dxshell.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -117,6 +118,7 @@ static void Inject(bool replace) {
 	Inject_VehiclesQuadbike(replace);
 	Inject_Gameflow(replace);
 	Inject_Output(replace);
+	Inject_Dxshell(replace);
 }
 
 static LPSTR __stdcall CallInject() {

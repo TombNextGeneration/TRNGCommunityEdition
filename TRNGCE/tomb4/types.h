@@ -2212,13 +2212,22 @@ namespace tomb4
 
 	struct GAMEFLOW
 	{
-		ulong CheatEnabled : 1;
-		ulong LoadSaveEnabled : 1;
-		ulong TitleEnabled : 1;
-		ulong PlayAnyLevel : 1;
-		ulong Language : 3;
-		ulong DemoDisc : 1;
-		ulong Unused : 24;
+		union
+		{
+			struct
+			{
+				ulong CheatEnabled : 1;
+				ulong LoadSaveEnabled : 1;
+				ulong TitleEnabled : 1;
+				ulong PlayAnyLevel : 1;
+				ulong Language : 3;
+				ulong DemoDisc : 1;
+				ulong Unused : 24;
+			};
+
+			ulong bitfield;
+		};
+
 		ulong InputTimeout;
 		uchar SecurityTag;
 		uchar nLevels;

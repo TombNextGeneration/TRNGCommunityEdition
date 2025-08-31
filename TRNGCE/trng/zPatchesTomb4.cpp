@@ -35,6 +35,7 @@ namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
 	StrBaseMemAllocata &BaseAlloc = *reinterpret_cast<decltype(&BaseAlloc)>(0x10658848);
 	int &LivelloOldNumber = *reinterpret_cast<decltype(&LivelloOldNumber)>(0x10679F50); // usato per passarlo a callback cbInitLevel
+	int &GlobIndiceCombine = *reinterpret_cast<decltype(&GlobIndiceCombine)>(0x10679E68);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -1496,6 +1497,66 @@ namespace trng {
 			break;
 		}
 	}
+
+	// riprstina priprita' normale per thread di gioco
+	void RestorePriorita(void)
+	{
+		SetPriority(Normal_NORMAL);
+	}
+
+	void SalvaDimensioneSchermo(void)
+	{
+		tomb4::DXDISPLAYMODE *pDisplayMode;
+
+		pDisplayMode = &tomb4::G_dxinfo->DDInfo[tomb4::G_dxinfo->nDD].D3DDevices[tomb4::G_dxinfo->nD3D].DisplayModes[tomb4::G_dxinfo->nDisplayMode];
+		GlobTomb4.ScreenSizeY = (short) pDisplayMode->h;
+		GlobTomb4.ScreenSizeX = (short) pDisplayMode->w;
+	}
+
+	// funziona come PreparaCustomize ma lavora solo per barre
+	// e deve essere chiamata prima di caricamento livello
+	void PreparaBarCust(void)
+	{
+		StrPtrBars *pBarDef;
+		StrBarraCust *pBar;
+		int OrgY;
+		int i;
+
+		// inizializza colore e dimensione per barre
+		for (i = BAR_HEALTH; i < BAR_CUSTOM1; i++) {
+			pBar = &GlobTomb4.pBaseCustomize->VetBar[i];
+			pBarDef = &GlobTomb4.VetBarDefault[i];
+			// calcolare orgy
+			if (pBar->OrgY != -1) {
+				OrgY = (int) RapportoFloatSchermo(*GlobTomb4.pAdr->pSizeScreenY, (float) 480, pBar->OrgY);
+				pBar->OrgYUpdated = (short) OrgY;
+			}
+
+			*pBarDef->pColor1 = pBar->Color1 | 0xff000000;
+			*pBarDef->pColor2 = pBar->Color2 | 0xff000000;
+
+			InviaLog(BufferLog);
+
+			*pBarDef->pSizeX = pBar->SizeX;
+
+			*pBarDef->pSizeY = pBar->SizeY;
+		}
+		// inizializza valori anche per customize bar
+		for (i = BAR_CUSTOM1; i <= BAR_CUST_TOT; i++) {
+			pBarDef = &GlobTomb4.VetBarDefault[i];
+			pBarDef->DefColor1 = 0xff0000ff;
+			pBarDef->DefColor2 = 0xFF000000;
+
+			switch (i) {
+			case BAR_DAMAGE:
+				pBarDef->DefColor1 = 0xffF6F923;
+				break;
+			case BAR_COLD:
+				pBarDef->DefColor1 = 0xfff924f1;
+				break;
+			}
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -1526,4 +1587,7 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100BD57C, (unsigned int)trng::GetValoreHex, replace);
 	ProcessInject(0x100AFC13, (unsigned int)trng::ReallocMine, false);
 	ProcessInject(0x100CCB8E, (unsigned int)trng::ImpostaCapelliLara, replace);
+	ProcessInject(0x100C523C, (unsigned int)trng::RestorePriorita, replace);
+	ProcessInject(0x100C411A, (unsigned int)trng::SalvaDimensioneSchermo, replace);
+	ProcessInject(0x100B9277, (unsigned int)trng::PreparaBarCust, replace);
 }

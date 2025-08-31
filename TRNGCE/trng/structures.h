@@ -1113,6 +1113,467 @@ namespace trng {
 	inline constexpr int STRING_NG = 0x8000;
 	inline constexpr int MASK_STRING_INDEX = 0x7fff;  // bit mask to get index of string removing further STRING_NG flag
 
+	// costanti per azioni
+	inline constexpr int AZ_NONE = 0; // record vuoto
+	inline constexpr int AZ_TURN_OBJECT = 1;  // ruota oggetto orizzontalmente fino ad un certo orientamento
+	inline constexpr int AZ_TURN_VERT_OBJECT = 2; // ruota verticalmente oggetto
+	inline constexpr int AZ_BLOCK_DISABLE_KEY = 3; // disabilita il blocco a tasti dopo tempo
+	inline constexpr int AZ_BLOCK_SENDING_KEY = 4; // disabilita invio di comando
+	inline constexpr int AZ_HIDE_SCREEN = 5;  // disabilita schermo per tot secondi
+	inline constexpr int AZ_FORCE_VOLUMETRIC_FX = 6; // NON PIU' USATA
+	inline constexpr int AZ_PRINT_STRING = 7;
+	inline constexpr int AZ_SOUND_SAMPLE = 8;
+	inline constexpr int AZ_TURN_FACING = 9; // fino a raggiungere facing richiesto
+	inline constexpr int AZ_TURN_VERT_FACING = 10;
+	inline constexpr int AZ_DELAY_TRIGGER = 11;  // attiva con ritardo qualcosa
+	inline constexpr int AZ_ADD_EFFECT = 12; // aggiunge effetto a moveable
+	inline constexpr int AZ_MOVE_ANIMATING = 13; // muove animating
+	inline constexpr int AZ_BLINK_MIRROR = 14;
+	inline constexpr int AZ_LARA_TRANSPARENT = 15;
+	inline constexpr int AZ_LARA_INVULNERABLE = 16;
+	inline constexpr int AZ_PREPARA_FILMATO = 17;
+	inline constexpr int AZ_TEXTURE_SEQUENCE = 18;
+	inline constexpr int AZ_MOVE_ROLLINGBALL = 19;
+	inline constexpr int AZ_MIST_ROLLINGBALL = 20;
+	inline constexpr int AZ_TRAP_PUSHABLE = 21;
+	inline constexpr int AZ_PUSH_PUSHABLE = 22;
+	inline constexpr int AZ_CAMERA_TARGET = 23;
+	inline constexpr int AZ_CAMERA_AXIS = 24;
+	inline constexpr int AZ_CAMERA_EFFECT = 25;
+	inline constexpr int AZ_CHANGE_LAYER_COLOR = 26;
+	inline constexpr int AZ_MOVE_ADVANCED = 27;
+	inline constexpr int AZ_WAIT_KILL = 28;
+	inline constexpr int AZ_MOVE_STATIC = 29;
+	inline constexpr int AZ_MOVE_MOVEABLE = 30;
+	inline constexpr int AZ_ROTATE_STATIC = 31;
+	inline constexpr int AZ_ROTATE_MOVEABLE = 32;
+	inline constexpr int AZ_CHANGE_COLOR_STATIC = 33;
+	inline constexpr int AZ_CHANGE_COLOR_MOVEABLE = 34;
+	inline constexpr int AZ_TRIGGER_GROUP_CONTINUO = 35;
+	inline constexpr int AZ_SHOW_TIMER_ITEM = 36;
+	inline constexpr int AZ_PLAY_CD_RESTORE = 37;
+	inline constexpr int AZ_CHANGE_FOG_DISTANCE = 38;
+	inline constexpr int AZ_PULSE_FOG_DISTANCE = 39;
+	inline constexpr int AZ_SCROLLING_VTEXT = 40;
+	inline constexpr int AZ_SCROLLING_HTEXT = 41;
+	inline constexpr int AZ_TEMP_FREE_HANDS = 42;
+	inline constexpr int AZ_SET_CAMERA = 43;
+	inline constexpr int AZ_SHOW_FLARE_LIGHT = 44;
+	inline constexpr int AZ_TRANSPARENCY_ENEMY = 45;
+	inline constexpr int AZ_CHANGE_FOG_DENSITY = 46;
+	inline constexpr int AZ_TIMER_TRNG = 47;
+	inline constexpr int AZ_SHOW_TIMER_TRNG = 48;
+	inline constexpr int AZ_RESUME_FROZEN = 49;
+	inline constexpr int AZ_SHOW_CUSTOM_BAR = 50;
+	inline constexpr int AZ_ALTERNATE_FLIPMAP = 51;
+	inline constexpr int AZ_SEQUENZA_SHOT = 52;
+	inline constexpr int AZ_FLOOD_WATER = 53;
+	inline constexpr int AZ_FREEZE_ALL = 54;
+	inline constexpr int AZ_H_CIRCULAR_ROTATE = 55;
+	inline constexpr int AZ_SCALE_STATIC = 56;
+	inline constexpr int AZ_ENABLE_FREEZE_TRASP = 57;
+	inline constexpr int AZ_HARPY_LOADING_EFFECT = 58;
+	inline constexpr int AZ_SHOW_SPRITE = 59;
+	inline constexpr int AZ_PUSH_AWAY = 60;
+	inline constexpr int AZ_LIGHTNING = 61;
+	inline constexpr int AZ_PRINT_WINDOWS_STRING = 62;  // stampa automatica di testi standard in modalita' windows font
+	inline constexpr int AZ_PRINT_WINDOWS_TEXT = 63;   // stampa testo con flipeffect e wparam data
+	inline constexpr int AZ_CROSS_FADE_IMAGE = 64;
+	inline constexpr int AZ_CURTAIN_FADE_EFFECT = 65;
+	inline constexpr int AZ_CAMERA_INFINITE = 66;
+
+	inline constexpr int TD_AMULETO = 0;
+	inline constexpr int TD_BIG_DETECTOR = 1;
+	inline constexpr int TD_LITTLE_DETECTOR = 2;
+
+	// flag per comando turbo
+	inline constexpr int TRB_SELECTIVE_VIEW = 0x0001;
+	inline constexpr int TRB_HIGH_PRIORITY = 0x0002;
+	inline constexpr int TRB_ASYNC_FRAMES = 0x0004;
+	inline constexpr int TRB_OPTIMIZE_SORTING = 0x0008;
+	inline constexpr int TRB_ADAPTIVE_FARVIEW = 0x0010;
+
+	// flag per PARAM_SET_CAMERA
+
+	inline constexpr int FSCAM_DISABLE_COMBAT_CAM = 0x0001;
+	inline constexpr int FSCAM_DISABLE_LOOK_CAM = 0x0002;
+
+	// --- flag per sezione livello
+	// FNGL  = Flag NG Level
+	inline constexpr int fngl_NONE = 0;
+	inline constexpr int fngl_Rain = 0x0001;
+	inline constexpr int fngl_Snow = 0x0002;
+	inline constexpr int fngl_VolumetricFX_Enable = 0x0004;
+	inline constexpr int fngl_VolumetricFX_Disable = 0x0008;
+	inline constexpr int fngl_Rain_All = 0x0010;
+	inline constexpr int fngl_Snow_All = 0x0020;
+	inline constexpr int fngl_CutScene = 0x0040;
+	inline constexpr int fngl_PreserveInventory = 0x0080;
+
+	// flag per demo
+	inline constexpr int DEMF_PLAY_LEVEL_SEQUENCE = 0x0001;
+	inline constexpr int DEMF_PLAY_ALL_SEQUENCE = 0x0002;
+	inline constexpr int DEMF_QUIT_WITH_ESCAPE = 0x0004;
+	inline constexpr int DEMF_CROSS_FADE = 0x0008;
+	inline constexpr int DEMF_RANDOM = 0x0010;
+	inline constexpr int DEMF_PLAY_ON_KEY = 0x0020;
+	inline constexpr int DEMF_PERFORM_AT_START = 0x0040;
+	inline constexpr int DEMF_CINEMA_SCREEN = 0x0100;
+	inline constexpr int DEMF_MUTE_TRACK = 0x200;
+	inline constexpr int DEMF_MUTE_SFX = 0x400;
+
+	// -- codici per nuovi oggetti OBJ_
+	inline constexpr int OBJ_RUBBER_BOAT = 501;
+	inline constexpr int OBJ_MOTOR_BOAT = 502;
+	inline constexpr int OBJ_SUB_PROPULSOR = 503;
+	inline constexpr int OBJ_MINE_CART = 504;
+	inline constexpr int OBJ_RUBBER_BOAT_ANIM = 505;
+	inline constexpr int OBJ_MOTOR_BOAT_ANIM = 506;
+	inline constexpr int OBJ_SUB_PROPULSOR_ANIM = 507;
+	inline constexpr int OBJ_MINE_CART_ANIM = 508;
+
+	// costanti per indici relativi a coppia claspriority/threadpriorirty
+	inline constexpr int NONE_PRIORITY = 0;
+	inline constexpr int Idle_IDLE = 1;
+	inline constexpr int Idle_LOWEST = 2;
+	inline constexpr int Idle_BELOW_NORMAL = 3;
+	inline constexpr int Idle_NORMAL = 4;
+	inline constexpr int Normal_LOWEST = 5;
+	inline constexpr int Normal_BELOW_NORMAL = 6;
+	inline constexpr int Normal_NORMAL = 7;
+	inline constexpr int Normal_ABOVE_NORMAL = 8;
+	inline constexpr int Normal_HIGHEST = 9;
+	inline constexpr int High_BELOW_NORMAL = 10;
+	inline constexpr int High_NORMAL = 11;
+	inline constexpr int High_ABOVE_NORMAL = 12;
+	inline constexpr int High_TIME_CRITICAL = 13;
+	inline constexpr int RealTime_IDLE = 14;
+	inline constexpr int OVERFLOW_PRIORITY = 15;
+
+	// flags per panello savegame
+	inline constexpr int SPF_NO_TIME_IN_LIST = 0x0001;
+	inline constexpr int SPF_SCROLL_PAGE = 0x0002;
+	inline constexpr int SPF_BLINK_SELECTED = 0x0004;
+	inline constexpr int SPF_NO_PANEL_TITLE = 0x0008;
+	inline constexpr int SPF_PRELOAD_BKG_IMAGE = 0x0010;
+
+	// Page Layout --- i primi 7 sono layout preordinati
+	inline constexpr int PL_DOUBLE_PAGE = 0x0001;
+	inline constexpr int PL_LEFT_IMAGE = 0x0002;
+	inline constexpr int PL_LEFT_IMAGE_LOGO = 0x0003;
+	inline constexpr int PL_RIGHT_IMAGE = 0x0004;
+	inline constexpr int PL_RIGHT_IMAGE_LOGO = 0x0005;
+	inline constexpr int PL_CENTRAL_IMAGE = 0x0006;
+	inline constexpr int PL_WIDE_IMAGE = 0x0007;
+	inline constexpr int PL_ADD_INFO_BAR = 0x0100;
+	inline constexpr int PL_CUSTOM_LAYOUT = 0x0200;
+	inline constexpr int PL_FIX_WIDE_SCREEN = 0x0400;
+
+	inline constexpr int SNOW_DISABLED = 0;
+	inline constexpr int SNOW_SINGLE_ROOM = 1;
+	inline constexpr int SNOW_ALL_OUTSIDE = 2;
+
+	// flag per snow e rain
+	inline constexpr int RAIN_DISABLED = 0;
+	inline constexpr int RAIN_SINGLE_ROOMS = 1;
+	inline constexpr int RAIN_ALL_OUTSIDE = 2;
+
+	// flag per detector (comando script)
+	inline constexpr int DTF_NONE = 0;
+	inline constexpr int DTF_SWINGING_POINTER = 0x01;
+	inline constexpr int DTF_RADAR_MODE = 0x02;
+	inline constexpr int DTF_ENGAGE_INVENTORY = 0x04;
+	inline constexpr int DTF_ENGAGE_IN_RANGE = 0x08;
+	inline constexpr int DTF_REQUIRED_ITEM = 0x10;
+	inline constexpr int DTF_ENGAGE_ALWAYS = 0x20;
+	inline constexpr int DTF_FAST_RADAR_SCAN = 0x40;
+	inline constexpr int DTF_INVERSE_VPOINTER = 0x80;
+
+	// flags di tipo customize
+	inline constexpr int CUST_DISABLE_SCREAMING_HEAD = 1;
+	inline constexpr int CUST_SET_SECRET_NUMBER = 2;
+	inline constexpr int CUST_SET_CREDITS_LEVEL = 3;
+	inline constexpr int CUST_DISABLE_FORCING_ANIM_96 = 4;
+	inline constexpr int CUST_ROLLINGBALL_PUSHING = 5;
+	inline constexpr int CUST_NEW_SOUND_ENGINE = 6;
+	inline constexpr int CUST_SPEED_MOVING = 7;
+	inline constexpr int CUST_SHATTER_RANGE = 8;
+	inline constexpr int CUST_WEAPON = 9;
+	inline constexpr int CUST_AMMO = 10;
+	inline constexpr int CUST_SHOW_AMMO_COUNTER = 11;
+	inline constexpr int CUST_SET_INV_ITEM = 12;
+	inline constexpr int CUST_SET_JEEP_KEY_SLOT = 13;
+	inline constexpr int CUST_STATIC_TRANSPARENCY = 14;
+	inline constexpr int CUST_SET_STATIC_DAMAGE = 15;
+	inline constexpr int CUST_LOOK_TRASPARENT = 16;
+	inline constexpr int CUST_HAIR_TYPE = 17;
+	inline constexpr int CUST_KEEP_DEAD_ENEMIES = 18;
+	inline constexpr int CUST_SET_OLD_CD_TRIGGER = 19;
+	inline constexpr int CUST_ESCAPE_FLY_CAMERA = 20;
+	inline constexpr int CUST_PAUSE_FLY_CAMERA = 21;
+	inline constexpr int CUST_TEXT_ON_FLY_SCREEN = 22;
+	inline constexpr int CUST_CD_SINGLE_PLAYBACK = 23;
+	inline constexpr int CUST_ADD_DEATH_ANIMATION = 24;
+	inline constexpr int CUST_BAR = 25;
+	inline constexpr int CUST_NO_TIME_IN_SAVELIST = 26;
+	inline constexpr int CUST_PARALLEL_BARS = 27;
+	inline constexpr int CUST_CAMERA = 28;
+	inline constexpr int CUST_DISABLE_MISSING_SOUNDS = 29;
+	inline constexpr int CUST_INNER_SCREENSHOT = 30;
+	inline constexpr int CUST_FMV_CUTSCENE = 31;
+	inline constexpr int CUST_FIX_WATER_FOG_BUG = 32;
+	inline constexpr int CUST_SAVE_LOCUST = 33;
+	inline constexpr int CUST_LIGHT_OBJECT = 34;
+	inline constexpr int CUST_HARPOON = 35;
+	inline constexpr int CUST_SCREENSHOT_CAPTURE = 36;
+	inline constexpr int CUST_RAIN = 37;
+	inline constexpr int CUST_TR5_UNDERWATER_COLLISIONS = 38;
+	inline constexpr int CUST_DARTS = 39;
+	inline constexpr int CUST_FLARE = 40;
+	inline constexpr int CUST_SET_TEXT_COLOR = 41;
+	inline constexpr int CUST_SET_STILL_COLLISION = 42;
+	inline constexpr int CUST_WATERFALL_SPEED = 43;
+	inline constexpr int CUST_ROLLING_BOAT = 44;
+	inline constexpr int CUST_SFX = 45;
+	inline constexpr int CUST_TITLE_FMV = 46;
+	inline constexpr int CUST_KEEP_LARA_HP = 47;
+	inline constexpr int CUST_BIKE_VS_ENEMIES = 48;
+	inline constexpr int CUST_BACKGROUND = 49;
+	inline constexpr int CUST_DISABLE_PUSH_AWAY_ANIMATION = 50;
+	inline constexpr int CUST_BINOCULARS = 51;
+	inline constexpr int CUST_SLOT_FLAGS = 52;
+	inline constexpr int CUST_FIX_BUGS = 53;
+	inline constexpr int CUST_SHATTER_SPECIFIC = 54;
+	inline constexpr int CUST_LAST = 55;
+
+	// costanti param
+	inline constexpr int PARAM_MOVE_ADV_ITEM = 1;
+	inline constexpr int PARAM_MOVE_ITEM = 2;
+	inline constexpr int PARAM_ROTATE_ITEM = 3;
+	inline constexpr int PARAM_COLOR_ITEM = 4;
+	inline constexpr int PARAM_PRINT_TEXT = 5;
+	inline constexpr int PARAM_SET_CAMERA = 6;
+	inline constexpr int PARAM_BIG_NUMBERS = 7;
+	inline constexpr int PARAM_SCALE_ITEM = 8;
+	inline constexpr int PARAM_SHOW_SPRITE = 9;
+	inline constexpr int PARAM_TRIANGLE = 10;
+	inline constexpr int PARAM_QUADRILATERAL = 11;
+	inline constexpr int PARAM_CIRCLE = 12;
+	inline constexpr int PARAM_LIGHTNING = 13;
+	inline constexpr int PARAM_WTEXT = 14;
+	inline constexpr int PARAM_RECT = 15;
+	inline constexpr int PARAM_SWAP_ANIMATIONS = 16;
+	inline constexpr int PARAM_ACTOR_SPEECH = 17;
+	inline constexpr int PARAM_INPUT_BOX = 18;
+	inline constexpr int PARAM_LAST = 19;  // ricordarsi di aggiornare questo quando aggiungo valori
+
+	// flags for read input box RIB
+	inline constexpr int RIB_ONLY_DIGITS = 0x0001;  // ignores letters (ABCDEF ...Z) (by default accepts letters and digits)
+	inline constexpr int RIB_ONLY_LETTERS = 0x0002;  // ignores digits (0123456789)  (by default accepts letters and digits)
+	inline constexpr int RIB_HIDE_CARET = 0x0004;  // by default caret is visible
+	inline constexpr int RIB_BLINK_CARET = 0x0008; // perform a blinking of caret while it's waiting input
+	inline constexpr int RIB_SOUND_ON_KEY = 0x0010;  // little sound for each typed character
+	inline constexpr int RIB_PRINT_ONLY = 0x0020;  // ignore input and print newly the current buffer in given rect (works like OutText() only)
+	inline constexpr int RIB_ALIGN_CENTER = 0x0040;  // center aligment in pRect boundary. (by default uses a LEFT align)
+	inline constexpr int RIB_ONLY_CAPS = 0x0080;  // force capital letters. By default it will be typed lower or capital letters
+									              // in according with SHIFT key
+	inline constexpr int RIB_PRINT_BIG_TEXT = 0x0100; // start printing the "TextBig" trng variable
+	inline constexpr int RIB_INPUT_BELOW_BIG_TEXT = 0x0200; // require input in Y position after big text
+	inline constexpr int RIB_ADD_SCANCODE_LIST = 0x0400;  // parses extra scan codes supplied in extra ng string 666
+	inline constexpr int RIB_SHORTCUT_KEY = 0x0800; // just typing a single (valid) key to have confirmed the input like with ENTER
+	inline constexpr int RIB_HIDE_TEXT = 0x1000;  // not draw the inserted text but manage it as usual
+
+	// flag per comando TriggerGroup
+	// campo flag
+	inline constexpr int TGROUP_USE_FOUND_ITEM_INDEX = 0x0001;
+	inline constexpr int TGROUP_USE_TRIGGER_ITEM_INDEX = 0x0002;
+	inline constexpr int TGROUP_USE_OWNER_ANIM_ITEM_INDEX = 0x0004;
+	inline constexpr int TGROUP_SINGLE_SHOT_RESUMED = 0x0008;
+	inline constexpr int TGROUP_OR = 0x0010;
+	inline constexpr int TGROUP_NOT = 0x0020;
+	inline constexpr int TGROUP_ELSE = 0x0040;
+	inline constexpr int TGROUP_CONDITION = 0x0080;
+	inline constexpr int TGROUP_USE_EXECUTOR_ITEM_INDEX = 0x0100;
+	inline constexpr int TGROUP_DISABLED = 0x0200; // non eseguirlo piu'
+	inline constexpr int TGROUP_SINGLE_SHOT = 0x0400; // dopo averlo eseguito una volta disattivarlo
+	inline constexpr int TGROUP_USE_ITEM_USED_BY_LARA_INDEX = 0x0800; // indice di oggetto con cui lara sta interagendo
+	// questi sono impostati nella fase di exporting e messi nella prima word
+	inline constexpr int TGROUP_CONDITION_TRIGGER = 0x8000;
+	inline constexpr int TGROUP_ACTION = 0x4000;
+	inline constexpr int TGROUP_FLIPEFFECT = 0x2000;
+	inline constexpr int TGROUP_MOVEABLE = 0x1000;
+	// valore assoluto di prima word (no maschera bit)
+	inline constexpr int TGROUP_COMMAND = 0x0003;
+
+	// flags per script image
+	inline constexpr int IF_TRANSPARENCE = 0x01;
+	inline constexpr int IF_POP_IMAGE = 0x02;
+	inline constexpr int IF_FULL_SCREEN = 0x04;
+	inline constexpr int IF_OVER_FLYBY = 0x08;
+	inline constexpr int IF_QUIT_ESCAPE = 0x10;
+	inline constexpr int IF_EFFECT_ZOOM = 0x20;
+	inline constexpr int IF_EFFECT_FROM_TOP = 0x40;
+	inline constexpr int IF_EFFECT_FROM_BOTTOM = 0x80;
+	inline constexpr int IF_EFFECT_FROM_LEFT = 0x100;
+	inline constexpr int IF_EFFECT_FROM_RIGHT = 0x200;
+	inline constexpr int IF_PLAY_AUDIO_TRACK = 0x400;
+	inline constexpr int IF_PRELOAD = 0x800;
+	inline constexpr int IF_OVER_FIXED_CAMERA = 0x1000;
+	inline constexpr int IF_LOOP_AUDIO_TRACK = 0x2000;
+	inline constexpr int IF_CRYPTIC = 0x4000;
+	inline constexpr int IF_EFFECT_CROSS_FADE = 0x8000;
+
+	// valori flag per TextureSequence= comando script
+	inline constexpr int SEQ_LOOP = 0x0001;
+	inline constexpr int SEQ_LOOP_INVERSE = 0x0002;
+	inline constexpr int SEQ_STOP_AT_FIRST = 0x0004;
+
+	// flag per comando script Damage=
+	inline constexpr int DMG_INDIRECT_BAR = 0x01;
+	inline constexpr int DMG_ONLY_PAD = 0x02;
+	inline constexpr int DMG_INCREASE_BAR = 0x04;
+	inline constexpr int DMG_COLD_WATER = 0x08;
+	inline constexpr int DMG_POISON_LARA = 0x10;
+	inline constexpr int DMG_BURNING_DEATH = 0x20;
+	inline constexpr int DMG_SLOW_DISAPPEARING = 0x40;
+	inline constexpr int DMG_BURNING_SCREAM = 0x80;
+	inline constexpr int DMG_ALERT_BEEP = 0x100;
+	inline constexpr int DMG_LITTLE_TEXT = 0x200;
+
+	inline constexpr int QSF_TRUE_COLOR = 0x100;
+
+	inline constexpr int FMV_FADE_OUT = 0x01;
+	inline constexpr int FMV_SHORT_BLACK_RESTART = 0x02;
+	inline constexpr int FMV_LONG_BLACK_RESTART = 0x04;
+	inline constexpr int FMV_NO_AUDIO_RESTART = 0x08;
+	inline constexpr int FMV_PRE_CACHE = 0x10;
+
+	// flag per disabilitare caratteristiche di lara in gioco
+	inline constexpr int DF_GUARDA = 0x0001;
+	inline constexpr int DF_COMBAT_CAMERA = 0x0002;
+
+	// flag usati in gioco per monitorare l'esecuzione di damage
+	inline constexpr int FPD_NONE = 0x00;
+	inline constexpr int FPD_ATTIVO = 0x01;
+	inline constexpr int FPD_BLINK = 0x02;
+	inline constexpr int FPD_RICRESCITA = 0x04;
+	inline constexpr int FPD_BEEP = 0x08;
+	inline constexpr int FPD_DIMINUIRE_VITA = 0x10;
+	inline constexpr int FPD_INCENDIATA_LARA = 0x20;
+	inline constexpr int FDP_BLINK_SHOW_ORA = 0x40;
+	inline constexpr int FDP_MOSTRATA_STRINGA = 0x80;
+
+	// flags per windows font
+	inline constexpr int WFF_BOLD = 0x0001;
+	inline constexpr int WFF_ULTRA_BOLD = 0x0002;
+	inline constexpr int WFF_LIGHT = 0x0004;
+	inline constexpr int WFF_SHADOW = 0x0008;
+	inline constexpr int WFF_ITALIC = 0x0010;
+	inline constexpr int WFF_UNDERLINE = 0x0020;
+	inline constexpr int WFF_LEFT_ALIGN = 0x0080;
+	inline constexpr int WFF_RIGHT_ALIGN = 0x0100;
+	inline constexpr int WFF_CENTER_ALIGN = 0x0200;
+	inline constexpr int WFF_FORCE_FIXED_PITCH = 0x0400;
+	inline constexpr int WFF_ROTATE_90 = 0x0800;
+	inline constexpr int WFF_ROTATE_INV_90 = 0x1000;
+	inline constexpr int WFF_FROM_RIGHT_TO_LEFT = 0x2000;
+	inline constexpr int WFF_UNICODE = 0x4000;
+	inline constexpr int WFF_UTF8 = 0x8000;
+
+	// BINF_ ... BINoculars Flags
+	inline constexpr int BINF_COMPASS = 0x0001;
+	inline constexpr int BINF_SEXTANT = 0x0002;
+	inline constexpr int BINF_LIGHTNESS = 0x0004;
+	inline constexpr int BINF_ZOOM = 0x0008;
+	inline constexpr int BINF_LIGHT_SWITCH = 0x0080;
+	inline constexpr int BINF_SOUND_ON_LIGHT = 0x0100;
+	inline constexpr int BINF_NOTATION_EXTENDED = 0x0200;
+	inline constexpr int BINF_SWING_COMPASS = 0x0400;
+	inline constexpr int BINF_SWING_SEXTANT = 0x0800;
+	inline constexpr int BINF_SUPER_ZOOM = 0x1000;
+	inline constexpr int BINF_PROGRESSIVE_ZOOM = 0x2000;
+	inline constexpr int BINF_SOUND_ON_ZOOM = 0x4000;
+
+	// BINT_  ... BINoculars Types
+	inline constexpr int BINT_STRIP = 0x8000;
+	inline constexpr int BINT_BAR = 0x4000;
+	inline constexpr int BINT_NUMERIC = 0x2000;
+	inline constexpr int BINT_PATTERN_BAR = 0x1000;
+	inline constexpr int BINT_ROUND = 0x0800;   // only for lightswitch
+	inline constexpr int BINT_MASK_ID = 0x03FF;  // to get the index of param_rect
+
+	// flags per Customize=CUST_BACKGROUND
+	inline constexpr int BKGDF_HIDE_LOADING_BAR = 0x0001;
+	inline constexpr int BKGDF_MINIMAL_LOADING_TIME = 0x0002;
+	inline constexpr int BKGDF_HIDE_SPRITE_LASER_SIGHT = 0x0004;
+	inline constexpr int BKGDF_COLORIZE = 0x0008;
+	inline constexpr int BKGDF_KEEP_GAME_SCREEN = 0x0010;
+	inline constexpr int BKGDF_ADD_COLOR_OR = 0x0020;
+	inline constexpr int BKGDF_ADD_COLOR_AND = 0x0040;
+	inline constexpr int BKGDF_ADD_COLOR_XOR = 0x0080;
+	inline constexpr int BKGDF_ADD_NEGATIVE_EFFECT = 0x0100;
+	inline constexpr int BKGDF_ADD_DARKNESS = 0x200;
+	inline constexpr int BKGDF_SEMI_TRANSPARENT = 0x400;
+	inline constexpr int BKGDF_SKIP_LOADING_TIME = 0x800;
+
+	// types per Customize=CUST_BACKGROUND
+	inline constexpr int BKGDT_INVENTORY = 1;
+	inline constexpr int BKGDT_LOADING_LEVEL = 2;
+	inline constexpr int BKGDT_TITLE = 3;
+	inline constexpr int BKGDT_BINOCULAR = 4;
+	inline constexpr int BKGDT_LASER_SIGHT = 5;
+
+	// flag per tipo di barre
+	inline constexpr int FBAR_SOUND_BAR_ANIM = 0x0001;
+	inline constexpr int FBAR_SHOW_BAR_NAME = 0x0002;
+	inline constexpr int FBAR_USED_FOR_BOAT_FUEL = 0x0004;
+	inline constexpr int FBAR_DRAW_ALWAYS = 0x0008;
+
+	// flag per still collision
+	inline constexpr int COLL_STATICS = 0x0001;
+	inline constexpr int COLL_DOORS = 0x0002;
+	inline constexpr int COLL_ANIMATINGS = 0x0004;
+	inline constexpr int COLL_PANELS = 0x0008;
+	inline constexpr int COLL_VEHICLES = 0x0010;
+	inline constexpr int COLL_FAKE_WALLS = 0x0020;
+	inline constexpr int COLL_STOP_ON_45_DEGREES = 0x0040;
+	inline constexpr int COLL_FAST_TURNING = 0x0080;
+	inline constexpr int COLL_NO_SPLAT = 0x0200;
+	inline constexpr int COLL_NO_SLIDING = 0x0400;
+	inline constexpr int COLL_ENABLED = 0x8000; // uso interno
+
+	// flags per CUST_RAIN command
+	inline constexpr int FR_PLAY_SFX = 0x0001;
+	inline constexpr int FR_ADD_DRIPS_TO_LARA = 0x0002;
+	inline constexpr int FR_CORRECT_SPRINKLERS = 0x004;
+
+	// flag per size character in textformat= script command
+	inline constexpr int SC_NORMAL = 0;
+	inline constexpr int SC_HALF_WIDTH = 1;
+	inline constexpr int SC_HALF_HEIGHT = 2;
+	inline constexpr int SC_HALF_SIZE = 3;
+	inline constexpr int SC_DOUBLE_WIDTH = 4;
+	inline constexpr int SC_DOUBLE_HEIGHT = 5;
+	inline constexpr int SC_DOUBLE_SIZE = 6;
+
+	// valori di FT_ flags di comando script TextFormat dopo la modifica
+	inline constexpr int FT_HALF_SIZEX = 0x01;
+	inline constexpr int FT_HALF_SIZEY = 0x02;
+	inline constexpr int FT_DOUBLE_SIZEX = 0x04;
+	inline constexpr int FT_DOUBLE_SIZEY = 0x08;
+	inline constexpr int FT_LITTLE_ALWAYS = 0x10;  // caratteri forzati sempre a dimensione ok per keypad
+	inline constexpr int FT_USE_FLOAT = 0x20; // usa i valori di rapporto globali
+	inline constexpr int FT_NO_BORDERS = 0x40;
+	inline constexpr int FT_SIZE_ATOMIC_CHAR = 0x80;
+
+	// costanti per operazione su inventario di funzione GestionePickups
+	inline constexpr int INV_LEGGI = 0;
+	inline constexpr int INV_SCRIVI = 1;
+	inline constexpr int INV_INCREMENTA = 2;
+	inline constexpr int INV_DECREMENTA = 3;
+	inline constexpr int INV_SCRIVI_NO_BIT = 4;
+	inline constexpr int INV_LEGGI_NO_BIT = 5;
+
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
 #pragma pack(push, 1)

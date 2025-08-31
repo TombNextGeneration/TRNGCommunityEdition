@@ -5,6 +5,7 @@ namespace trng {
 	extern DWORD &OffsetPosLara;
 	extern StrBaseMemAllocata &BaseAlloc;
 	extern int &LivelloOldNumber;
+	extern int &GlobIndiceCombine;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -32,6 +33,9 @@ namespace trng {
 	DWORD GetValoreHex(char *pStringaHex, bool *pTestErrore);
 	void * ReallocMine(void * pOldMem, DWORD NewSize, const char *pDescrizione);
 	void ImpostaCapelliLara(WORD *pFlagLivello);
+	void RestorePriorita(void);
+	void SalvaDimensioneSchermo(void);
+	void PreparaBarCust(void);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

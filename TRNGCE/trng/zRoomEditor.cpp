@@ -165,6 +165,15 @@ namespace trng {
 		GetFileTime(InFile, NULL, NULL, pFileTime);
 		CloseHandle(InFile);
 	}
+
+	// trasorma stringa numerica in numero. se non e' numero resituisce false
+	bool PrendiNumero(char *pTesto, int *pValore)
+	{
+		if (sscanf_s(pTesto, "%d", pValore) != 1)
+			return false;
+		else
+			return true;
+	}
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
@@ -177,4 +186,5 @@ void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
 	ProcessInject(0x100E9626, (unsigned int)trng::SoloNomeSenzaExt, replace);
 	ProcessInject(0x100E95C6, (unsigned int)trng::SoloNome, replace);
 	ProcessInject(0x100FBCEA, (unsigned int)trng::GetDataDelFile, replace);
+	ProcessInject(0x10114BF2, (unsigned int)trng::PrendiNumero, replace);
 }

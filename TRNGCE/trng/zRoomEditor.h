@@ -19,6 +19,7 @@ namespace trng {
 	char *SoloNomeSenzaExt(char FileName[]);
 	char * SoloNome(char FileName[]);
 	void GetDataDelFile(char *pNomeFile, FILETIME *pFileTime);
+	bool PrendiNumero(char *pTesto, int *pValore);
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace);

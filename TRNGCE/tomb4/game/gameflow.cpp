@@ -308,9 +308,11 @@ namespace tomb4
 				else if (n >= (long)gf_commands::CMD_KEYCOMBO1_1 && n <= (long)gf_commands::CMD_KEYCOMBO8_2)
 					n -= 101;
 				else if (n >= (long)gf_commands::CMD_PUZZLECOMBO1_1 && n <= (long)gf_commands::CMD_PUZZLECOMBO8_2)
-					n += 111;
+					n -= 145;
 				else if (n >= (long)gf_commands::CMD_PICKUPCOMBO1_1 && n <= (long)gf_commands::CMD_PICKUPCOMBO4_2)
 					n -= 113;
+				else
+					break;
 
 				inventry_objects_list[n].objname = gf[0] | (gf[1] << 8);
 				inventry_objects_list[n].yoff = gf[2] | (gf[3] << 8);

@@ -161,4 +161,8 @@ namespace trng {
 	// ---- COSTANTI NG-----------
 	inline constexpr int NG_LONG_CHECK = 0x454C474E;
 	inline constexpr int NG_SHORT_CHECK = 0x474E;
+
+	inline constexpr int PLUG_FROM_SCRIPT = 1;   // quelli memorizzati per comandi script customize e parameter
+	inline constexpr int PLUG_FROM_NGLE = 2;    // quelli memorizzati nel floor data preso da file .tr4
+	inline constexpr int PLUG_FROM_TRNG = 3;  // quelli scansditi e collegati in modo dinamico all'avvio di tomb4
 }
