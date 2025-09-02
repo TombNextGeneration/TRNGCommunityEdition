@@ -2236,5 +2236,14 @@ namespace tomb4
 		ushort FileNameLen;
 		ushort ScriptLen;
 	};
+
+	struct SORTLIST
+	{
+		float zVal;
+		short drawtype;
+		short tpage;
+		short nVtx;
+		short polytype;
+	};
 #pragma pack(pop)
 }

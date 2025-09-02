@@ -45,6 +45,7 @@ namespace tomb4
 	PHD_VECTOR &gfLoadCam = *reinterpret_cast<decltype(&gfLoadCam)>(0x533978);
 	PHD_VECTOR &gfLoadTarget = *reinterpret_cast<decltype(&gfLoadTarget)>(0x533984);
 	uchar &gfLoadRoom = *reinterpret_cast<decltype(&gfLoadRoom)>(0x4B0635);
+	uchar &gfInitialLegendTime = *reinterpret_cast<decltype(&gfInitialLegendTime)>(0x450F59);
 
 	void DoGameflow()
 	{
@@ -247,7 +248,7 @@ namespace tomb4
 				gf++;
 
 				if (gfGameMode != 4)
-					gfLegendTime = 150;
+					gfLegendTime = gfInitialLegendTime;
 
 				break;
 

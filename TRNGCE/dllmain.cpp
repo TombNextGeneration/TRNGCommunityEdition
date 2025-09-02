@@ -29,6 +29,7 @@
 #include "tomb4/game/gameflow.h"
 #include "tomb4/specific/output.h"
 #include "tomb4/specific/dxshell.h"
+#include "tomb4/specific/polyinsert.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -119,6 +120,7 @@ static void Inject(bool replace) {
 	Inject_Gameflow(replace);
 	Inject_Output(replace);
 	Inject_Dxshell(replace);
+	Inject_Polyinsert(replace);
 }
 
 static LPSTR __stdcall CallInject() {
