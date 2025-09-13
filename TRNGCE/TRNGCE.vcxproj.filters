@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="framework.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="trng\structures.h">
@@ -16,16 +15,7 @@
     <ClInclude Include="tomb4\game\croc.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
-    <ClInclude Include="tomb4\game\types.h">
-      <Filter>tomb4\game</Filter>
-    </ClInclude>
     <ClInclude Include="tomb4\game\lara.h">
-      <Filter>tomb4\game</Filter>
-    </ClInclude>
-    <ClInclude Include="tomb4\game\enums.h">
-      <Filter>tomb4\game</Filter>
-    </ClInclude>
-    <ClInclude Include="tomb4\game\math.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
     <ClInclude Include="tomb4\game\sound.h">
@@ -41,9 +31,6 @@
       <Filter>tomb4\specific</Filter>
     </ClInclude>
     <ClInclude Include="tomb4\specific\3dmath.h">
-      <Filter>tomb4\specific</Filter>
-    </ClInclude>
-    <ClInclude Include="tomb4\specific\math_tbls.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
     <ClInclude Include="tomb4\specific\file.h">
@@ -127,8 +114,56 @@
     <ClInclude Include="flep\patches\vehicles\minecart.h">
       <Filter>flep\patches\vehicles</Filter>
     </ClInclude>
-    <ClInclude Include="flep\patches\types.h">
-      <Filter>flep\patches</Filter>
+    <ClInclude Include="trng\zRoomEditor.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\types.h">
+      <Filter>tomb4</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\types.h">
+      <Filter>flep</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\math_tbls.h">
+      <Filter>tomb4</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\ListTr4Patch.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\plugin.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\winmain.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\dxshell.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\trng_weather.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\input.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\text.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\LoadSave.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\lara2gun.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\effects.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\audio.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\output.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\polyinsert.h">
+      <Filter>tomb4\specific</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +263,48 @@
     </ClCompile>
     <ClCompile Include="flep\patches\vehicles\minecart.cpp">
       <Filter>flep\patches\vehicles</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\zRoomEditor.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\ListTr4Patch.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\plugin.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\winmain.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\dxshell.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\trng_weather.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\input.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\text.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\LoadSave.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\lara2gun.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\effects.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\audio.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\output.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\polyinsert.cpp">
+      <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

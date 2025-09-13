@@ -1,5 +1,5 @@
 #pragma once
-#include "../game/types.h"
+#include "../types.h"
 
 namespace tomb4
 {

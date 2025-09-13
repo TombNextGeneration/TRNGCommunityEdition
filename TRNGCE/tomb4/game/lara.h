@@ -1,8 +1,9 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 namespace tomb4
 {
 	extern LARA_INFO &lara;
 	extern ITEM_INFO* &lara_item;
+	extern short &DashTimer;
 }

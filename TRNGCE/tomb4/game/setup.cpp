@@ -1,3 +1,4 @@
+#include "setup.h"
 #include "../../inject.h"
 
 namespace tomb4

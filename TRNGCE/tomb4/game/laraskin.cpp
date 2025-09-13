@@ -1,7 +1,10 @@
+#include "laraskin.h"
 #include "../../inject.h"
 
 namespace tomb4
 {
+	char (&HairSkinVertNums)[6][12] = *reinterpret_cast<decltype(&HairSkinVertNums)>(0x4ABDA0);
+
 	void CreateSkinningData()
 	{
 		__try { throw __func__; } __finally {}

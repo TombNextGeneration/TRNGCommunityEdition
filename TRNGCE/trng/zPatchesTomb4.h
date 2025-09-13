@@ -3,10 +3,14 @@
 
 namespace trng {
 	extern DWORD &OffsetPosLara;
+	extern StrBaseMemAllocata &BaseAlloc;
+	extern int &LivelloOldNumber;
+	extern int &GlobIndiceCombine;
 
-	void * MallocMine(DWORD Size, const char *pDescrizione);
-	bool FreeMine(void *pMemory);
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
+	bool FreeMine(void *pMemory);
+	void * MallocMine(DWORD Size, const char *pDescrizione);
+	void InitSlot(void);
 	void SetSlotMotorBoat(WORD SlotBoat, WORD SlotLaraBoat);
 	void SetSlotRubberBoat(WORD SlotBoat, WORD SlotLaraBoat);
 	void SetSlotMotorBikeLara(void);
@@ -15,13 +19,23 @@ namespace trng {
 	void InitSlotEnemySubMarine(void);
 	bool EsisteDirectCB(int CB_Numero, WORD Flags);
 	void RiassegnaAssignSlotNew(void);
-	void InitSlot(void);
-	bool IsNemicoEsploso(WORD SlotId);
 	WORD ConvertiSlotAssigned(WORD SlotNow);
-	bool SlotSempreAttivo(WORD Slot);
-	short DaSalvare(StrItemTr4 *pItem);
+	bool IsNemicoEsploso(WORD SlotId);
 	WORD ContaItemCreatiDaSalvare(void);
+	short DaSalvare(StrItemTr4 *pItem);
+	bool SlotSempreAttivo(WORD Slot);
 	void SalvaItemCreati(void);
+	void InizializzaAdrImmediati(void);
+	void InitCustomize(void);
+	void LeggiNG_LanguageDat(char *pNomeFile);
+	void DecryptDatString(char *pTesto);
+	void ImpostaScanCodeInputBox(void);
+	DWORD GetValoreHex(char *pStringaHex, bool *pTestErrore);
+	void * ReallocMine(void * pOldMem, DWORD NewSize, const char *pDescrizione);
+	void ImpostaCapelliLara(WORD *pFlagLivello);
+	void RestorePriorita(void);
+	void SalvaDimensioneSchermo(void);
+	void PreparaBarCust(void);
 }
 
-void Inject_ZPatchesTomb4(bool replace);
+void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

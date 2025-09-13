@@ -1,5 +1,5 @@
+#include "objects.h"
 #include "../../inject.h"
-#include "types.h"
 
 namespace tomb4
 {

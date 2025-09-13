@@ -1,6 +1,6 @@
 #pragma once
 #include "structures.h"
-#include "../tomb4/game/types.h"
+#include "../tomb4/types.h"
 
 namespace trng {
 	void ProcMyBridgeFloor(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);
@@ -15,6 +15,14 @@ namespace trng {
 	void TriggerFish(short ItemIndex);
 	void TorpedoControl(short item_number);
 	void DiverControl(short item_number);
+	void CreaFinestraAvviso(void);
+	bool IsModoWindowed(void);
+	void CreaBlackWindow(void);
+	long FAR PASCAL WindowBlackProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void DisattivaAnimWindow(void);
+	void NascondiTaskBar(void);
+	HFONT CreaWindowsFontForCB(StrWindowsFont *pFont, bool TestNoResize);
+	HFONT CreaWindowsFont(StrWindowsFont *pFont, bool TestNoResize);
 }
 
-void Inject_Oggetti(bool replace);
+void LoadTombNextGenerationInject_Oggetti(bool replace);

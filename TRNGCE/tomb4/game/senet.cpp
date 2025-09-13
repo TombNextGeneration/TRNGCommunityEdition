@@ -1,3 +1,5 @@
+#include "senet.h"
+
 namespace tomb4
 {
 	short (&senet_item)[6] = *reinterpret_cast<decltype(&senet_item)>(0x4BF2D8);

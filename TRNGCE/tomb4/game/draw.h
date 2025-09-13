@@ -1,10 +1,12 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 namespace tomb4
 {
 	extern STATIC_INFO (*&static_objects)[(long)static_types::NUMBER_STATIC_OBJECTS];
-#define static_objects (*static_objects)
+#define static_objects (*tomb4::static_objects)
+	extern ushort (&LightningRGB)[3];
+	extern ushort (&LightningRGBs)[3];
 
 	short* GetBoundsAccurate(ITEM_INFO* item);
 	void DrawAnimatingItem(ITEM_INFO* item);

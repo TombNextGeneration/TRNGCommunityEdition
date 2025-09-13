@@ -1,5 +1,5 @@
+#include "quadbike.h"
 #include "../../../inject.h"
-#include "../../../tomb4/game/types.h"
 
 namespace flep
 {

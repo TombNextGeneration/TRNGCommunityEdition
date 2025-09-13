@@ -1,10 +1,13 @@
+#include "draw.h"
 #include "../../inject.h"
-#include "types.h"
 
 namespace tomb4
 {
+#undef static_objects
 	STATIC_INFO (*&static_objects)[(long)static_types::NUMBER_STATIC_OBJECTS] = *reinterpret_cast<decltype(&static_objects)>(0x4730B5);
-#define static_objects (*static_objects)
+#define static_objects (*tomb4::static_objects)
+	ushort (&LightningRGB)[3] = *reinterpret_cast<decltype(&LightningRGB)>(0x7FD1D8);
+	ushort (&LightningRGBs)[3] = *reinterpret_cast<decltype(&LightningRGBs)>(0x7FE010);
 
 	short* GetBoundsAccurate(ITEM_INFO* item)
 	{
