@@ -11,6 +11,7 @@ namespace tomb4
 	long &malloc_free = *reinterpret_cast<decltype(&malloc_free)>(0x7E70C4);
 	char* &malloc_ptr = *reinterpret_cast<decltype(&malloc_ptr)>(0x7E70AC);
 	char* &malloc_buffer = *reinterpret_cast<decltype(&malloc_buffer)>(0x7E70D4);
+	PHD_VECTOR &CamRot = *reinterpret_cast<decltype(&CamRot)>(0x7E70B0);
 
 	long GetRandomControl()
 	{
@@ -60,6 +61,11 @@ namespace tomb4
 			return ptr;
 		}
 	}
+
+	void S_CDLoop()
+	{
+
+	}
 }
 
 void Inject_FunctionStubs(bool replace)
@@ -70,4 +76,5 @@ void Inject_FunctionStubs(bool replace)
 	ProcessInject(0x48EBA0, (unsigned int)tomb4::SeedRandomDraw, replace);
 	ProcessInject(0x499EC0, (unsigned int)tomb4::Log, false);
 	ProcessInject(0x48EBF0, (unsigned int)tomb4::game_malloc, replace);
+//	ProcessInject(0x425D20, (unsigned int)tomb4::S_CDLoop, replace);
 }

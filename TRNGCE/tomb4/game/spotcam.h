@@ -8,4 +8,9 @@ namespace tomb4
 #define SpotCam (*tomb4::SpotCam)
 	extern long &bUseSpotCam;
 	extern long &bDisableLaraControl;
+	extern long &bTrackCamInit;
+
+	void CalculateSpotCams();
 }
+
+void Inject_Spotcam(bool replace);

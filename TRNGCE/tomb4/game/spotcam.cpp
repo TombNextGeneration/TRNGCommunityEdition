@@ -1,4 +1,5 @@
 #include "spotcam.h"
+#include "../../inject.h"
 
 namespace tomb4
 {
@@ -8,4 +9,15 @@ namespace tomb4
 #define SpotCam (*tomb4::SpotCam)
 	long &bUseSpotCam = *reinterpret_cast<decltype(&bUseSpotCam)>(0x4BF5BC);
 	long &bDisableLaraControl = *reinterpret_cast<decltype(&bDisableLaraControl)>(0x4BF5C0);
+	long &bTrackCamInit = *reinterpret_cast<decltype(&bTrackCamInit)>(0x4BF5B4);
+
+	void CalculateSpotCams()
+	{
+		__try { throw __func__; } __finally {}
+	}
+}
+
+void Inject_Spotcam(bool replace)
+{
+	ProcessInject(0x45FE50, (unsigned int)tomb4::CalculateSpotCams, false);
 }

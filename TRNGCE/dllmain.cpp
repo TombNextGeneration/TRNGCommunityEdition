@@ -30,6 +30,20 @@
 #include "tomb4/specific/output.h"
 #include "tomb4/specific/dxshell.h"
 #include "tomb4/specific/polyinsert.h"
+#include "tomb4/game/control.h"
+#include "tomb4/game/pickup.h"
+#include "tomb4/specific/input.h"
+#include "tomb4/game/newinv.h"
+#include "tomb4/game/effect2.h"
+#include "tomb4/game/items.h"
+#include "tomb4/game/box.h"
+#include "tomb4/game/laramisc.h"
+#include "tomb4/game/hair.h"
+#include "tomb4/game/spotcam.h"
+#include "tomb4/game/debris.h"
+#include "tomb4/game/scarab.h"
+#include "tomb4/game/text.h"
+#include "tomb4/game/effects.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -121,6 +135,20 @@ static void Inject(bool replace) {
 	Inject_Output(replace);
 	Inject_Dxshell(replace);
 	Inject_Polyinsert(replace);
+	Inject_Control(replace);
+	Inject_Pickup(replace);
+	Inject_Input(replace);
+	Inject_Newinv(replace);
+	Inject_Effect2(replace);
+	Inject_Items(replace);
+	Inject_Box(replace);
+	Inject_Laramisc(replace);
+	Inject_Hair(replace);
+	Inject_Spotcam(replace);
+	Inject_Debris(replace);
+	Inject_Scarab(replace);
+	Inject_Text(replace);
+	Inject_Effects(replace);
 }
 
 static LPSTR __stdcall CallInject() {

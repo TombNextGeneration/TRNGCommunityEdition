@@ -9,4 +9,8 @@ namespace tomb4
 	extern long &GLOBAL_inventoryitemchosen;
 	extern long &GLOBAL_enterinventory;
 	extern long &InventoryActive;
+
+	long S_CallInventory2();
 }
+
+void Inject_Newinv(bool replace);

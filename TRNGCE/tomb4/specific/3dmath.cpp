@@ -35,10 +35,22 @@ namespace tomb4
 	{
 		phd_mxptr -= (long)matrix_indices::indices_count;
 	}
+
+	void AlterFOV(short fov)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	ulong mGetAngle(long x, long z, long x1, long z1)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_3dmath(bool replace)
 {
 	ProcessInject(0x48DF00, (unsigned int)tomb4::phd_sqrt, false);
 	ProcessInject(0x48E710, (unsigned int)tomb4::phd_GetVectorAngles, false);
+	ProcessInject(0x48D660, (unsigned int)tomb4::AlterFOV, false);
+	ProcessInject(0x48D9C0, (unsigned int)tomb4::mGetAngle, false);
 }

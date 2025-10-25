@@ -165,6 +165,39 @@
     <ClInclude Include="tomb4\specific\polyinsert.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\game\pickup.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\deltapak.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\gamemain.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\effect2.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\sphere.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\items.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\box.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\laramisc.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\hair.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\debris.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\health.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -305,6 +338,39 @@
     </ClCompile>
     <ClCompile Include="tomb4\specific\polyinsert.cpp">
       <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\pickup.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\deltapak.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\gamemain.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\effect2.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\sphere.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\items.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\box.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\laramisc.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\hair.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\debris.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\health.cpp">
+      <Filter>tomb4\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

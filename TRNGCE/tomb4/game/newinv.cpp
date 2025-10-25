@@ -1,4 +1,5 @@
 #include "newinv.h"
+#include "../../inject.h"
 
 namespace tomb4
 {
@@ -8,4 +9,14 @@ namespace tomb4
 	long &GLOBAL_inventoryitemchosen = *reinterpret_cast<decltype(&GLOBAL_inventoryitemchosen)>(0x4AC064);
 	long &GLOBAL_enterinventory = *reinterpret_cast<decltype(&GLOBAL_enterinventory)>(0x4AC060);
 	long &InventoryActive = *reinterpret_cast<decltype(&InventoryActive)>(0x4BF2A0);
+
+	long S_CallInventory2()
+	{
+		__try { throw __func__; } __finally {}
+	}
+}
+
+void Inject_Newinv(bool replace)
+{
+	ProcessInject(0x43B0F0, (unsigned int)tomb4::S_CallInventory2, false);
 }

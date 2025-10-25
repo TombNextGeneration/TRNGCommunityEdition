@@ -34,6 +34,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void AnimateWaterfalls()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Objects(bool replace)
@@ -44,4 +49,5 @@ void Inject_Objects(bool replace)
 	ProcessInject(0x455420, (unsigned int)tomb4::BridgeTilt1Ceiling, false);
 	ProcessInject(0x455460, (unsigned int)tomb4::BridgeTilt2Floor, false);
 	ProcessInject(0x4554B0, (unsigned int)tomb4::BridgeTilt2Ceiling, false);
+	ProcessInject(0x4558B0, (unsigned int)tomb4::AnimateWaterfalls, false);
 }
