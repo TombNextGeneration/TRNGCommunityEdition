@@ -7,6 +7,7 @@ namespace tomb4
 	extern long &phd_winwidth;
 	extern long &phd_winheight;
 	extern float &FogStart;
+	extern short &phd_winxmax;
 
 	ulong phd_sqrt(ulong num);
 	void phd_GetVectorAngles(long x, long y, long z, short* angles);

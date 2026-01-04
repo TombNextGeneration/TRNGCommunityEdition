@@ -5,7 +5,7 @@ namespace tomb4
 {
 	extern SoundSlot (&LaSlot)[32];
 
-	long SoundEffect(sound_effect_names sfx, PHD_3DPOS* pos, sfx_options flags);
+	long SoundEffect(long sfx, PHD_3DPOS* pos, long flags);
 	void SayNo();
 }
 

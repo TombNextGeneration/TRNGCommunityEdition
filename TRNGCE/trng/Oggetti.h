@@ -23,6 +23,8 @@ namespace trng {
 	void NascondiTaskBar(void);
 	HFONT CreaWindowsFontForCB(StrWindowsFont *pFont, bool TestNoResize);
 	HFONT CreaWindowsFont(StrWindowsFont *pFont, bool TestNoResize);
+	int LeggiVariabile(WORD CodiceVariabile);
+	const char *GetNomeVariabile(WORD Codice);
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace);

@@ -22,9 +22,7 @@ namespace tomb4
 	short* &frames = *reinterpret_cast<decltype(&frames)>(0x533954);
 	long &number_cameras = *reinterpret_cast<decltype(&number_cameras)>(0x7FE820);
 	short &nAIObjects = *reinterpret_cast<decltype(&nAIObjects)>(0x7FD0E0);
-#define THREAD THREAD_
-	THREAD &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
-#undef THREAD
+//	THREAD &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
 
 	bool LoadObjects()
 	{
@@ -37,8 +35,8 @@ namespace tomb4
 		long size, num, slot;
 
 		Log(2, "LoadObjects");
-		memset(objects, 0, sizeof(OBJECT_INFO) * (long)object_types::NUMBER_OBJECTS);
-		memset(static_objects, 0, sizeof(STATIC_INFO) * (long)static_types::NUMBER_STATIC_OBJECTS);
+		memset(objects, 0, sizeof(OBJECT_INFO) * NUMBER_OBJECTS);
+		memset(static_objects, 0, sizeof(STATIC_INFO) * NUMBER_STATIC_OBJECTS);
 
 		size = *(long*)FileData;
 		FileData += sizeof(long);
@@ -133,7 +131,7 @@ namespace tomb4
 
 		CreateSkinningData();
 
-		for (int i = 0; i < (long)object_types::NUMBER_OBJECTS; i++)
+		for (int i = 0; i < NUMBER_OBJECTS; i++)
 		{
 			obj = &objects[i];
 			obj->mesh_index *= 2;
@@ -178,7 +176,7 @@ namespace tomb4
 			FileData += sizeof(short);
 		}
 
-		for (int i = 0; i < (long)static_types::NUMBER_STATIC_OBJECTS; i++)
+		for (int i = 0; i < NUMBER_STATIC_OBJECTS; i++)
 		{
 			stat = &static_objects[i];
 			stat->mesh_number *= 2;

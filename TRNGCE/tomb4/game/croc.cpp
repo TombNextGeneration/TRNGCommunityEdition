@@ -64,8 +64,8 @@ namespace tomb4
 
 				phd_GetVectorAngles(lara_item->pos.x_pos + (fx->XTarget << 3) - fx->pos.x_pos, lara_item->pos.y_pos - fx->LaraTarget - fx->pos.y_pos, lara_item->pos.z_pos + (fx->ZTarget << 3) - fx->pos.z_pos, angles);
 
-				ox = SQUARE(lara_item->pos.x_pos - fx->pos.x_pos);
-				oz = SQUARE(lara_item->pos.z_pos - fx->pos.z_pos);
+				ox = (lara_item->pos.x_pos - fx->pos.x_pos) * (lara_item->pos.x_pos - fx->pos.x_pos);
+				oz = (lara_item->pos.z_pos - fx->pos.z_pos) * (lara_item->pos.z_pos - fx->pos.z_pos);
 
 				if (ox + oz < closestdist)
 				{
@@ -140,7 +140,7 @@ namespace tomb4
 		if (closestnum != -1)
 		{
 			fx = &Locusts[closestnum];
-			SoundEffect(sound_effect_names::SFX_LOCUSTS_LOOP, &fx->pos, sfx_options::SFX_DEFAULT);
+			SoundEffect(SFX_LOCUSTS_LOOP, &fx->pos, SFX_DEFAULT);
 		}
 	}
 }

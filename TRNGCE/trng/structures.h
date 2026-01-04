@@ -1574,6 +1574,153 @@ namespace trng {
 	inline constexpr int INV_SCRIVI_NO_BIT = 4;
 	inline constexpr int INV_LEGGI_NO_BIT = 5;
 
+	// flag for recording/playing demog
+	inline constexpr int RECF_STOP = 0;
+	inline constexpr int RECF_RECORDING = 1;
+	inline constexpr int RECF_PLAYING = 2;
+
+	// costanti per singole operazioni che devono essere eseguite una volta
+	inline constexpr int ON_NONE = 0;
+	inline constexpr int ON_SAVE_BACKGAME = 1;
+	inline constexpr int ON_LOAD_BACKGAME = 2;
+	inline constexpr int ON_SHOW_SCREEN_AT_START = 3;
+	inline constexpr int ON_WAIT_AND_HIDE = 4;
+	inline constexpr int ON_WAIT_ESCAPE = 6;
+
+	// flag per cutscene camera
+	inline constexpr int FTC_NONE = 0;
+	inline constexpr int FTC_LEADING_LOOK_LARA = 0x0001;
+	inline constexpr int FTC_EXTRA_LOOK_LARA = 0x0002;
+	inline constexpr int FTC_LARA_LOOK_LEADING = 0x0004;
+	inline constexpr int FTC_LARA_LOOK_EXTRA = 0x0008;
+
+	// flag for param_speech_actor
+	inline constexpr int SPCF_OLD_SPEECH_SLOTS = 0x0001;
+	inline constexpr int SPCF_LOOP = 0x0002;
+	inline constexpr int SPCF_FREEZE_HAIR = 0x0004;
+
+	inline constexpr int DEMO_FRAME = 0x0800;
+
+	// speech commands
+
+	inline constexpr int SPC_MESH = 0x0000;  // + numero mesh
+	inline constexpr int SPC_SYLL = 0x1000;
+	inline constexpr int SPC_TEXT = 0x2000;
+	inline constexpr int SPC_SEQUENCE = 0x3000;
+	inline constexpr int SPC_PAUSE = 0x4000;
+	inline constexpr int SPC_LOOK_RIGHT = 0x5000;
+	inline constexpr int SPC_LOOK_LEFT = 0x6000;
+	inline constexpr int SPC_LOOK_UP = 0x7000;
+	inline constexpr int SPC_LOOK_DOWN = 0x8000;
+	inline constexpr int SPC_HEAD_SHAKE = 0x9000;
+	inline constexpr int SPC_HEAD_NOD = 0xA000;
+	inline constexpr int SPC_PLAY_SFX = 0xB000;
+	inline constexpr int SPC_ANIMATION = 0xC000;
+	inline constexpr int SPC_PLAY_CD = 0xD000;
+	inline constexpr int SPC_PERFORM_TG = 0xE000;
+	inline constexpr int SPC_NEXT_STATEID = 0xF000;
+	inline constexpr int SPC_MASK_COMMANDS = 0xF000;
+	inline constexpr int SPC_MASK_FRAMES = 0x0FC0;
+	inline constexpr int SPC_MASK_MESH = 0x003F;
+	inline constexpr int SPC_MASK_SINGLE = 0x0FFF;
+	inline constexpr int SPC_MASK_PAUSE = 0x07FF;
+
+	inline constexpr int SCANF_HEAVY = 0x100;  // Only for SCANF_FLOOR_DATA
+	inline constexpr int SCANF_TEMP_ONE_SHOT = 0x200;  // internal setting to stop trigger until lara is yet standing on same sector
+	inline constexpr int SCANF_BUTTON_ONE_SHOT = 0x400;  // one-shot button of the trigger. Only with SCANF_FLOOR_DATA
+	inline constexpr int SCANF_YET_TO_PERFORM = 0x800;  // internal setting to remember this trigger has yet to be performed
+	inline constexpr int SCANF_SCRIPT_TRIGGER = 0x1000; // trigger read from triggergroup of script.dat
+	inline constexpr int SCANF_DIRECT_CALL = 0x2000; // trigger has been called from code in direct way
+	inline constexpr int SCANF_FLOOR_DATA = 0x4000;  // trigger has been read directly from floor data of tr4 file
+	inline constexpr int SCANF_ANIM_COMMAND = 0x8000; // trigger has been called from an animcommand of some animation
+
+	// Trigger RETurn values for flipeffect and action callbacks
+	inline constexpr int TRET_PERFORM_ALWAYS = 0;   // let enabled, the trigger, it will be continuosly performed until lara is over it
+	inline constexpr int TRET_PERFORM_ONCE_AND_GO = 1; // disable temporary further executions until lara is yet on this sector
+	inline constexpr int TRET_PERFORM_NEVER_MORE = 2;  // disable forever this trigger on this sector (single-shot)
+	inline constexpr int TRET_EXECUTE_ORIGINAL = 3; // used only with CBT_REPLACE to change idea and let execution of original code, in this way the CBT_REPLACE becomes dinamically a CBT_FIRST callback
+
+	// flags per importfile type
+	inline constexpr int FTYPE_USERFILE = 1;
+	inline constexpr int FTYPE_SOUND = 2;
+	inline constexpr int FTYPE_SETTINGS = 3;
+
+	// commands for TGROUP_COMMAND script flag
+	inline constexpr int TCMD_GOTO = 1;   // go to Index trigger of current TriggerGroup
+	inline constexpr int TCMD_EXIT = 2;   // quit from current triggergroup, returning the value true/false (1/0) in conditions
+	inline constexpr int TCMD_SET_TIMER = 3;   // 0/255 used only with Flipeffects
+	inline constexpr int TCMD_SET_FULL_TIMER = 4;   // 0/32767 used only with flipeffect having NO (E)xtra argument
+	inline constexpr int TCMD_SET_EXTRA_TIMER = 5;   // 0/127 used with flipeffects and Action triggers
+	inline constexpr int TCMD_SET_EXTRA_CONDITION = 6;   // 0/31 used only with conditons. It is the (E)xtra argument
+	inline constexpr int TCMD_SET_OBJECT = 7;   // 0/4095 used with conditions and action triggers
+	inline constexpr int TCMD_LOG = 8;   // enable/disable the script log
+	inline constexpr int TCMD_PAUSE = 9;   // feeze the game for a given microseconds or wait for user input (scancode)
+	inline constexpr int TCMD_TIMER_FIELD = 10;
+	inline constexpr int TCMD_MAX_ID = 11; // limit of TCMD values ATTENZIONE: DUPLICATO PER ROOM EDITOR
+
+	// flag gestione demo FGD_...
+	inline constexpr int FDG_NONE = 0;
+	inline constexpr int FDG_START = 0x0001;
+	inline constexpr int FDG_END = 0x0002;
+	inline constexpr int FDG_END_FOR_ESCAPE = 0x0004;
+	inline constexpr int FDG_END_FOR_TRIGGER = 0x0008;  //required stot demo via trigger
+	inline constexpr int FDG_FROM_TITLE = 0x0010;  // demo launched from title demo
+	inline constexpr int FDG_IN_PROGRESS = 0x0020; // in the midle of playing
+
+	// flag per organizer
+	inline constexpr int FO_ENABLED = 0x0001;
+	inline constexpr int FO_LOOP = 0x0002;
+	inline constexpr int FO_TICK_TIME = 0x0004;
+	inline constexpr int FO_DEMO_ORGANIZER = 0x0008;
+
+	// flags for extra activity off normal game
+	inline constexpr int SKIP_NONE = 0x0000;
+	inline constexpr int SKIP_FIXED_CAMERA = 0x0001;
+	inline constexpr int SKIP_FLY_CAMERA = 0x0002;
+	inline constexpr int SKIP_LOADING_LEVEL = 0x0004;
+	inline constexpr int SKIP_FADE = 0x0008;
+	inline constexpr int SKIP_TITLE_LEVEL = 0x0010;
+	inline constexpr int SKIP_GRAY_SCREEN = 0x0020;  // pause, inventory load/save game from the game
+	inline constexpr int SKIP_NO_VIEW_OGGETTI = 0x0040;
+	inline constexpr int SKIP_BINOCULARS = 0x0080;
+	inline constexpr int SKIP_LASER_SIGHT = 0x0100;
+	inline constexpr int SKIP_FULL_IMAGE = 0x200; // creata da trng
+
+	inline constexpr int VAR_TYPE_TEXT = 0x0020;  // --10 ----
+	inline constexpr int VAR_TYPE_LOCAL = 0x0040;  // 64
+	inline constexpr int VAR_TYPE_BYTE = 0x0000;  //  0
+	inline constexpr int VAR_TYPE_SHORT = 0x0010;  // 16
+	inline constexpr int VAR_TYPE_LONG = 0x0030;  // 48
+	inline constexpr int VAR_TYPE_STORE = 0x0100;  // e' un tipo di variabile store
+	inline constexpr int VAR_TYPE_INPUT_NUMBER = 0x0200;  // variabile numerica LastInputNumber
+	inline constexpr int VAR_TYPE_INPUT_TEXT = 0x0400; // ultimo testo inserito da utente
+	inline constexpr int VAR_TYPE_CURRENT_VALUE = 0x0800; // variabile speciale current value
+	inline constexpr int VAR_TYPE_BIG_TEXT = 0x1000; // variable speciale big text
+	// used only to add to 0/15 values for specific long type store variables
+	inline constexpr int VAR_TYPE_LONG_STORE = 0x1c0;
+
+	inline constexpr int STORE_MASK_INDEX = 0x003F; // indice
+	inline constexpr int STORE_MASK_SIZE = 0x00C0;  // tipo size byte, short, long
+
+	inline constexpr int STORE_TYPE_BYTE = 0x0040;
+	inline constexpr int STORE_TYPE_SHORT = 0x0080;
+	inline constexpr int STORE_TYPE_LONG = 0x00C0;
+
+	// costanti per accedere a variabili (BaseVariabili)
+	inline constexpr int VAR_MASK_TYPE = 0x0070;  // -111 ----
+	inline constexpr int VAR_MASK_SIZE = 0x0030;  // --11 ----
+	inline constexpr int VAR_MASK_INDEX = 0x000F;  // ---- 1111
+
+	// Condition Trigger RETurn values for callback of conditional trigger
+	inline constexpr int CTRET_IS_TRUE = 0x0001; // condition is true. se this value is missing then it will be false
+	inline constexpr int CTRET_EXTRA_PARAM = 0x0002; // this condition trigger had an Extra parameter
+	inline constexpr int CTRET_ON_MOVEABLE = 0x0004;   // this condition trigger worked on a moveable
+	inline constexpr int CTRET_PERFORM_ALWAYS = 0x0008; // peforming: Perform continuosly this condition
+	inline constexpr int CTRET_ONLY_ONCE_ON_TRUE = 0x0010; // (suggested) Next peforming: No more performing until lara is over this sector and the condition was true
+	inline constexpr int CTRET_NEVER_MORE_ON_TRUE = 0x0020; // Next peforming: No more performing forever if the condition was true
+	inline constexpr int CTRET_PERFORM_ONCE_AND_GO = 0x040; // No more performing until lara is over this sector, no matter if the conditon was true or false
+	inline constexpr int CTRET_EXECUTE_ORIGINAL = 0x0080;  // Only for CBT_REPLACE and CBT_AFTER callbacks.  it lets to original trng code the target to return a response.
+
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
 #pragma pack(push, 1)
@@ -5431,7 +5578,7 @@ namespace trng {
 		SalvaSliderInput SliderSfx;
 		StrAnchoredBoat BoatAnchored;
 		DWORD LastTimeBinoculars; // to stop inventory when exiting from binoculars
-		char *pMexLastTGCaller; // text about who called last time triggergroup() procedure (for diagnostic)
+		const char *pMexLastTGCaller; // text about who called last time triggergroup() procedure (for diagnostic)
 		StrItemTr4 *pItemAdrToIgnoreLOF;  // Adr structure to ignore in the objectonlos2() procedure (or NULL=0)
 		StrRecording *pBaseDemo;  // to record or play demo
 		StrMyDirectInput BaseDirectInputMine; // to temporize fake direct input outside of common game
@@ -5595,6 +5742,10 @@ namespace trng {
 	struct StrEndNgHeader {
 		DWORD EndCheck;  // it should be number 0x454C474E ( "NGLE")
 		DWORD SizeNgHeader; // size of whole extra ng header
+	};
+
+	struct StrListaWav {
+		char Testo[64];
 	};
 #pragma pack(pop)
 }

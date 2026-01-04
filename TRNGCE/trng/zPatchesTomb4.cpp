@@ -122,7 +122,7 @@ namespace trng {
 		if (pAssign->IndiceRubberBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
 			// inizializzare slot per RUBBER BOAT da assign slot
 
-			SetSlotRubberBoat(pAssign->IndiceRubberBoat , pAssign->IndiceAnimRubberBoat);
+			SetSlotRubberBoat(pAssign->IndiceRubberBoat, pAssign->IndiceAnimRubberBoat);
 		}
 
 		if (pAssign->IndiceMotorBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
@@ -167,7 +167,7 @@ namespace trng {
 			i = pSlotNow->Flags;
 			i |= 0x2c78;
 			pSlotNow->Flags = i;
-			pSlotNow->ShatterableMeshes  = 6;
+			pSlotNow->ShatterableMeshes = 6;
 			pSlotNow->pProcInitialise = &InitialiseGuardian;
 			pSlotNow->pProcControl = &GuardianControl;
 			pSlotNow->pProcCollision = tomb4::CreatureCollision;
@@ -628,7 +628,7 @@ namespace trng {
 		GlobTomb4.pAdr->p2CurrentEnemyTarget = (StrItemTr4 **) &tomb4::lara.target;
 		GlobTomb4.pAdr->pWeaponSelected = (WORD *) &tomb4::lara.last_gun_type;
 		GlobTomb4.pAdr->pDashBarValue = &tomb4::DashTimer;
-		GlobTomb4.pAdr->pVetDrip = &tomb4::lara.electric;
+		GlobTomb4.pAdr->pVetDrip = tomb4::lara.drip;
 		GlobTomb4.pAdr->pWeaponHolding = &tomb4::lara.weapon_item;
 		GlobTomb4.pAdr->pInputExtGameCommands = (DWORD*) &tomb4::linput;
 		GlobTomb4.pAdr->pLaraIndex = (WORD *) &tomb4::lara.item_number;
@@ -1557,6 +1557,343 @@ namespace trng {
 			}
 		}
 	}
+
+	// suona un cd con bass senza usare in alcun
+	// modo, ne' influenzare, la gestione dei suoni di tomb
+	// il numero di canale dovrebbe partire da 2 fino a 4
+	void PlayExtraCD(short NumeroCd, int Canale, int Loop)
+	{
+		if (GlobTomb4.BaseBassHandles.TestPresente == false)
+			return;
+		GlobTomb4.BaseBassHandles.CanaleNow = Canale;
+		GestioneCdPlay(NumeroCd, Loop);
+	}
+
+	// sostituisce S_CDPlay quando e' attivo bass
+	// puo' essere chiamata direttamnte da codice tomb4
+	// o da miei flipeffect
+	// se in NumeroCd c'e' il bit 0x4000 attivo vuol dire che l'indice
+	// riguarda un file Preload di script.dat
+	// usa sempre il primo canale, a meno che:
+	// il suono non sia di tipo loop=0
+	// oppure
+	// e' stato impostato il valore "1"  in GlobTomb4.Basess.CanaleNow
+	// se c'era gia' un suono nel canale usato effettua un fadeout
+	// per il suono precedente.
+	// NOTA: chiamata da ogni parte del codice e questa funzione gestisce le callback per la funzione
+	// effettiva SubGestionePlayCd()
+	void GestioneCdPlay(short NumeroCd, int Loop)
+	{
+		int IndiceCanale;
+		int IndiceSuono;
+		char NomeFile[80];
+		int i;
+		DWORD Flags;
+		StrImportFile *pImpFile;
+		int FadeOut;
+		int j;
+		StrCanaleBass *pCanale;
+		StrBassHandles *pBass;
+		bool TestImport;
+		StrBaseImportFile *pImport;
+		StrListaWav *pVetNomiTracce;
+
+		if (NumeroCd == 130) {
+			j = 0;
+		}
+		pVetNomiTracce = tomb4::TrackFileNames;
+		AggiornaVolumeBass();
+
+		pBass = &GlobTomb4.BaseBassHandles;
+		IndiceCanale = 0;
+		if (GlobTomb4.pBaseCustomize->TestOldCDTrigger == false) {
+			if (Loop == 0)
+				IndiceCanale = 1;
+		}
+		if (pBass->CanaleNow) {
+			IndiceCanale = pBass->CanaleNow & 0x3f;
+		}
+
+		if (NumeroCd == -1) {
+			StopBassSuoni(IndiceCanale);
+			pBass->CanaleNow = 0;
+			return;
+		}
+
+		pCanale = &pBass->VetCanali[IndiceCanale];
+		if (NumeroCd & 0x4000) {
+			TestImport = true;
+		} else {
+			// non e' import, pero' se c'e' tra i file import un file audio con lo stesso numero
+			// impostare adesso come fosse di tipo import
+			pImpFile = &GlobTomb4.BaseImportedFiles.VetFiles[0];
+			for (i = 0; i < GlobTomb4.BaseImportedFiles.TotFiles; i++) {
+				if (pImpFile->Tipo == FTYPE_SOUND && pImpFile->NumeroFile == NumeroCd)
+					break;
+				pImpFile++;
+			}
+			if (i == GlobTomb4.BaseImportedFiles.TotFiles) {
+				TestImport = false;
+			} else {
+				// convertire l'indice in ID
+				for (j = 0; j < MAX_IMPORT_FILES * 10; j++) {
+					if (GlobTomb4.BaseImportedFiles.VetID[j] == i)
+						break;
+				}
+
+				NumeroCd = 0x4000 | j;
+				TestImport = true;
+			}
+		}
+		// ora eseguire su canale IndiceCanale
+		IndiceSuono = NumeroCd & 0x3fff;
+
+		// qui si dovrebbe fare analisi per estensione di default
+		// e anche per uso di suono precaricato
+		if (TestImport == false) {
+			sprintf_s(NomeFile, "audio\\%s", pVetNomiTracce[IndiceSuono].Testo);
+		}
+
+		// se canale e' gia' attivo fare il fade out
+		// azzerare valore di canale now per la prossima richiesta
+		pBass->CanaleNow = 0;
+
+		// se era attivo il canale chiuderlo con fade-out
+
+		if (pCanale->Canale) {
+			// se era gia' attivo lo stesso cd in modo loop uscire subito
+			if (pCanale->NumeroCd == NumeroCd && pCanale->Loop)
+				return;
+
+			FadeOut = GlobTomb4.pBaseCustomize->BassDll.TimeFadeOutCorto;
+
+			pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, (float) -0.02, FadeOut);
+			// togliere attributo loop per far si che si chiuda da solo
+			pBass->Proc.BASS_ChannelFlags(pCanale->Canale, 0, BASS_SAMPLE_LOOP);
+		}
+
+		if (Loop)
+			Flags = BASS_SAMPLE_LOOP;
+		else
+			Flags = 0;
+
+		if (TestImport == true) {
+			pImport = &GlobTomb4.BaseImportedFiles;
+			i = pImport->VetID[IndiceSuono];
+
+			if (i == -1) {
+
+				InviaLog("Cann't find imported file");
+
+				return;
+			}
+			// usare dati id import file = i
+			pImpFile = &pImport->VetFiles[i];
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE + Flags);
+			if (pBass->StartOffset > 0) {
+				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
+			}
+		} else {
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE + Flags);
+			if (pBass->StartOffset > 0) {
+				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
+			}
+			if (IndiceCanale == 0 && Loop != 0) {
+				*GlobTomb4.pAdr->pAudioTrackLoop = IndiceSuono;
+				*GlobTomb4.pAdr->pTestAudioTrackLoop = 1;
+			}
+		}
+
+		if (GlobTomb4.pBaseCustomize->TestOldCDTrigger == true) {
+			if (IndiceCanale == 0 && pCanale->Loop != 0) {
+				pBass->OldCdLoop = pCanale->NumeroCd;
+			}
+		}
+
+		pBass->StartOffset = 0;
+
+		if (pCanale->Canale == 0) {
+			ShowBASSErrore(NomeFile);
+			return;
+		}
+
+		if (pCanale->Canale) {
+			pCanale->NumeroCd = NumeroCd;
+			pCanale->Loop = Loop;
+		}
+		// imposta volume con crescita di fadeout
+		pBass->Proc.BASS_ChannelSetAttribute(pCanale->Canale, BASS_ATTRIB_VOL, 0.1f);
+
+		pBass->Proc.BASS_ChannelPlay(pCanale->Canale, 0);
+
+		// ora fare slid per farlo crescere fino al massimo
+		pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, pBass->VolumeMusica, GlobTomb4.pBaseCustomize->BassDll.TimeFadeOutCorto);
+
+		// qui nella patch del trep si crerava un synt con call back
+		// poi provare a vedere a che serve
+	}
+
+	// legge il contenuto di tomb4 per il volume e lo converte in float
+	// e lo salva basebass
+	// non viene effettuata alcuna chiamata di funzione
+	void AggiornaVolumeBass(void)
+	{
+		GlobTomb4.BaseBassHandles.VolumeMusica = *GlobTomb4.pAdr->pSetting_MusicVolume / (float) 100;
+	}
+
+	// se bass.dll e'attiva chiude i suoni bass
+	// se invece non e' attiva chiama il normale S_CDStop()
+	// iusare -1 come numero canale per chiudere tutto
+	// oppure 0 per primo canale e 1 per il secondo
+	void StopBassSuoni(int NumeroCanale)
+	{
+		StrBassHandles *pBass;
+		DWORD FadeOut;
+		int i;
+		StrCanaleBass *pCanale;
+		int Inizio, Fine;
+
+		pBass = &GlobTomb4.BaseBassHandles;
+
+		if (pBass->TestPresente == false) {
+			tomb4::S_CDStop();
+			return;
+		}
+		switch (NumeroCanale) {
+		case -1:
+			Inizio = 0;
+			Fine = 2;
+			break;
+		case 0:
+			Inizio = 0;
+			Fine = 1;
+			break;
+		case 1:
+			Inizio = 1;
+			Fine = 2;
+			break;
+		default:
+			Inizio = NumeroCanale;
+			Fine = NumeroCanale + 1;
+			break;
+		}
+
+		// chiudere con fade out breve
+		FadeOut = GlobTomb4.pBaseCustomize->BassDll.TimeFadeOut;
+
+		for (i = Inizio; i < Fine; i++) {
+			pCanale = &pBass->VetCanali[i];
+
+			if (pCanale->Canale) {
+				pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, (float) -0.02, FadeOut);
+				// rimuove flag loop in modo che si fermi il prima
+				// possibile
+				pBass->Proc.BASS_ChannelFlags(pCanale->Canale, 0, BASS_SAMPLE_LOOP);
+			}
+
+			pCanale->Canale = 0;
+			pCanale->Loop = 0;
+			pCanale->NumeroCd = -1;
+		}
+	}
+
+	// controllare errore
+	void ShowBASSErrore(char *pNome)
+	{
+		int Codice;
+
+		Codice = GlobTomb4.BaseBassHandles.Proc.BASS_ErrorGetCode();
+
+		sprintf_s(BufferLog, "BassError after operation \"%s\": Error Code = %d", pNome, Codice);
+		InviaLog(BufferLog);
+	}
+
+	// incrementa il numero di debug attivi
+	// se alla fine c'e' un valore attivo di debug restitusice true
+	bool AddTabLogScript(void)
+	{
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) != 0 && (GlobTomb4.pDiagnostica->FlagsDgx & DGX_LOG_SCRIPT_COMMANDS) != 0) {
+
+			GlobTomb4.DebugModeCounter++;
+		}
+
+		if (GlobTomb4.DebugModeCounter)
+			return true;
+		return false;
+	}
+
+	DWORD FindSkipPhase(void)
+	{
+		DWORD FlagsSkip;
+
+		FlagsSkip = SKIP_NONE;
+
+		if (*GlobTomb4.pAdr->pFadeScreen)
+			FlagsSkip |= SKIP_FADE;
+
+		if (*GlobTomb4.pAdr->pTestLoading)
+			FlagsSkip |= SKIP_LOADING_LEVEL;
+
+		if (*GlobTomb4.pAdr->Camera.pModeCameraNow == 1)
+			FlagsSkip |= SKIP_FIXED_CAMERA;
+
+		if (*GlobTomb4.pAdr->pTestFlybyInProgress)
+			FlagsSkip |= SKIP_FLY_CAMERA;
+
+		if (*GlobTomb4.pAdr->pLevelNow == 0 && (*GlobTomb4.pAdr->pScriptMainFlags & 0x04))
+			FlagsSkip |= SKIP_TITLE_LEVEL;
+
+		if (*GlobTomb4.pAdr->pTestGrayScreen)
+			FlagsSkip |= SKIP_GRAY_SCREEN;
+
+		if (GlobTomb4.TestSuspendObjectShowing == true)
+			FlagsSkip |= SKIP_NO_VIEW_OGGETTI;
+
+		if (*GlobTomb4.pAdr->pZoomFactor != 0 && *GlobTomb4.pAdr->pTestLaserSight == 0)
+			FlagsSkip |= SKIP_BINOCULARS;
+
+		if (*GlobTomb4.pAdr->pTestLaserSight && (*GlobTomb4.pAdr->pInputExtGameCommands & 0x200) != 0)
+			FlagsSkip |= SKIP_LASER_SIGHT;
+
+		if (GlobTomb4.TestOverlapImage == true)
+			FlagsSkip |= SKIP_FULL_IMAGE;
+		return FlagsSkip;
+	}
+
+
+	bool TastoPremutoTomb4(int ScanCode)
+	{
+		if (GlobTomb4.pAdr->pVetInputKeyboard[ScanCode])
+			return true;
+		return false;
+	}
+
+	// quando e' presente immagine per title viene allocata solo una volta all'inizio
+	// verra' poi rilasciata alla fine di tutto.
+	void AllocaTitleImage(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// immagine per binocolo viene allocata all'inizio del livello e verra' poi rilasciata
+	// solo al cariamento di un nuovo livello
+	void AllocaBinocularImage(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// immagine per mirino viene allocata all'inizio del livello e verra' poi rilasciata
+	// solo al cariamento di un nuovo livello
+	void AllocaLaserSightImage(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// restituisce true se i piedi di lara sono in palude
+	bool IsLaraPiediInPalude(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -1590,4 +1927,16 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100C523C, (unsigned int)trng::RestorePriorita, replace);
 	ProcessInject(0x100C411A, (unsigned int)trng::SalvaDimensioneSchermo, replace);
 	ProcessInject(0x100B9277, (unsigned int)trng::PreparaBarCust, replace);
+	ProcessInject(0x100C7C10, (unsigned int)trng::PlayExtraCD, replace);
+	ProcessInject(0x100C7858, (unsigned int)trng::GestioneCdPlay, replace);
+	ProcessInject(0x100C7802, (unsigned int)trng::AggiornaVolumeBass, replace);
+	ProcessInject(0x100C7C3C, (unsigned int)trng::StopBassSuoni, replace);
+	ProcessInject(0x100C7820, (unsigned int)trng::ShowBASSErrore, replace);
+	ProcessInject(0x100AFE13, (unsigned int)trng::AddTabLogScript, replace);
+	ProcessInject(0x100C0D03, (unsigned int)trng::FindSkipPhase, replace);
+	ProcessInject(0x100CCD5E, (unsigned int)trng::TastoPremutoTomb4, replace);
+	ProcessInject(0x100CA197, (unsigned int)trng::AllocaTitleImage, false);
+	ProcessInject(0x100C7F9E, (unsigned int)trng::AllocaBinocularImage, false);
+	ProcessInject(0x100C9ECA, (unsigned int)trng::AllocaLaserSightImage, false);
+	ProcessInject(0x100CC782, (unsigned int)trng::IsLaraPiediInPalude, false);
 }

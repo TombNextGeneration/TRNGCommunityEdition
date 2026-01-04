@@ -5,7 +5,7 @@ namespace flep
 {
 	extern short (&quad_bike_slot_quadbike)[16];
 	extern short (&quad_bike_slot_vehicle_anim)[16];
-	extern char (&quad_bike_index)[(long)tomb4::object_types::NUMBER_OBJECTS];
+	extern char (&quad_bike_index)[tomb4::NUMBER_OBJECTS];
 
 	long IsQuadBikeAssigned(long index);
 }

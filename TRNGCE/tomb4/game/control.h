@@ -7,10 +7,10 @@ namespace tomb4
 	extern ANIM_STRUCT* &anims;
 	extern long* &bones;
 	extern ulong &FmvSceneTriggered;
-	extern long (*&flip_stats)[32];
-#define flip_stats (*tomb4::flip_stats)
-	extern long (*&flipmap)[32];
-#define flipmap (*tomb4::flipmap)
+	inline struct { long (*&_)[32] = *reinterpret_cast<decltype(&_)>(0x4598AF); decltype(*_) operator()() { return *_; } } flip_stats;
+#define flip_stats flip_stats()
+	inline struct { long (*&_)[32] = *reinterpret_cast<decltype(&_)>(0x4598D8); decltype(*_) operator()() { return *_; } } flipmap;
+#define flipmap flipmap()
 	extern long &flipeffect;
 	extern long &fliptimer;
 	extern long &flip_status;
@@ -50,6 +50,7 @@ namespace tomb4
 	FLOOR_INFO* GetFloor(long x, long y, long z, short* room_number);
 	long GetHeight(FLOOR_INFO* floor, long x, long y, long z);
 	void TestTriggers(short* data, long heavy, long HeavyFlags);
+	void RefreshCamera(short type, short* data);
 }
 
 void Inject_Control(bool replace);

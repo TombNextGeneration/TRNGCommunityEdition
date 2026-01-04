@@ -36,6 +36,18 @@ namespace trng {
 	void RestorePriorita(void);
 	void SalvaDimensioneSchermo(void);
 	void PreparaBarCust(void);
+	void PlayExtraCD(short NumeroCd, int Canale, int Loop);
+	void GestioneCdPlay(short NumeroCd, int Loop);
+	void AggiornaVolumeBass(void);
+	void StopBassSuoni(int NumeroCanale);
+	void ShowBASSErrore(char *pNome);
+	bool AddTabLogScript(void);
+	DWORD FindSkipPhase(void);
+	bool TastoPremutoTomb4(int ScanCode);
+	void AllocaTitleImage(void);
+	void AllocaBinocularImage(void);
+	void AllocaLaserSightImage(void);
+	bool IsLaraPiediInPalude(void);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

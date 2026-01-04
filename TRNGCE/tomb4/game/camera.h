@@ -10,6 +10,7 @@ namespace tomb4
 	extern long &BinocularOn;
 
 	void CalculateCamera();
+	void InitialiseCamera();
 }
 
 void Inject_Camera(bool replace);

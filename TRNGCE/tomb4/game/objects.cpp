@@ -3,7 +3,7 @@
 
 namespace tomb4
 {
-	OBJECT_INFO (&objects)[(long)object_types::NUMBER_OBJECTS] = *reinterpret_cast<decltype(&objects)>(0x52B720);
+	OBJECT_INFO (&objects)[NUMBER_OBJECTS] = *reinterpret_cast<decltype(&objects)>(0x52B720);
 
 	void BridgeFlatFloor(ITEM_INFO* item, long x, long y, long z, long* height)
 	{

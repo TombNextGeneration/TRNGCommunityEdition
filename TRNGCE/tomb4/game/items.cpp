@@ -10,9 +10,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void ItemNewRoom(short item_num, short room_num)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Items(bool replace)
 {
 	ProcessInject(0x453690, (unsigned int)tomb4::KillItem, false);
+	ProcessInject(0x453C80, (unsigned int)tomb4::ItemNewRoom, false);
 }

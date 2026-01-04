@@ -30,6 +30,7 @@
 #include "effects.h"
 #include "health.h"
 #include "savegame.h"
+#include "../../trng/Tomb_NextGeneration.h"
 
 namespace tomb4
 {
@@ -39,12 +40,8 @@ namespace tomb4
 	ANIM_STRUCT* &anims = *reinterpret_cast<decltype(&anims)>(0x533938);
 	long* &bones = *reinterpret_cast<decltype(&bones)>(0x533958);
 	ulong &FmvSceneTriggered = *reinterpret_cast<decltype(&FmvSceneTriggered)>(0x7FE0F0);
-#undef flip_stats
-	long (*&flip_stats)[32] = *reinterpret_cast<decltype(&flip_stats)>(0x4598AF);
-#define flip_stats (*tomb4::flip_stats)
-#undef flipmap
-	long (*&flipmap)[32] = *reinterpret_cast<decltype(&flipmap)>(0x4598D8);
-#define flipmap (*tomb4::flipmap)
+//	long (*&flip_stats)[32] = *reinterpret_cast<decltype(&flip_stats)>(0x4598AF);
+//	long (*&flipmap)[32] = *reinterpret_cast<decltype(&flipmap)>(0x4598D8);
 	long &flipeffect = *reinterpret_cast<decltype(&flipeffect)>(0x4ACBFC);
 	long &fliptimer = *reinterpret_cast<decltype(&fliptimer)>(0x4BF2E8);
 	long &flip_status = *reinterpret_cast<decltype(&flip_status)>(0x7FE0F8);
@@ -98,12 +95,13 @@ namespace tomb4
 		for (framecount += nframes; framecount > 0; framecount -= 2)
 		{
 			GlobalCounter++;
+			trng::InizioCiclo();
 			UpdateSky();
 
 			if (cdtrack > 0)
 				S_CDLoop();
 
-			if (S_UpdateInput() == (long)input_buttons::IN_ALL)
+			if (S_UpdateInput() == IN_ALL)
 				return 0;
 
 			if (bDisableLaraControl)
@@ -111,7 +109,7 @@ namespace tomb4
 				if (gfCurrentLevel)
 					dbinput = 0;
 
-				input &= (long)input_buttons::IN_LOOK;
+				input &= IN_LOOK;
 			}
 
 			if (cutseq_trig)
@@ -119,12 +117,12 @@ namespace tomb4
 				input = 0;
 
 				if (cutseq_num == 27)
-					input = (long)input_buttons::IN_ACTION;
+					input = IN_ACTION;
 			}
 
 			SetDebounce = 0;
 
-			if (gfCurrentLevel && (dbinput & (long)input_buttons::IN_OPTION || GLOBAL_enterinventory != -1) && !cutseq_trig && lara_item->hit_points > 0)
+			if (gfCurrentLevel && (dbinput & IN_OPTION || GLOBAL_enterinventory != -1) && !cutseq_trig && lara_item->hit_points > 0)
 			{
 				if (S_CallInventory2())
 					return 2;
@@ -145,20 +143,20 @@ namespace tomb4
 				return 1;
 			}
 
-			if (demo_mode && input == (long)input_buttons::IN_ALL)
+			if (demo_mode && input == IN_ALL)
 				input = 0;
 
 			if (!FadeScreenHeight)
 			{
-				if (input & (long)input_buttons::IN_SAVE)
-					S_LoadSave((long)input_buttons::IN_SAVE, 0);
-				else if (input & (long)input_buttons::IN_LOAD)
+				if (input & IN_SAVE)
+					S_LoadSave(IN_SAVE, 0);
+				else if (input & IN_LOAD)
 				{
-					if (S_LoadSave((long)input_buttons::IN_LOAD, 0) >= 0)
+					if (S_LoadSave(IN_LOAD, 0) >= 0)
 						return 2;
 				}
 
-				if (input & (long)input_buttons::IN_PAUSE && !gfGameMode)
+				if (input & IN_PAUSE && !gfGameMode)
 				{
 					if (S_PauseMenu() == 8)
 						return 1;
@@ -168,14 +166,14 @@ namespace tomb4
 			if (MainThread.ended)
 				return 4;
 
-			if (input & (long)input_buttons::IN_LOOK && (lara_item->current_anim_state == (long)lara_anim_state::AS_STOP && lara_item->anim_number == (long)lara_anim::ANIM_BREATH ||
-				(lara.IsDucked && !(input & (long)input_buttons::IN_DUCK) && lara_item->anim_number == (long)lara_anim::ANIM_DUCKBREATHE && lara_item->goal_anim_state == (long)lara_anim_state::AS_DUCK)))
+			if (input & IN_LOOK && (lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH ||
+				(lara.IsDucked && !(input & IN_DUCK) && lara_item->anim_number == ANIM_DUCKBREATHE && lara_item->goal_anim_state == AS_DUCK)))
 			{
 				if (!BinocularRange)
 				{
-					if (lara.gun_type == (long)weapon_types::WEAPON_REVOLVER)
+					if (lara.gun_type == WEAPON_REVOLVER)
 					{
-						if (lara.sixshooter_type_carried & 4 && lara.gun_status == (long)lara_gun_status::LG_READY)
+						if (lara.sixshooter_type_carried & 4 && lara.gun_status == LG_READY)
 						{
 							BinocularRange = 128;
 							BinocularOldCamera = camera.old_type;
@@ -183,7 +181,7 @@ namespace tomb4
 							LaserSight = 1;
 						}
 					}
-					else if (lara.gun_type == (long)weapon_types::WEAPON_CROSSBOW && lara.crossbow_type_carried & 4 && lara.gun_status == (long)lara_gun_status::LG_READY)
+					else if (lara.gun_type == WEAPON_CROSSBOW && lara.crossbow_type_carried & 4 && lara.gun_status == LG_READY)
 					{
 						BinocularRange = 128;
 						BinocularOldCamera = camera.old_type;
@@ -209,7 +207,7 @@ namespace tomb4
 					BinocularOn = -8;
 				}
 				else
-					input |= (long)input_buttons::IN_LOOK;
+					input |= IN_LOOK;
 			}
 
 			ClearDynamics();
@@ -328,7 +326,7 @@ namespace tomb4
 			{
 				HairControl(0, 0, 0);
 
-				if (gfLevelFlags & (long)gf_level_options::GF_YOUNGLARA)
+				if (gfLevelFlags & GF_YOUNGLARA)
 					HairControl(0, 1, 0);
 			}
 
@@ -341,7 +339,7 @@ namespace tomb4
 			}
 			else
 			{
-				camera.type = camera_type::CINEMATIC_CAMERA;
+				camera.type = CINEMATIC_CAMERA;
 				CalculateCamera();
 			}
 
@@ -412,6 +410,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void RefreshCamera(short type, short* data)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Control(bool replace)
@@ -423,4 +426,5 @@ void Inject_Control(bool replace)
 	ProcessInject(0x449880, (unsigned int)tomb4::GetFloor, false);
 	ProcessInject(0x449BD0, (unsigned int)tomb4::GetHeight, false);
 	ProcessInject(0x44A1F0, (unsigned int)tomb4::TestTriggers, false);
+	ProcessInject(0x44A0C0, (unsigned int)tomb4::RefreshCamera, false);
 }

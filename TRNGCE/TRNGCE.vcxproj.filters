@@ -198,6 +198,15 @@
     <ClInclude Include="tomb4\game\health.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
+    <ClInclude Include="trng\trng_flipeffects.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\RoomEditor.h">
+      <Filter>trng</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\specificfx.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -371,6 +380,12 @@
     </ClCompile>
     <ClCompile Include="tomb4\game\health.cpp">
       <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\trng_flipeffects.cpp">
+      <Filter>trng</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\specificfx.cpp">
+      <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

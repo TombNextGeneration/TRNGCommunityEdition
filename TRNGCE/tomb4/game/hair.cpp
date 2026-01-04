@@ -7,9 +7,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void InitialiseHair()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Hair(bool replace)
 {
 	ProcessInject(0x41FCA0, (unsigned int)tomb4::HairControl, false);
+	ProcessInject(0x41FC20, (unsigned int)tomb4::InitialiseHair, false);
 }

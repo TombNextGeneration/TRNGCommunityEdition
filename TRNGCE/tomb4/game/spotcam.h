@@ -4,8 +4,8 @@
 namespace tomb4
 {
 	extern short &number_spotcams;
-	extern SPOTCAM (*&SpotCam)[320];
-#define SpotCam (*tomb4::SpotCam)
+	inline struct { SPOTCAM (*&_)[320] = *reinterpret_cast<decltype(&_)>(0x45F764); decltype(*_) operator()() { return *_; } } SpotCam;
+#define SpotCam SpotCam()
 	extern long &bUseSpotCam;
 	extern long &bDisableLaraControl;
 	extern long &bTrackCamInit;

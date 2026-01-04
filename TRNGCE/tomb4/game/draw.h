@@ -3,13 +3,14 @@
 
 namespace tomb4
 {
-	extern STATIC_INFO (*&static_objects)[(long)static_types::NUMBER_STATIC_OBJECTS];
-#define static_objects (*tomb4::static_objects)
+	inline struct { STATIC_INFO (*&_)[NUMBER_STATIC_OBJECTS] = *reinterpret_cast<decltype(&_)>(0x4730B5); decltype(*_) operator()() { return *_; } } static_objects;
+#define static_objects static_objects()
 	extern ushort (&LightningRGB)[3];
 	extern ushort (&LightningRGBs)[3];
 
 	short* GetBoundsAccurate(ITEM_INFO* item);
 	void DrawAnimatingItem(ITEM_INFO* item);
+	short* GetBestFrame(ITEM_INFO* item);
 }
 
 void Inject_Draw(bool replace);

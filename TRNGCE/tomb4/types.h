@@ -15,12 +15,7 @@ namespace tomb4
 
 	inline constexpr int W2V_SHIFT = 14;
 
-	constexpr long SQUARE(long x)
-	{
-		return x * x;
-	}
-
-	enum class mood_type
+	enum mood_type
 	{
 		BORED_MOOD,
 		ATTACK_MOOD,
@@ -28,7 +23,7 @@ namespace tomb4
 		STALK_MOOD,
 	};
 
-	enum class zone_type
+	enum zone_type
 	{
 		SKELLY_ZONE,
 		BASIC_ZONE,
@@ -37,7 +32,7 @@ namespace tomb4
 		FLYER_ZONE,
 	};
 
-	enum class sfx_options
+	enum sfx_options
 	{
 		SFX_DEFAULT     = 0,
 		SFX_WATER       = 1,
@@ -45,7 +40,7 @@ namespace tomb4
 		SFX_SETPITCH    = 4
 	};
 
-	enum class sound_effect_names
+	enum sound_effect_names
 	{
 		SFX_LARA_FEET,
 		SFX_LARA_CLIMB2,
@@ -421,7 +416,7 @@ namespace tomb4
 		NumSamples
 	};
 
-	enum class matrix_indices
+	enum matrix_indices
 	{
 		M00, M01, M02, M03,
 		M10, M11, M12, M13,
@@ -430,7 +425,7 @@ namespace tomb4
 		indices_count
 	};
 
-	enum class object_types
+	enum object_types
 	{
 		LARA,
 		PISTOLS_ANIM,
@@ -955,7 +950,7 @@ namespace tomb4
 		NUMBER_OBJECTS
 	};
 
-	enum class static_types
+	enum static_types
 	{
 		PLANT0, PLANT1, PLANT2, PLANT3, PLANT4, PLANT5, PLANT6, PLANT7, PLANT8, PLANT9,
 		FURNITURE0, FURNITURE1, FURNITURE2, FURNITURE3, FURNITURE4,
@@ -986,7 +981,7 @@ namespace tomb4
 		NUMBER_STATIC_OBJECTS
 	};
 
-	enum class ITEM_FLAGS
+	enum ITEM_FLAGS
 	{
 		IFL_TRIGGERED =				0x20,
 		IFL_SWITCH_ONESHOT =		0x40,	//oneshot for switch items
@@ -997,7 +992,7 @@ namespace tomb4
 		IFL_CLEARBODY =				0x8000
 	};
 
-	enum class camera_type
+	enum camera_type
 	{
 		CHASE_CAMERA,
 		FIXED_CAMERA,
@@ -1007,7 +1002,7 @@ namespace tomb4
 		HEAVY_CAMERA,
 	};
 
-	enum class invobj_types
+	enum invobj_types
 	{
 		INV_UZI_ITEM = 0,
 		INV_PISTOLS_ITEM,
@@ -1132,7 +1127,7 @@ namespace tomb4
 		NUM_INVOBJ
 	};
 
-	enum class gf_commands
+	enum gf_commands
 	{
 		CMD_FMV = 0x80,
 		CMD_LEVEL,
@@ -1226,7 +1221,7 @@ namespace tomb4
 		CMD_PICKUPCOMBO4_2,
 	};
 
-	enum class gf_level_options
+	enum gf_level_options
 	{
 		GF_YOUNGLARA =		0x1,
 		GF_WEATHER =		0x2,
@@ -1246,7 +1241,7 @@ namespace tomb4
 		GF_NOLEVEL =		0x8000
 	};
 
-	enum class input_buttons
+	enum input_buttons
 	{
 		IN_NONE =				0x0,
 		IN_FORWARD =			0x1,
@@ -1285,7 +1280,7 @@ namespace tomb4
 		IN_ALL =				(int)0xFFFFFFFF
 	};
 
-	enum class lara_anim_state
+	enum lara_anim_state
 	{
 		AS_WALK = 0,
 		AS_RUN = 1,
@@ -1409,7 +1404,7 @@ namespace tomb4
 		NUM_LARA_STATES
 	};
 
-	enum class lara_anim
+	enum lara_anim
 	{
 		ANIM_RUN = 0,
 		ANIM_WALK_STOP_LEFT = 2,
@@ -1572,7 +1567,7 @@ namespace tomb4
 		NUM_LARA_ANIMS
 	};
 
-	enum class weapon_types
+	enum weapon_types
 	{
 		WEAPON_NONE,
 		WEAPON_PISTOLS,
@@ -1585,7 +1580,7 @@ namespace tomb4
 		WEAPON_TORCH
 	};
 
-	enum class lara_gun_status
+	enum lara_gun_status
 	{
 		LG_NO_ARMS,
 		LG_HANDS_BUSY,
@@ -1835,8 +1830,17 @@ namespace tomb4
 		short flare_frame;
 		short poisoned;
 		short dpoisoned;
-		uchar electric;
-		uchar wet[15];
+
+		union
+		{
+			struct
+			{
+				uchar electric;
+				uchar wet[15];
+			};
+
+			uchar drip[16];
+		};
 
 		union
 		{

@@ -3,7 +3,7 @@
 
 namespace tomb4
 {
-	extern OBJECT_INFO (&objects)[(long)object_types::NUMBER_OBJECTS];
+	extern OBJECT_INFO (&objects)[NUMBER_OBJECTS];
 
 	void BridgeFlatFloor(ITEM_INFO* item, long x, long y, long z, long* height);
 	void BridgeFlatCeiling(ITEM_INFO* item, long x, long y, long z, long* height);

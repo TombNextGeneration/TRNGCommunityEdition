@@ -11,9 +11,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void DXReadKeyboard(char* KeyMap)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Dxshell(bool replace)
 {
 	ProcessInject(0x48F8A0, (unsigned int)tomb4::DXAttempt, false);
+	ProcessInject(0x492090, (unsigned int)tomb4::DXReadKeyboard, false);
 }

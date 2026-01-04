@@ -18,6 +18,21 @@
 #include "../tomb4/game/lara.h"
 #include "../tomb4/game/objects.h"
 #include "../tomb4/game/gameflow.h"
+#include "../tomb4/math_tbls.h"
+#include "../tomb4/game/control.h"
+#include "../tomb4/game/draw.h"
+#include "../tomb4/specific/3dmath.h"
+#include "../tomb4/game/sound.h"
+#include "trng_flipeffects.h"
+#include "../tomb4/specific/input.h"
+#include "../tomb4/specific/LoadSave.h"
+#include "../tomb4/game/tomb4fx.h"
+#include "../tomb4/specific/audio.h"
+#include "../tomb4/game/items.h"
+#include "../tomb4/specific/specificfx.h"
+#include "../tomb4/game/camera.h"
+#include "../tomb4/game/hair.h"
+#define malloc ((void *(*)(size_t)) 0x10135531)
 
 namespace trng {
 	StrGlobaliTomb4 &GlobTomb4 = *reinterpret_cast<decltype(&GlobTomb4)>(0x101C9578);
@@ -66,12 +81,12 @@ namespace trng {
 	char (&BufferLog)[8192] = *reinterpret_cast<decltype(&BufferLog)>(0x101B73D8);
 	StrFloatPatch (&VetFarWorld)[5] = *reinterpret_cast<decltype(&VetFarWorld)>(0x1015A420);
 	int &NuovoFlagCapelli = *reinterpret_cast<decltype(&NuovoFlagCapelli)>(0x4A6E6C);
-	TYPE_convert_obj_to_invobj &convert_obj_to_invobj = *reinterpret_cast<decltype(&convert_obj_to_invobj)>(0x1015993C);
 	POINT (&VetSizeInner)[6] = *reinterpret_cast<decltype(&VetSizeInner)>(0x1015A3F0);
 	short (&VetOriginali)[6] = *reinterpret_cast<decltype(&VetOriginali)>(0x10159AB4);
 	short (&VetDetectorBig)[6] = *reinterpret_cast<decltype(&VetDetectorBig)>(0x10159AC0);
 	short (&VetDetectorLittle)[6] = *reinterpret_cast<decltype(&VetDetectorLittle)>(0x10159ACC);
-#define malloc ((void *(*)(size_t)) 0x10135531)
+	TYPE_IsComandoPremuto &IsComandoPremuto = *reinterpret_cast<decltype(&IsComandoPremuto)>(0x10159810);
+	TYPE_StopAllSounds &StopAllSounds = *reinterpret_cast<decltype(&StopAllSounds)>(0x10159964);
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -898,12 +913,12 @@ namespace trng {
 
 		// salva indirizzo di slot default sprites
 
-		GlobTomb4.pSlotDefaultSprite = (StrSlot *) &tomb4::objects[(int) tomb4::object_types::DEFAULT_SPRITES];
+		GlobTomb4.pSlotDefaultSprite = (StrSlot *) &tomb4::objects[tomb4::DEFAULT_SPRITES];
 
 		// salva valore di costant eper slot usato per detector
 		// valore 252 0xFC
 
-		GlobTomb4.BaseDetector.SlotDetector = (WORD) tomb4::object_types::QUEST_ITEM1;
+		GlobTomb4.BaseDetector.SlotDetector = tomb4::QUEST_ITEM1;
 	}
 
 	// inizializza vettore di conversione tra azione e flipeffect che usano
@@ -3474,9 +3489,9 @@ namespace trng {
 								while (pCombine->pProcedura != NULL)
 									pCombine++;
 
-								pCombine->PrimoItem = convert_obj_to_invobj(ParseField.pData[i++]);
-								pCombine->SecondoItem = convert_obj_to_invobj(ParseField.pData[i++]);
-								pCombine->ItemFinale = convert_obj_to_invobj(ParseField.pData[i]);
+								pCombine->PrimoItem = (WORD) tomb4::convert_obj_to_invobj(ParseField.pData[i++]);
+								pCombine->SecondoItem = (WORD) tomb4::convert_obj_to_invobj(ParseField.pData[i++]);
+								pCombine->ItemFinale = (WORD) tomb4::convert_obj_to_invobj(ParseField.pData[i]);
 
 								// ora convertire i valori slot
 								// negli indici relativi a vetitems
@@ -3969,7 +3984,7 @@ namespace trng {
 		short *pSrc;
 		tomb4::INVOBJ *pInv;
 
-		pInv = &tomb4::inventry_objects_list[(long)tomb4::invobj_types::INV_QUEST1_ITEM];
+		pInv = &tomb4::inventry_objects_list[tomb4::INV_QUEST1_ITEM];
 		switch (TipoDetector) {
 		case TD_AMULETO:
 		default:
@@ -5872,7 +5887,7 @@ namespace trng {
 	// valore contiene l'argomento da usare per qualche operazione
 	// se operazione e' INV_READ restituisce il numero di elmenti
 
-	WORD GestionePickups(WORD Slot, int Operazione, short Valore)
+	WORD GestionePickups(WORD Slot, int Operazione, char Valore)
 	{
 		__try { throw __func__; } __finally {}
 	}
@@ -5951,6 +5966,3996 @@ namespace trng {
 	// per fogbulbs
 	// legge l'input da BaseFog.NowFogBulbDistance
 	void ModificaFogBulbDistance(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// chiamata all'inizio di ogni ciclo game
+	void InizioCiclo(void)
+	{
+		StrBaseCollisione *pBaseColl;
+		StrItemTr4 *pLara;
+		DWORD StartTime, TempoNow;
+		int i;
+		StrPluginRec *pRec;
+		CALL_VOID CallCycle;
+
+		// ---- eseguire eventuali callback cycle_begin -----
+		if (MyGlobPrivate.DataBase.TotPlugins > 1) {
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				if (pRec->VetDirectCB[CB_CYCLE_BEGIN]) {
+					CallCycle = (CALL_VOID) pRec->VetDirectCB[CB_CYCLE_BEGIN];
+					CallCycle();
+				}
+				pRec++;
+			}
+
+		}
+
+		GlobTomb4.BaseDiagnosiAnimSlot.TotAnim = 0;
+
+		GlobTomb4.BaseCreatedItems.TotNewItems = 0;
+
+		if (GlobTomb4.pBaseDemo->Status == RECF_STOP && GlobTomb4.pBaseCutscene->BaseCamera.TestAttiva == true) {
+			AggiornaCutsceneCamera(&GlobTomb4.pBaseCutscene->BaseCamera);
+		}
+
+		// qui si esegue movimenti speech se NON c'e' demo attivo
+		if (GlobTomb4.pBaseDemo->Status == RECF_STOP)
+			GestioneComandiSpeech();
+
+		if (*GlobTomb4.pAdr->pVehicleIndex != -1) {
+			ControllaAnchoredBoat(*GlobTomb4.pAdr->pVehicleIndex);
+		}
+
+		if (GlobTomb4.BaseImgTitle.TestEnabled && GlobTomb4.BaseImgTitle.TestAllocatedImage == false) {
+			AllocaTitleImage();
+		}
+
+		if (GlobTomb4.BaseImgBinocular.TestEnabled && GlobTomb4.BaseImgBinocular.TestAllocatedImage == false) {
+			AllocaBinocularImage();
+		}
+
+		if (GlobTomb4.BaseImgLaserSight.TestEnabled && GlobTomb4.BaseImgLaserSight.TestAllocatedImage == false) {
+			AllocaLaserSightImage();
+		}
+
+		AnalisiPatchPushAway();
+
+		// ---------- mostra diario
+		if (GlobTomb4.TestStartDiary)
+			AvviaDiario();
+
+		ResetScanActions();
+		ResetScanFlipEffects();
+
+		// inizializza stil lcollision per questo ciclo
+		pBaseColl = &GlobTomb4.BaseCollisione;
+		GlobTomb4.TestDummyFalse = false;
+
+		pBaseColl->TestCollideStatic = false;
+		pBaseColl->TestStillCollision = false;
+		pBaseColl->TestSbattiMuro = false;
+		pLara = GlobTomb4.pAdr->pLara;
+		pBaseColl->OldAnimazione = pLara->AnimationNow;
+		pBaseColl->OldFrame = pLara->FrameNow;
+		pBaseColl->OldLaraX = pLara->CordX;
+		pBaseColl->OldLaraZ = pLara->CordZ;
+		pBaseColl->OldStateId = pLara->StateIdCurrent;
+		GlobTomb4.BaseTG_SingleShotResumed.TGEseguiti = 0;
+
+		GlobTomb4.BaseShowMesh.TotMesh = 0;
+		GlobTomb4.BaseFMV.IndiceFmvAttivato = -1;
+		GlobTomb4.ItemIndexEnabledTrigger = -1;
+
+		GlobTomb4.BaseEnvEnemy.TestLara = true;
+
+		if (GlobTomb4.HangCounter == 0) {
+			GlobTomb4.HangForbidden = 0;
+		} else {
+			GlobTomb4.HangCounter--;
+		}
+
+		// analisi per sospensione log
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) && ((GlobTomb4.pDiagnostica->FlagsDgx & DGX_LOG_SCRIPT_COMMANDS) || GlobTomb4.BaseSospendiLog.TestSospendi)) {
+
+			if (TastoVKPremuto(VK_F9)) {
+
+				if (GlobTomb4.BaseSospendiLog.TestRilasciatoF9) {
+					// invertire situazione
+					if (GlobTomb4.BaseSospendiLog.TestSospendi) {
+						// era sospeso: riprendere
+						GlobTomb4.pDiagnostica->FlagsDgx |= DGX_LOG_SCRIPT_COMMANDS;
+						GlobTomb4.BaseSospendiLog.TestSospendi = false;
+						GlobTomb4.DebugModeCounter = GlobTomb4.BaseSospendiLog.SalvaDebugCounter;
+						InviaLog("RESUME SCRIPT LOG");
+					} else {
+						// era attivo: sospenderlo
+						GlobTomb4.pDiagnostica->FlagsDgx &= ~DGX_LOG_SCRIPT_COMMANDS;
+						GlobTomb4.BaseSospendiLog.TestSospendi = true;
+						GlobTomb4.BaseSospendiLog.SalvaDebugCounter = GlobTomb4.DebugModeCounter;
+						GlobTomb4.DebugModeCounter = 0;
+						InviaLog("SUSPEND SCRIPT LOG");
+					}
+				}
+				GlobTomb4.BaseSospendiLog.TestRilasciatoF9 = false;
+			} else {
+				// tasto f9 rilasciato
+				GlobTomb4.BaseSospendiLog.TestRilasciatoF9 = true;
+			}
+		}
+
+		AddTabLogScript();
+		if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+			ShowMsgDebug("XXXXXXXXXXXXXXXXXXXXX  START NEW GAME FRAME XXXXXXXXXXXXXXXXXXXXX", 0, 0);
+
+		GlobTomb4.TestConditionFound = false;
+		GestioneRaisePushables();
+		GestioneItemsSuElevatore();
+		InizializzaCondizioniGlobali();
+		InizializzaCollisioniLara();
+		GlobTomb4.pTarget = NULL;
+		GlobTomb4.TestFeetInQuickSand = IsLaraPiediInPalude();
+		GlobTomb4.ItemIndexTgroup = -1;
+
+		// impostare status di room dove si trova lara
+		ImpostaStatusRoom();
+
+		// eseguire operazioni all'inizio di ciclo
+		switch (GlobTomb4.OperazioneNext) {
+		case ON_SHOW_SCREEN_AT_START:
+			// ripristinare update
+			GlobTomb4.TestNoUpdate = false;
+			GlobTomb4.OperazioneNext = ON_NONE;
+			break;
+
+		case ON_WAIT_ESCAPE:
+			// aspettare pressione esc
+			while (TastoVKPremuto(VK_ESCAPE) == false) {
+				// se e' stata richiesta fine di thread di gioco
+				// abortire tutto
+				if (tomb4::App.dx.WaitAtBeginScene)
+					break;
+
+			}
+			// ok, ora pero' attendere ancora perche' venga tolto
+			while (TastoVKPremuto(VK_ESCAPE) == true);
+			GlobTomb4.OperazioneNext = ON_NONE;
+			break;
+
+		}
+
+		// gestioni per diagnostica
+		if (GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) {
+
+			// gestione slowmotion
+			if (GlobTomb4.pDiagnostica->DgxExtra & EDGX_SLOW_MOTION) {
+				if (TastoVKPremuto(VK_F11)) {
+					GlobTomb4.SlowMotionDelay += 5;
+				}
+
+				if (TastoVKPremuto(VK_ESCAPE)) {
+					GlobTomb4.SlowMotionDelay = 0;
+				}
+
+				if (GlobTomb4.SlowMotionDelay) {
+
+					// effettuare ritardo
+					StartTime = (DWORD) GetTickCount64();
+					do {
+						Sleep(0);
+						TempoNow = (DWORD) GetTickCount64() - StartTime;
+					} while (TempoNow < GlobTomb4.SlowMotionDelay);
+
+				}
+			}
+
+			if (GlobTomb4.pDiagnostica->DgxExtra & EDGX_SWAP_VIEW) {
+				TempoNow = (DWORD) GetTickCount64() - GlobTomb4.LastTempoF12;
+				if (TempoNow > 500) {
+					if (TastoVKPremuto(VK_F12)) {
+						// cambiare orientamento camera
+						i = GlobTomb4.BaseSetCamera.VetID[MAX_SET_CAMERA - 1];
+						GlobTomb4.BaseSetCamera.VetSetCamera[i].HOrient += 0x2000;
+						GlobTomb4.LastTempoF12 = (DWORD) GetTickCount64();
+					}
+
+				}
+			}
+		}
+		// --- fine gestione slowmotion
+	}
+
+	// aggiorna posizione orient height e distanza di Cutscenec camera
+	void AggiornaCutsceneCamera(StrCutsceneCamera *pCut)
+	{
+		WORD Orient;
+		StrItemTr4 *pTarget;
+		int IncX, IncZ;
+		void *pFloor;
+		short RoomNow;
+		DWORD FrameNow;
+		bool TestSoggettiva;
+		int Indice;
+		StrItemTr4 *pItemSrc;
+		StrBoxCollisione *pBox;
+
+		if (pCut->TestAttiva == false)
+			return;
+
+		TestSoggettiva = false;
+		if (pCut->Flags & (FTC_LEADING_LOOK_LARA | FTC_EXTRA_LOOK_LARA | FTC_LARA_LOOK_LEADING | FTC_LARA_LOOK_EXTRA))
+			TestSoggettiva = true;
+
+		FrameNow = GetCutsceneFrame();
+
+		if (pCut->TestFreeze == true) {
+			if (pCut->FreezeEndFrame != 1000000 && FrameNow >= pCut->FreezeEndFrame) {
+				pCut->TestFreeze = false;
+				pCut->FreezeEndFrame = 0;
+
+			}
+		}
+
+		if (pCut->TestFreeze)
+			return;
+
+		if (FrameNow == pCut->LastPerformedFrame)
+			return;
+
+		*GlobTomb4.pAdr->Camera.pModeCameraNow = 0;
+
+		pCut->LastPerformedFrame = FrameNow;
+
+		if (TestSoggettiva == false) {
+
+			// ---- applicare effetti dinamici -----------------
+
+			if (pCut->DistanceInc) {
+				pCut->Distance += pCut->DistanceInc;
+
+				// controllare se terminato
+				if (FrameNow >= pCut->DistanceEndFrame)
+					pCut->DistanceInc = 0;
+
+			}
+
+			if (pCut->HeightInc) {
+				pCut->Height += pCut->HeightInc;
+
+				// controllare se terminato
+				if (FrameNow >= pCut->HeightEndFrame)
+					pCut->HeightInc = 0;
+
+			}
+
+			if (pCut->RotateInc) {
+				pCut->Rotate += pCut->RotateInc;
+
+				if (pCut->RotateEndFrame != 1000000 && FrameNow >= pCut->RotateEndFrame)
+					pCut->RotateInc = 0;
+			}
+
+			// --- fine effetti dinamici -----
+		}
+
+		pTarget = &GlobTomb4.pAdr->pVetItems[pCut->TargetIndex];
+
+		if (TestSoggettiva == false) {
+
+			// calcolare orient a seconda di angleview
+			Orient = (pCut->AngleViews & 0x07) << 13;
+
+			// vedere se orientamento assoluto o relativo
+			if (pCut->AngleViews & 0x08) {
+				// relativo
+				Orient += pTarget->OrientationH;
+			}
+
+			Orient += pCut->Rotate;
+
+			// se assoluto fare subito calcolo di posizione
+			CalcolaIncremento(Orient, &IncX, &IncZ, pCut->Distance);
+
+			pCut->pCamera->CordX = pTarget->CordX + IncX;
+			pCut->pCamera->CordZ = pTarget->CordZ + IncZ;
+			pCut->pCamera->Room = pTarget->Room;
+
+			pCut->pCamera->CordY = pCut->Height;
+
+			// ora aggiornare numero di room di cutscene camera
+			RoomNow = pCut->pCamera->Room;
+
+			pFloor = tomb4::GetFloor(pCut->pCamera->CordX, pCut->pCamera->CordY, pCut->pCamera->CordZ, &RoomNow);
+
+			pCut->pCamera->Room = RoomNow;
+		} else {
+			// soggettiva
+			// calcolo posizione camera con visione soggettiva
+			// scoprire quale moveable e' la sorgente
+			if (pCut->Flags & FTC_LEADING_LOOK_LARA) {
+				Indice = GlobTomb4.pBaseCutscene->LeadingActorIndex;
+			}
+
+			if (pCut->Flags & FTC_EXTRA_LOOK_LARA) {
+				Indice = GlobTomb4.pBaseCutscene->ExtraActorIndex;
+			}
+
+			if (pCut->Flags & (FTC_LARA_LOOK_LEADING | FTC_LARA_LOOK_EXTRA)) {
+				Indice = *GlobTomb4.pAdr->pLaraIndex;
+			}
+
+			pItemSrc = &GlobTomb4.pAdr->pVetItems[Indice];
+			// scoprire altezza di pItemSrc
+			pBox = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItemSrc);
+
+			Orient = (WORD) tomb4::mGetAngle(pItemSrc->CordX, pItemSrc->CordZ, pTarget->CordX, pTarget->CordZ);
+			Orient += 0x4000;
+			CalcolaIncremento(Orient, &IncX, &IncZ, 300);
+
+			pCut->pCamera->CordX = pItemSrc->CordX + IncX;
+			pCut->pCamera->CordY = pItemSrc->CordY + pBox->MinY;
+			pCut->pCamera->CordZ = pItemSrc->CordZ + IncZ;
+			pCut->pCamera->Room = pItemSrc->Room;
+		}
+
+		// provare a disattivare il look
+	}
+
+	// restituisce il frame di demo, oppure di contatore generale se non c'e' un demo in progresso
+	DWORD GetCutsceneFrame(void)
+	{
+		if (GlobTomb4.pBaseDemo->Status == RECF_PLAYING)
+			return GlobTomb4.pBaseDemo->IndexFrame;
+
+		return *GlobTomb4.pAdr->pFrameCounter;
+	}
+
+	// calcola incrementi per arrivare ad una certa distanza
+	// nella direzione Orientamento
+	void CalcolaIncremento(WORD Orientamento, int *pIncX, int *pIncZ, int Distanza)
+	{
+		int IncX, IncZ;
+		int Indice;
+		short * pMatriceOrientamento;
+
+		pMatriceOrientamento = tomb4::rcossin_tbl;
+		if (Distanza == 0) {
+			*pIncX = 0;
+			*pIncZ = 0;
+			return;
+		}
+
+		Indice = Orientamento >> 3;
+		Indice &= 0x1FFE;
+
+		IncX = pMatriceOrientamento[Indice] <<	12;
+		IncZ = pMatriceOrientamento[Indice + 1] << 12;
+		IncX = IncX >> 14;
+		IncZ = IncZ >> 14;
+		// modificarli sulla base di distanza richiesta
+		if (Distanza != 1024) {
+			IncX = ProporzioneDistanza(IncX, Distanza);
+			IncZ = ProporzioneDistanza(IncZ, Distanza);
+		}
+
+		*pIncX = IncX;
+		*pIncZ = IncZ;
+	}
+
+	// restituisce il nuovo valore per incremeto rapportato
+	// alla distanza richiesta.
+	// ossia: se la distanza richiesta fosse esattamente un settore (0x400)
+	// allora incrmeento resterebbe uguale
+	// se invece distanza fosse due settori 0x800 allora incremento
+	// sarebbe raddoppiato
+	int ProporzioneDistanza(int Incremento, int Distanza)
+	{
+		float Temp;
+		float Result;
+
+		Temp = (float) Distanza / 1024;
+		Result = (float) Incremento * Temp;
+
+		return (int) Result;
+	}
+
+	// esegue tutti i comandi speech attivi
+	void GestioneComandiSpeech(void)
+	{
+		int i;
+		StrPlaySpeech *pPlay;
+		WORD ComandoNow;
+		DWORD TimerNow;
+		WORD SalvaColore;
+		WORD SalvaPosizione;
+		bool TestNextComando;
+		int StartAnim;
+		int Numero;
+		StrItemTr4 *pItem;
+		bool TestFineTurning;
+		char MioBuffer[256];
+		const char *pLastCommand;
+		int IdSpeech;
+
+		TimerNow = GetCutsceneFrame();
+
+		for (i = 0; i < GlobTomb4.pBaseSpeechActor->TotSpeechActor; i++) {
+			if (GlobTomb4.pBaseSpeechActor->VetPlay[i].TestAttivo) {
+				pPlay = &GlobTomb4.pBaseSpeechActor->VetPlay[i];
+				// controllare che l'id di comando Parameters=PARAM_ACTOR_SPEECH
+				IdSpeech = pPlay->pParam->IdSpeech;
+				if (GlobTomb4.pBaseSpeechActor->VetId[IdSpeech] == -1) {
+					sprintf_s(BufferLog, "ERROR: invalid Id (%d) of Parameters=PARAM_ACTOR_SPEECH script command", IdSpeech);
+					InviaLog(BufferLog);
+					// forzare fine di play
+					// avremmo terminato, se pero' siamo in modalita' loop
+					if (GlobTomb4.DebugModeCounter)
+						ShowMsgDebug("Frame=%d: Completed PARAM_ACTOR_SPEECH, %d", TimerNow, pPlay->pParam->IdSpeech);
+
+					// terminare
+					// impostare bocca muta
+					pPlay->TestAbs = false;
+					ImpostaMeshHead(pPlay, 0);
+					EliminaStringaSpeech(pPlay);
+					pPlay->TestAttivo = false;
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: COMPLETED", pPlay->pParam->IdSpeech, 0);
+					DeleteParamCommand(PARAM_ACTOR_SPEECH, pPlay->pParam->IdSpeech, false, true);
+
+					continue;
+				}
+
+				// se abbiamo terminato ed eravamo in modalita' loop terminare
+				if (pPlay->pParam->Flags & SPCF_LOOP) {
+					if (TimerNow >= pPlay->FrameEndLoop) {
+						pPlay->TestAttivo = false;
+						pPlay->TestAbs = false;
+						if (GlobTomb4.DebugModeCounter)
+							ShowMsgDebug("Completed playing of PARAM_ACTOR_SPEECH, %d", pPlay->pParam->IdSpeech, 0);
+						FormattaLogCutscene("SPEECH", TimerNow, "Completed  PARAM_ACTOR_SPEECH, %d", pPlay->pParam->IdSpeech, 0);
+						ImpostaMeshHead(pPlay, 0);
+						EliminaStringaSpeech(pPlay);
+						DeleteParamCommand(PARAM_ACTOR_SPEECH, pPlay->pParam->IdSpeech, false, true);
+
+						continue;
+					}
+				}
+
+				if (TimerNow == pPlay->LastFramePerformed)
+					continue;
+
+				pPlay->LastFramePerformed = TimerNow;
+				TestNextComando = false;
+
+				ComandoNow = pPlay->pParam->VetCommands[pPlay->IndexCommandNow];
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Frame=%d: Command $%04X", TimerNow, ComandoNow);
+
+				// ----- ROTAZIONE ORIZZONTALE -------------------------
+				// se c''e rotazione testa in corso eseguirla
+				if (pPlay->OrientHTurnInc) {
+					pLastCommand = "";
+					switch (pPlay->OrientHLastCommand ) {
+					case SPC_LOOK_RIGHT:
+						pLastCommand = "LOOK_RIGHT";
+						break;
+					case SPC_LOOK_LEFT:
+						pLastCommand = "LOOK_LEFT";
+						break;
+					case SPC_HEAD_SHAKE:
+						pLastCommand = "HEAD_SHAKE";
+						break;
+					}
+
+					// siamo in fase di rotazione orizzontale
+					// vedere se abbiamo terminato
+					if (pPlay->OrientHLastCommand != SPC_HEAD_SHAKE) {
+						if (TimerNow >= pPlay->FrameEndHTurn) {
+							pPlay->OrientHTurnInc = 0;
+							sprintf_s(MioBuffer, "SPEECH, %d: end %s command ", pPlay->pParam->IdSpeech, pLastCommand);
+
+							FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+						}
+					}
+
+					TestFineTurning = false;
+					if (pPlay->IndiceSecondarioRotateH == 0 || pPlay->OrientHLastCommand == SPC_HEAD_SHAKE) {
+
+						// siamo in fase di modificare rotazione
+						pPlay->OrientHTurnNow += pPlay->OrientHTurnInc;
+						// vedere se abbiamo terminato rotazione
+						if (pPlay->OrientHTurnEnd > 0) {
+							if (pPlay->OrientHTurnNow >= pPlay->OrientHTurnEnd) {
+								// terminato
+								TestFineTurning = true;
+
+								pPlay->IndiceSecondarioRotateH++;
+							}
+						} else {
+							if (pPlay->OrientHTurnNow < pPlay->OrientHTurnEnd) {
+								// terminato
+								TestFineTurning = true;
+							}
+						}
+
+						if (TestFineTurning) {
+							pPlay->OrientHTurnNow = pPlay->OrientHTurnEnd;
+							pPlay->IndiceSecondarioRotateH++;
+						}
+					}
+
+					// adesso tenere impostato questo valore
+					tomb4::lara.head_y_rot = pPlay->OrientHTurnNow;
+					tomb4::lara.torso_y_rot = pPlay->OrientHTurnNow;
+
+					// se comando shake e terminato vedere se abbiamo finito tutto o se dobbiamo invertire direzione
+					if (pPlay->OrientHLastCommand == SPC_HEAD_SHAKE && TestFineTurning == true) {
+						if (pPlay->IndiceSecondarioRotateH >= pPlay->OrientHTimes) {
+							// terminato
+							pPlay->OrientHTurnInc = 0;
+							sprintf_s(MioBuffer, "SPEECH, %d: end %s command ", pPlay->pParam->IdSpeech, pLastCommand);
+
+							FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+						} else {
+							// invertire direzione
+							pPlay->OrientHTurnInc = -pPlay->OrientHTurnInc;
+							pPlay->OrientHTurnEnd = -pPlay->OrientHTurnEnd;
+						}
+					}
+				}
+
+				// turning VERTICALE --------------------------------------------
+				// se c''e rotazione testa in corso eseguirla
+				if (pPlay->OrientVTurnInc) {
+
+					pLastCommand = "";
+					switch (pPlay->OrientVLastCommand) {
+					case SPC_LOOK_UP:
+						pLastCommand = "LOOK_UP";
+						break;
+					case SPC_LOOK_DOWN:
+						pLastCommand = "LOOK_DOWN";
+						break;
+					case SPC_HEAD_NOD:
+						pLastCommand = "HEAD_NOD";
+						break;
+					}
+					// siamo in fase di rotazione orizzontale
+					// vedere se abbiamo terminato
+					if (pPlay->OrientVLastCommand != SPC_HEAD_NOD) {
+						if (TimerNow >= pPlay->FrameEndVTurn) {
+							pPlay->OrientVTurnInc = 0;
+							sprintf_s(MioBuffer, "SPEECH, %d: end %s command ", pPlay->pParam->IdSpeech, pLastCommand);
+
+							FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+						}
+					}
+
+					TestFineTurning = false;
+					if (pPlay->IndiceSecondarioRotateV == 0 || pPlay->OrientVLastCommand == SPC_HEAD_NOD) {
+
+						// siamo in fase di modificare rotazione
+						pPlay->OrientVTurnNow += pPlay->OrientVTurnInc;
+						// vedere se abbiamo terminato rotazione
+						if (pPlay->OrientVTurnEnd > 0) {
+							if (pPlay->OrientVTurnNow >= pPlay->OrientVTurnEnd) {
+								// terminato
+								TestFineTurning = true;
+
+								pPlay->IndiceSecondarioRotateV++;
+							}
+						} else {
+							if (pPlay->OrientVTurnNow < pPlay->OrientVTurnEnd) {
+								// terminato
+								TestFineTurning = true;
+							}
+						}
+
+						if (TestFineTurning) {
+							pPlay->OrientVTurnNow = pPlay->OrientVTurnEnd;
+							pPlay->IndiceSecondarioRotateV++;
+						}
+					}
+
+					// adesso tenere impostato questo valore
+					tomb4::lara.head_x_rot = pPlay->OrientVTurnNow;
+					tomb4::lara.torso_x_rot = pPlay->OrientVTurnNow;
+
+					// se comando shake e terminato vedere se abbiamo finito tutto o se dobbiamo invertire direzione
+					if (pPlay->OrientVLastCommand == SPC_HEAD_NOD && TestFineTurning == true) {
+						if (pPlay->IndiceSecondarioRotateV >= pPlay->OrientVTimes) {
+							// terminato
+							pPlay->OrientVTurnInc = 0;
+							sprintf_s(MioBuffer, "SPEECH, %d: end %s command ", pPlay->pParam->IdSpeech, pLastCommand);
+
+							FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+						} else {
+							// invertire direzione
+							// facendo pero' valori diversi a seconda se verso l'alto o verso il basso
+
+							pPlay->OrientVTurnInc = -pPlay->OrientVTurnInc;
+							if (pPlay->OrientVTurnInc > 0) {
+								// ora si deve andare verso l'alto, fare spostamento di solo un quarto
+								pPlay->OrientVTurnEnd = pPlay->OrientVTurnEnd >> 1;
+							} else {
+								// ora si sta tornamndo in basso, moltiplicare per 4
+								pPlay->OrientVTurnEnd = pPlay->OrientVTurnEnd << 1;
+							}
+							pPlay->OrientVTurnEnd = -pPlay->OrientVTurnEnd;
+						}
+					}
+				}
+
+				// ---- fine VERTICALE
+				if (pPlay->pParam->Flags & SPCF_FREEZE_HAIR) {
+					tomb4::InitialiseHair();
+					tomb4::lara.hit_frame = 0;
+				}
+				// se siamo in modo speech pausa impostare head attuale e non fare altro
+				if (TimerNow <= pPlay->FrameEndSpeech) {
+					// eseguire solo mesh attuale
+					// a meno che non sia SPC_PAUSE nel qual caso lasciarla com'e'
+					if ((ComandoNow & SPC_MASK_COMMANDS) != SPC_PAUSE) {
+						ImpostaMeshHead(pPlay, pPlay->SpeechIndexNow);
+					}
+
+					continue;
+				}
+
+				// abbiamo terminano frame rate per mesh attuale
+				// ora eseguire comando
+
+				// analizzare comandi che richiedono una sequenza
+				switch (ComandoNow & SPC_MASK_COMMANDS) {
+				case SPC_MESH:
+				case SPC_PAUSE:
+					// se siamo a questo punto vuol dire che abbiamo gia' finito
+					pPlay->IndexCommandNow++;
+					if (pPlay->SpeechIndexNow == 0) {
+						FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: completed SPC_PAUSE command", pPlay->pParam->IdSpeech, 0);
+					} else {
+						FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: completed SPC_MESH command", pPlay->pParam->IdSpeech, 0);
+					}
+					TestNextComando = true;
+					break;
+
+				case SPC_SYLL:
+
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SYLL", TimerNow, 0);
+
+					pPlay->SpeechTotSequence--;
+					if (pPlay->SpeechTotSequence == 0) {
+						// finita sequenza, ma se ci sono diverse syllabe iniziare un'altra invertendo
+						// i valori
+						pPlay->SpeechTotSyll--;
+						if (pPlay->SpeechTotSyll == 0) {
+							pPlay->IndexCommandNow++;
+							FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: end SPC_SYLL command", pPlay->pParam->IdSpeech, pPlay->SpeechIndexNow);
+							TestNextComando = true;
+							break;
+						}
+
+						// impostare altra syllaba
+						pPlay->SpeechIndexInc = -pPlay->SpeechIndexInc;
+						pPlay->SpeechTotSequence = pPlay->TotSpeech - 1;
+					}
+
+					pPlay->SpeechIndexNow += pPlay->SpeechIndexInc;
+					pPlay->FrameEndSpeech = TimerNow + pPlay->FrameRateSpeech;
+
+					break;
+				case SPC_SEQUENCE:
+					pPlay->SpeechTotSequence--;
+					if (pPlay->SpeechTotSequence == 0) {
+						pPlay->IndexCommandNow++;
+						FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: end SPC_SEQUENCE command", pPlay->pParam->IdSpeech, pPlay->SpeechIndexNow);
+						TestNextComando = true;
+						break;
+					}
+
+					pPlay->SpeechIndexNow += pPlay->SpeechIndexInc;
+					pPlay->FrameEndSpeech = TimerNow + pPlay->FrameRateSpeech;
+
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_SEQUENCE mesh %d", TimerNow, pPlay->SpeechIndexNow);
+
+					break;
+				case SPC_PLAY_SFX:
+					// suonare sound effect
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+					pItem = &GlobTomb4.pAdr->pVetItems[pPlay->ItemIndex];
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_PLAY_SFT  %d", TimerNow, Numero);
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: PLAY_SFX %d", pPlay->pParam->IdSpeech, Numero);
+					tomb4::SoundEffect(Numero, (tomb4::PHD_3DPOS *) &pItem->CordX, 0);
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+				case SPC_TEXT:
+					// visualizzare stringa
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_TEXT string %d", TimerNow, Numero);
+
+					// eliminare stringa precedente
+					if (pPlay->IndexLastString) {
+						sprintf_s(MioBuffer, "SPEECH, %d: removed TEXT %d:'%s'", pPlay->pParam->IdSpeech, pPlay->IndexLastString, GetStringaNG(pPlay->IndexLastString));
+
+						FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+					}
+
+					EliminaStringaSpeech(pPlay);
+					if (Numero) {
+						sprintf_s(MioBuffer, "SPEECH, %d: TEXT %d:'%s'", pPlay->pParam->IdSpeech, Numero, GetStringaNG(Numero));
+
+						FormattaLogCutscene("SPEECH", TimerNow, MioBuffer, 0, 0);
+					}
+
+					pPlay->IndexLastString = Numero;
+
+					if (Numero) {
+						// visualizzare stringa extrang numero
+						// impostare temporaneamente posizione e colore per questo attore
+						SalvaColore = GlobTomb4.PrintString.Colore;
+						SalvaPosizione = GlobTomb4.PrintString.Posizione;
+
+						GlobTomb4.PrintString.Colore = pPlay->TextSettings.Colore;
+						GlobTomb4.PrintString.Posizione = pPlay->TextSettings.Posizione;
+
+						EsecuzioneFlipeffect(0, 360, Numero, SCANF_DIRECT_CALL);
+
+						GlobTomb4.PrintString.Colore = SalvaColore;
+						GlobTomb4.PrintString.Posizione = SalvaPosizione;
+					}
+
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+
+				case SPC_PLAY_CD:
+					// suonare traccia audio
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_PLAY_CD track %d", TimerNow, Numero);
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: PLAY_CD %d", pPlay->pParam->IdSpeech, Numero);
+					PlayExtraCD(Numero, 2, false);
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+				case SPC_PERFORM_TG:
+					// eseguire trigger group
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+					GlobTomb4.pMexLastTGCaller = "Speech command";
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_PERFORM_TG triggergroup=%d", TimerNow, Numero);
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: PERFORM_TG %d", pPlay->pParam->IdSpeech, Numero);
+					EseguiTriggerGroup(Numero);
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+				case SPC_NEXT_STATEID:
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_NEXT_STATE_ID %d", TimerNow, Numero);
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: NEXT_STATEID %d", pPlay->pParam->IdSpeech, Numero);
+					pItem = &GlobTomb4.pAdr->pVetItems[pPlay->ItemIndex];
+					pItem->StateIdNext = Numero;
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+				case SPC_ANIMATION:
+					// eseguire animazione su moveable attuale
+					Numero = ComandoNow & SPC_MASK_SINGLE;
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Frame=%d: SPC_ANIMATION %d", TimerNow, Numero);
+					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: ANIMATION %d", pPlay->pParam->IdSpeech, Numero);
+					pItem = &GlobTomb4.pAdr->pVetItems[pPlay->ItemIndex];
+
+					StartAnim = GlobTomb4.pAdr->pVetSlot[pItem->SlotID].IndexFirstAnim;
+					// trovare indice assoluto di animazione
+					Numero += StartAnim;
+
+					pItem->FrameNow = GlobTomb4.pAdr->pVetAnimations[Numero].FrameStart;
+					pItem->StateIdCurrent = GlobTomb4.pAdr->pVetAnimations[Numero].StateId;
+					pItem->AnimationNow = Numero;
+					pPlay->IndexCommandNow++;
+					TestNextComando = true;
+					break;
+				}
+
+				if (TestNextComando == true) {
+					// controllare se abbiamo terminato
+					if (pPlay->IndexCommandNow >= pPlay->pParam->TotCommands) {
+						// avremmo terminato, se pero' siamo in modalita' loop
+						if (GlobTomb4.DebugModeCounter)
+							ShowMsgDebug("Frame=%d: Completed PARAM_ACTOR_SPEECH, %d", TimerNow, pPlay->pParam->IdSpeech);
+						// ricominare da capo
+						if (pPlay->pParam->Flags & SPCF_LOOP) {
+							if (GlobTomb4.DebugModeCounter)
+								ShowMsgDebug("Frame=%d: loop mode: restart PARAM_ACTOR_SPEECH, %d", TimerNow, pPlay->pParam->IdSpeech);
+							pPlay->IndexCommandNow = 0;
+							pPlay->OrientHTurnInc = 0;
+							pPlay->OrientVTurnInc = 0;
+							pPlay->OrientHTimes = 0;
+							pPlay->OrientVTimes = 0;
+							ImpostaComandoSpeech(pPlay);
+							FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: RESTART SPEECH (loop mode) %d", pPlay->pParam->IdSpeech, 0);
+							continue;
+						}
+						// terminare
+						// impostare bocca muta
+						pPlay->TestAbs = false;
+						ImpostaMeshHead(pPlay, 0);
+						EliminaStringaSpeech(pPlay);
+						pPlay->TestAttivo = false;
+						FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: COMPLETED", pPlay->pParam->IdSpeech, 0);
+						DeleteParamCommand(PARAM_ACTOR_SPEECH, pPlay->pParam->IdSpeech, false, true);
+
+						continue;
+					}
+					// non e' terminato: impostare prossimo comando
+					ImpostaComandoSpeech(pPlay);
+				}
+			}
+		}
+	}
+
+	void ShowMsgDebug(const TCHAR *szFormat, ...)
+	{
+		TCHAR szBuffer[512];  // Large buffer for very long filenames (like with HTTP)
+		char BufTabs[80];
+		int i;
+		va_list pArgs;
+
+		for (i = 0; i < GlobTomb4.DebugModeCounter; i++) {
+			BufTabs[i] = '\t';
+		}
+
+		BufTabs[i] = 0;
+
+		va_start(pArgs, szFormat);
+		vsprintf_s(szBuffer, szFormat, pArgs);
+		va_end(pArgs);
+
+		if (i > 0) {
+			sprintf_s(BufferLog, "%s%s", BufTabs, szBuffer);
+			InviaLog(BufferLog);
+		} else {
+			InviaLog(szBuffer);
+		}
+	}
+
+	// il valore meshindex e' relativo e parte da zero (mute), poi questa funzione calcola il valore assoluto
+	// TestAbs=true quando impostato per comando sequenza o comando mesh singola
+	// in tutti gli altri casi relativo, ossia "0" puo' essere cambiato a 3 se si usa vecchio tipo di slot
+	void ImpostaMeshHead(StrPlaySpeech *pPlay, int MeshIndex)
+	{
+		WORD MeshAbs;
+
+		MeshAbs = GetMeshSpeech(pPlay, MeshIndex);
+
+		if (pPlay->TestLara) {
+
+			GlobTomb4.pAdr->VetMeshLara[14] = GlobTomb4.pAdr->VetMeshPointer[MeshAbs];
+
+		} else {
+			// moveable diverso da lara
+
+			GlobTomb4.pAdr->VetMeshPointer[pPlay->IndexMeshActorHead] = GlobTomb4.pAdr->VetMeshPointer[MeshAbs];
+		}
+	}
+
+	// restituisce l'indice di mesh da pmeshvettore
+	// callcolato tenendo conto di flag SPCF_OLD_SPEECH_SLOTS
+	// e se assoluto TestAbs=true o relativo
+	// se NON e' assoluto, allora vuol dire che i primi indici di mesh potrebbero andare invertiti
+	// se corrispondono a bocca chiusa/aperta ma solo se c'e' SPCF_OLD_SPEECH_SLOTS flag
+	// se invece e' assoluto calcola MeshIndex+firstmesh
+	WORD GetMeshSpeech(StrPlaySpeech *pPlay, int MeshIndex)
+	{
+		WORD i;
+		int TotMesh;
+
+		if ((pPlay->Flags & SPCF_OLD_SPEECH_SLOTS) == 0 || pPlay->TestAbs == true) {
+			// e' nuovo metodo
+			return pPlay->IndexFirstMeshSpeech + MeshIndex * 2;
+		}
+
+		if (pPlay->Flags & SPCF_OLD_SPEECH_SLOTS) {
+			// e' vecchio metodo: tutto piu' complicato
+			if (MeshIndex < pPlay->TotSpeech) {
+				// invertire l'ordine della mesh speech
+				i = pPlay->pParam->TotSpeechMesh - MeshIndex - 1;
+
+			} else {
+				i = MeshIndex;
+			}
+			TotMesh = GlobTomb4.pAdr->pVetSlot[pPlay->pParam->SpeechSlot].TotMesh;
+			i *= TotMesh;
+		} else {
+			i = MeshIndex;
+		}
+
+		return pPlay->IndexFirstMeshSpeech + i * 2;
+	}
+
+	void EliminaStringaSpeech(StrPlaySpeech *pPlay)
+	{
+		int j;
+		StrProgressiveAction *pAzione;
+
+		if (pPlay->IndexLastString) {
+			pAzione = &GlobTomb4.VetProgressiveActions[0];
+			for (j = 0; j < GlobTomb4.TotProgressiveActions; j++) {
+				if (pAzione->ActionType == AZ_PRINT_STRING && (pAzione->ItemIndex & 0x8000) != 0) {
+
+					if ((pAzione->ItemIndex & 0x7fff) == pPlay->IndexLastString) {
+						pAzione->ActionType = 0;
+						GestioneCompletedProgActions(AZ_PRINT_STRING, j);
+						break;
+					}
+				}
+				pAzione++;
+			}
+		}
+	}
+
+	// chiamata quando e' stata completata una progrssive action
+
+	void GestioneCompletedProgActions(int ActionType, int ActionIndex)
+	{
+		CALL_COMPLETED_PROGR_ACTION CallCompletedAction;
+		StrPluginRec *pRec;
+		StrProgressiveAction *pAction;
+		int i;
+		int IdCommand;
+
+		pAction = &GlobTomb4.VetProgressiveActions[ActionIndex];
+
+		// gestione callback
+		if (EsisteDirectCB(CB_COMPLETED_PROGR_ACTION, CBT_ANY)) {
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				if (pRec->VetDirectCB[CB_COMPLETED_PROGR_ACTION]) {
+					CallCompletedAction = (CALL_COMPLETED_PROGR_ACTION) pRec->VetDirectCB[CB_COMPLETED_PROGR_ACTION];
+					CallCompletedAction(ActionType, pAction);
+				}
+
+				pRec++;
+			}
+		}
+
+		// se l'azione appena conclusa conteneva un id di comando script allocato dinamicamente: canellare
+		// adesso quel comando
+		switch (ActionType) {
+		case AZ_MOVE_STATIC:
+		case AZ_MOVE_MOVEABLE:
+			// comando PARAM_MOVE_ITEM
+			IdCommand = pAction->VetArgWord[2];
+			DeleteParamCommand(PARAM_MOVE_ITEM, IdCommand, false, true);
+			break;
+		case AZ_SET_CAMERA:
+			IdCommand = pAction->ItemIndex;
+			DeleteParamCommand(PARAM_SET_CAMERA, IdCommand, false, true);
+			break;
+		case AZ_SCALE_STATIC:
+			IdCommand = pAction->ItemIndex;
+			DeleteParamCommand(PARAM_SCALE_ITEM, IdCommand, false, true);
+			break;
+		case AZ_SHOW_SPRITE:
+			IdCommand = pAction->ItemIndex;
+			DeleteParamCommand(PARAM_SHOW_SPRITE, IdCommand, false, true);
+			break;
+		case AZ_LIGHTNING:
+			IdCommand = pAction->ItemIndex;
+			DeleteParamCommand(PARAM_LIGHTNING, IdCommand, false, true);
+			break;
+		case AZ_TRIGGER_GROUP_CONTINUO:
+			IdCommand = pAction->ItemIndex;
+			DeleteTriggerGroup(IdCommand, false);
+			break;
+		case AZ_ADD_EFFECT:
+			IdCommand = pAction->VetArgShort[4];
+			DeleteAddEffect(IdCommand, false);
+			break;
+		case AZ_PRINT_STRING:
+			IdCommand = pAction->VetArgShort[3];
+			DeleteParamCommand(PARAM_PRINT_TEXT, IdCommand, false, true);
+			break;
+		}
+	}
+
+	void FormattaLogCutscene(const char *pMexTipo, DWORD Frame, const char *pMexBase, int Arg1, int Arg2)
+	{
+		char BufferFinale[512];
+		char Buffer[512];
+
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) == 0)
+			return;
+
+		if (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG) {
+
+			sprintf_s(Buffer, pMexBase, Arg1, Arg2);
+			sprintf_s(BufferFinale, "%d: [%s] %s\r\n", Frame, pMexTipo, Buffer);
+			StampaLogCutscene(BufferFinale);
+		}
+	}
+
+	void StampaLogCutscene(char *pMex)
+	{
+		FILE *pFile;
+
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) == 0)
+			return;
+		if (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG && fopen_s(&pFile, "cutscene_log.txt", "at") == 0) {
+			fprintf(pFile, pMex);
+			fclose(pFile);
+		}
+	}
+
+	// esegue singolo flipeffect, sia vecchio <= 46, che quelli nuovi ng
+	// gestisce eventuali chiamate per flipeffect di diversi plugin
+	// o callbakc su vecchi plugin da eseguire prima o dopo o al posto
+
+	// NumeroFlip = Numero del flipeffect (da 47 in poi teoricamnte)
+	// Timer = Valore di timer (puo' essere negativo o positivo da interpretare)
+	// Flags = Flags+NumeroRoom dove si trova flip
+	// valori restituiti:
+	//  0 = non bloccare flip (verra' eseguito al prossimo ciclo)
+	//  1 = blocco temporaneo (finche' lara rimane sul settore non lo esegue
+	//					ma tornera' attivo quando lara	torna nuovamente)
+	//  2 = blocco totale (non verra' mai piu' eseguito)
+	// in valore globale GlobTomb4.pItemCorrente si puo' trovare l'oggetto
+	// che ha attivato il trigger, che sara' lara per untrigger normale
+	// e un moveable diverso per un heavy o antiyheavy trigger
+
+	int EsecuzioneFlipeffect(WORD PluginId, int NumeroFlip, WORD Timer, WORD Flags)
+	{
+		int RepeatType;
+		int ExtraTimer;
+		StrPluginRec *pRec;
+		bool TestReplaced;
+		StrRecordCallBack *pCB;
+		CALL_FLIPEFFECT pCallFlip;
+		CALL_FLIPEFFECT_MINE pCallMine;
+		WORD TimerFull;
+		int i, j;
+		int Responso;
+
+		TimerFull = Timer;
+
+		ExtraTimer = Timer >> 8;
+		ExtraTimer &= 0x7f;
+
+		Timer &= 0xFF;
+
+		RepeatType = 0;
+
+		// se siamo in modalita' inside dummy aboertire l'esecuzione
+		if (GlobTomb4.BaseSalvaFloor.InsideDummyTrigger)
+			return 1;
+
+		// ----------------------- FLIPEFFECT DI UN'ALTRA ENGINE? ----------------------------------------------
+
+		if (PluginId > 0) {
+			if (PluginId == 0xffff) {
+				// non era stato trovato plugin per questo id
+				sprintf_s(BufferLog, "ERROR: Invalid Plugin ID for Flipeffect %d", NumeroFlip);
+				InviaLog(BufferLog);
+				return 0;
+			}
+			// passarlo alla calbback di quel plugin
+			// si.
+			pCallMine = (CALL_FLIPEFFECT_MINE) MyGlobPrivate.DataBase.pVetPlugins[PluginId].VetDirectCB[CB_FLIPEFFECT_MINE];
+			if (pCallMine == NULL) {
+				sprintf_s(BufferLog, "ERROR: plugin [%s] didn't set a callback for its flipeffect triggers", MyGlobPrivate.DataBase.pVetPlugins[PluginId].Nome);
+				InviaLog(BufferLog);
+				return 1;
+			}
+			RepeatType = pCallMine(NumeroFlip, Timer , ExtraTimer, Flags);
+
+			return RepeatType;
+
+		}
+		// ----------------------- CALLBACK FIRST ? ------------------------------------------------
+		// prima eseguire solo le eventuali callback first
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetFlipeffects[NumeroFlip] & CBT_FIRST) {
+			// ok, sappiamo che esiste almeno una callback first per questo flipeffect
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCB->CB_Tipo == CB_FLIPEFFECT && pCB->Numero == NumeroFlip && (pCB->Flags & CBT_FIRST) != 0) {
+						// trovata call back
+						// (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode);
+						pCallFlip = (CALL_FLIPEFFECT) pCB->pCall;
+						pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_FIRST);
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+
+		// ---------------------- CALLBACK REPLACE --------------------------------------------------
+		TestReplaced = false;
+
+		pCallFlip = (CALL_FLIPEFFECT) MyGlobPrivate.BaseVetCbReplace.VetFlipeffects[NumeroFlip];
+
+		if (pCallFlip != NULL) {
+			TestReplaced = true;
+			//  (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode, WORD CBType);
+			Responso = pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_REPLACE);
+			if (Responso == TRET_EXECUTE_ORIGINAL) {
+				TestReplaced = false;
+			} else {
+				RepeatType = Responso;
+			}
+
+		}
+
+		// ------------------ ORIGINAL TRNG FLIPEFFECT -----------------------------------------------------
+
+		if (TestReplaced == false) {
+			// tutta la gestione standard (trng) di flipeffect vecchi e nuovi
+
+			RepeatType = PerformTRNGFlipEffect(NumeroFlip, TimerFull, Flags);
+		}
+
+		// ------------------- CALLBACK AFTER -----------------------------------------------------------
+
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetFlipeffects[NumeroFlip] & CBT_AFTER) {
+			// ok, sappiamo che esiste almeno una callback after per questo flipeffect
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCB->CB_Tipo == CB_FLIPEFFECT && pCB->Numero == NumeroFlip && (pCB->Flags & CBT_AFTER) != 0) {
+						// trovata call back
+						// (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode);
+						pCallFlip = (CALL_FLIPEFFECT) pCB->pCall;
+						RepeatType = pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_AFTER);
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+
+		return RepeatType;
+	}
+
+	// modifica punto da dove suonare nel canale pCanale
+	void ImpostaPosizioneSuono(StrCanaleBass *pCanale, DWORD Posizione)
+	{
+		StrBassHandles *pBass;
+
+		pBass = &GlobTomb4.BaseBassHandles;
+
+		pBass->Proc.BASS_ChannelSetPosition(pCanale->Canale, Posizione, BASS_POS_BYTE);
+	}
+
+	// esegue l'intero gruppo di trigger pGroup
+	// nel caso ci siano condzioni restituisce 1 se condizione
+	// complessiva e' true, mentre restituisce 0 se e' false
+	// se non e' condizione restituisce sempre  true
+	int EseguiTriggerGroup(short IdTriggerGroup)
+	{
+		int TestEsito;
+		int i;
+		int ResultNow;
+		int j;
+		WORD NextFlags;
+		short SalvaLastTimer;
+		StrTriggerGroup *pGroup;
+		StrScriptTrigger *pTrigger;
+		StrScriptTrigger TriggerMod;
+		bool TestOkElse;
+		int Numero;
+		DWORD StartTime;
+		int EndTime;
+		int TipoCMD;
+		bool TestModTrigger;
+
+		if (GlobTomb4.DebugModeCounter)
+			ShowMsgDebug("Perform TriggerGroup=%d", IdTriggerGroup, 0);
+		AddTabLogScript();
+
+		pGroup = NULL;
+		GlobTomb4.pTarget = NULL;
+		i = GlobTomb4.pBaseTriggerGroups->VetID[IdTriggerGroup];
+		if (i == -1) {
+
+			sprintf_s(BufferLog, "ERROR: cann't find trigger group with id=%d (called from: %s)", IdTriggerGroup, GlobTomb4.pMexLastTGCaller);
+			InviaLog(BufferLog);
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug(BufferLog, 0, 0);
+			SubTabLogScript();
+			return 0;
+		}
+		pGroup = &GlobTomb4.pBaseTriggerGroups->VetTriggerGroups[i];
+
+		if (pGroup->VetTriggers[0].Flags & TGROUP_DISABLED) {
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("TriggerGroup DISABLED", 0, 0);
+			SubTabLogScript();
+			return 1;
+		}
+		SalvaLastTimer = GlobTomb4.LastTimerTrigger;
+		GlobTomb4.LastTimerTrigger = 0;
+
+		// fare analisi particolare per accoppiata trigger camera + target
+		if (*GlobTomb4.pAdr->Camera.pModeCameraNext != 5) {
+			AnalisiCameraTarget(pGroup);
+		}
+
+		pTrigger = &pGroup->VetTriggers[0];
+		if ((pTrigger->Flags & (TGROUP_SINGLE_SHOT | TGROUP_SINGLE_SHOT_RESUMED)) != 0) {
+			// imposta come disabled
+			pTrigger->Flags |= TGROUP_DISABLED;
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("TriggerGroup=%d is Single-Shot: sign it like disabled to avoid further executions", pGroup->IdGroup, 0);
+		}
+		TestEsito = 1;
+		i = 0;
+		TestOkElse = true;
+
+		while (i < pGroup->TotTriggers) {
+
+			pTrigger = &pGroup->VetTriggers[i];
+
+			// ------------- TRIGGER COMMAND ? -----------------------------
+			// verifica per tgroup_commmand
+			// eseguirli tutti finche' non si raggiune un trigger reale
+			while (i < pGroup->TotTriggers && (pTrigger->Flags & TGROUP_COMMAND) == TGROUP_COMMAND) {
+				// command trigger
+				// visualizzarlo nel log
+				PrintLogCommand(pTrigger, i);
+				// veriifa else anche qui
+				if (TestOkElse == false && (pTrigger->Flags & TGROUP_ELSE) != 0) {
+					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+						ShowMsgDebug("Conditional block has been completed: found next TGROUP_ELSE index=%d. Quit the TriggerGroup", i, 0);
+					TestEsito = 1;
+					SubTabLogScript();
+					goto Concludi;
+
+				}
+				TestOkElse = false;
+
+				// eseguire comando
+				TestModTrigger = false;
+				TipoCMD = pTrigger->Object;
+				switch (TipoCMD) {
+				case TCMD_TIMER_FIELD:
+					// imposta valore timer da usare con trigger successivi
+					GlobTomb4.LastTimerTrigger = pTrigger->Timer;
+					i++;
+					break;
+				case TCMD_GOTO:
+					// nuovo indice da eseguire
+					i = pTrigger->Timer;
+					TestOkElse = true;
+					break;
+				case TCMD_EXIT:
+
+					TestEsito = pTrigger->Timer;
+					goto Concludi;
+
+				case TCMD_LOG:
+					// attivare o disattivare log
+					if (pTrigger->Timer == 0) {
+
+						// disattivarlo
+						if (GlobTomb4.DebugModeCounter)
+							ShowMsgDebug("DISABLED SCRIPT LOG", 0, 0);
+						GlobTomb4.DebugModeCounter = 0;
+						GlobTomb4.pDiagnostica->FlagsDgx &= ~DGX_LOG_SCRIPT_COMMANDS;
+					} else {
+						// attivarlo
+						GlobTomb4.pDiagnostica->FlagsDgx |= DGX_LOG_SCRIPT_COMMANDS;
+
+						GlobTomb4.DebugModeCounter = 1;
+						if (GlobTomb4.DebugModeCounter)
+							ShowMsgDebug("ENABLED SCRIPT LOG", 0, 0);
+						AddTabLogScript();
+					}
+					i++;
+					break;
+				case TCMD_PAUSE:
+					// fare pause
+					if (pTrigger->TimerSigned < 0) {
+						// attesa di microsecondi
+						Numero = -pTrigger->TimerSigned;
+						StartTime = (DWORD) GetTickCount64();
+						EndTime = 0;
+
+						while (EndTime < Numero) {
+							EndTime = (DWORD) GetTickCount64() - StartTime;
+						}
+					} else {
+						// attendere pressione tasto
+						do {
+							LeggiDirectInput();
+						} while (TastoPremutoTomb4(pTrigger->Timer) == false);
+
+					}
+					i++;
+					break;
+				case TCMD_SET_TIMER:
+				case TCMD_SET_FULL_TIMER:
+				case TCMD_SET_EXTRA_TIMER:
+				case TCMD_SET_EXTRA_CONDITION:
+				case TCMD_SET_OBJECT:
+					// tutti hanno in comunque di fornire una variabile da cui leggere il valore da impostare
+					Numero = LeggiVariabile(pTrigger->Timer);
+					// ora trovare prossimo trigger ma salvare tipo CMD di questo
+					i = i + 1;
+					TriggerMod = pGroup->VetTriggers[i];
+					pTrigger = &TriggerMod;
+
+					// ora non posso continuare questo while, altrimenti si modifichera' pTrigger che punta
+					// a TriggerMod
+					TestModTrigger = true;
+
+					switch (TipoCMD) {
+					case TCMD_SET_TIMER:
+						// byte basso di timer
+						if (Numero < 0 || Numero > 255) {
+							if (GlobTomb4.DebugModeCounter)
+								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_TIMER field", Numero, 0);
+						}
+						pTrigger->Timer = (pTrigger->Timer & 0x7f00) | Numero;
+						break;
+					case TCMD_SET_FULL_TIMER:
+						if (Numero < 0 || Numero > 0x7fff) {
+							if (GlobTomb4.DebugModeCounter)
+								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_FULL_TIMER field", Numero, 0);
+						}
+						// intero numero
+						pTrigger->Timer = Numero;
+						break;
+					case TCMD_SET_EXTRA_CONDITION:
+						if (Numero < 0 || Numero > 31) {
+							if (GlobTomb4.DebugModeCounter)
+								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_EXTRA_CONDITION field", Numero, 0);
+						}
+						// byte alto di timer
+						pTrigger->Timer = (pTrigger->Timer & 0x00ff) | (Numero << 8);
+						break;
+					case TCMD_SET_EXTRA_TIMER:
+						if (Numero < 0 || Numero > 0x7f) {
+							if (GlobTomb4.DebugModeCounter)
+								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_EXTRA_TIMER field", Numero, 0);
+						}
+						// byte alto di timer
+						pTrigger->Timer = (pTrigger->Timer & 0x00ff) | (Numero << 8);
+						break;
+					case TCMD_SET_OBJECT:
+						// valore object
+						// se numero e' negativo e' un indice ngle da convertire
+						// anzi no: se e' negtivo va gia' bene cosi, e' quando e' positivo che devo fare conversione
+						if (Numero >= 0) {
+							if (Numero > 4095) {
+								if (GlobTomb4.DebugModeCounter)
+									ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_OBJECT field", Numero, 0);
+							}
+							// e' indice ngle o valore non moveable index, lasciarlo come e'
+							pTrigger->Object = Numero;
+						} else {
+							// NEGATIVO: e' indice tomb di moveable: lo devo converire in ngle
+							Numero = -Numero;
+							if (Numero > 4095) {
+								if (GlobTomb4.DebugModeCounter)
+									ShowMsgDebug("ERROR: value out of range -(%d) for TCMD_SET_OBJECT field", Numero, 0);
+							}
+							//
+							pTrigger->Object = ConvertiTombItemIndex2NgleIndex(Numero);
+
+						}
+						break;
+					}
+					if (GlobTomb4.DebugModeCounter)
+						ShowMsgDebug("Set new Parameter (%d) for following trigger", Numero, 0);
+					break;
+
+				}
+				SubTabLogScript();
+
+				// se siamo arrivati a trigger modificato, uscire adesso
+				if (TestModTrigger == true)
+					break;
+				// impostare trigger (i)
+				pTrigger = &pGroup->VetTriggers[i];
+
+			}
+
+			// -------------- TRIGGER TRADIZIONALE --------------
+			//
+			// VERIFICA ELSE di fine blocco condizionale
+			//  se siamo in un blocco condizionale (dopo una condizione true) e incontriamo un ELSE
+			// allora terminare
+			if (TestOkElse == false && (pTrigger->Flags & TGROUP_ELSE) != 0) {
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Conditional block has been completed: found next TGROUP_ELSE index=%d", i, 0);
+				TestEsito = 1;
+				goto Concludi;
+			}
+
+			ResultNow = EseguiScriptTrigger(pTrigger, i);
+
+			TestOkElse = false;
+
+			// calcolare i flag del prossimo trigger
+			NextFlags = GetNextTriggerFlag(pGroup, i + 1);
+
+			// ora a seconda se questo era una condizione fare calcoli
+			// diversi
+			if (pTrigger->Flags & TGROUP_CONDITION_TRIGGER) {
+
+				// --------------------  CONDITION ---------------------------------
+
+				// e' una condizione vedere se finora va bene
+				// o bisogna andare al prossimo (eventuale) else
+				// se era NOT invertire esito
+				if (pTrigger->Flags & TGROUP_NOT)
+					ResultNow ^= 1;
+
+				if (ResultNow == 0) {
+					// ----------------------  FALSE condition per ora ----------------------
+					// continuare solo se prossimo trigger e' una condizine
+					// ed e' di tipo OR
+
+					if ((NextFlags & TGROUP_OR) == 0) {
+						// ------------ FALSE CONDITIONI ATTUALE----------------
+
+						// ora cercare solo se c'e' un blocco ELSE
+						// cercare evitare tutto fino al prossimo else
+						j = i + 1;
+
+						for (i = j; i < pGroup->TotTriggers; i++) {
+							pTrigger = &pGroup->VetTriggers[i];
+
+							if (pGroup->VetTriggers[i].Flags & TGROUP_ELSE) {
+								// mettere testesito=1 perche'
+								// se c'e' una prima condizione AND non esca subito
+								// visto che la prossima potrebbe essere un OR
+								if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+									ShowMsgDebug("Condition false: continue with next ELSE block: found next TGROUP_ELSE with index=%d", i, 0);
+								TestEsito = 1;
+								TestOkElse = true;
+								break;
+							}
+
+						}
+
+
+						// se non e' stato trovato un gruppo else
+						// uscire subito con esito=0
+						if (i == pGroup->TotTriggers) {
+							if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+								ShowMsgDebug("Conditional block is false", 0, 0);
+							TestEsito = 0;
+							goto Concludi;
+
+						}
+						// ... continue with While() .....
+
+					} else {
+						// condizione fino a qua e' sbagliato
+						TestEsito = 0;
+						i++;
+						if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+							ShowMsgDebug("Condition is false but there is a next condition with TGROUP_OR (Index=%d)", i, 0);
+
+					}
+					// ... continua con While() principale...
+
+				} else {
+					// ----------- CONDITION TRUE --------------------------------
+					// esito e' positivo.
+					// se attuale condizione e' legata a condizioni seguenti
+					// legate con OR saltarle tutte fino a raggiungere
+					// il primo trigger NON condizionale, oppure con
+					// con condizione diversa da OR
+					// ----------- SALTARE CONDIZIONI -------------------------
+					TestEsito = 1;
+					j = i + 1;
+					for (i = j; i < pGroup->TotTriggers; i++) {
+
+						// se non e' condizione fermarmi a questo per analisi
+						if ((pGroup->VetTriggers[i].Flags & TGROUP_CONDITION_TRIGGER) == 0)
+							break;
+						// pur essendo condizione continuare scansione solo se e' or
+						if ((pGroup->VetTriggers[i].Flags & TGROUP_OR) == 0)
+							break;
+						// e' condizione OR, continaure a saltarle
+					}
+					TestOkElse = false;
+					// .... continua con While() principale .....
+				}
+			} else {
+				// -----------------  NON CONDIZIONE -------------------------------------
+				// dovrebbero essere trigger da eseguire  (ma non command)
+				if (TestEsito == 0)
+					break;
+
+				// ok, questo trigger e' gia' stato eseguito.
+				// in pratica continuare con while() principale
+				TestEsito = 1;
+				TestOkElse = false;  // ci si fermera' al primo ELSE
+				i = i + 1;  // puntare al successivo
+				// ... continua con While() principale
+
+			}
+
+		}
+Concludi:
+		GlobTomb4.LastTimerTrigger = SalvaLastTimer;
+		if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+			ShowMsgDebug("END TriggerGroup=%d", IdTriggerGroup, 0);
+		SubTabLogScript();
+		return TestEsito;
+	}
+
+	void SubTabLogScript(void)
+	{
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) != 0 && (GlobTomb4.pDiagnostica->FlagsDgx & DGX_LOG_SCRIPT_COMMANDS) != 0 && (GlobTomb4.DebugModeCounter > 0)) {
+
+			GlobTomb4.DebugModeCounter--;
+		}
+	}
+
+	// verfica se in gruppo trigger che si sta eseguendo
+	// ci sono trigger per camera e per target
+	// se ci sono chiama la funzione RefereshCamera
+	void AnalisiCameraTarget(StrTriggerGroup *pGroup)
+	{
+		WORD VetTriggers[MAX_TRIGGERS_IN_THE_GROUP];
+		int TotTriggers;
+		int i;
+		WORD ValWord;
+		StrProgressiveAction *pAzione;
+		short ItemIndex;
+		short IndiceCamera;
+		int IndiceAzione;
+		int LastIndice;
+		WORD *pWord;
+		int IndiceTarget;
+		StrScriptTrigger *pTrigger;
+		WORD NAzione;
+
+		TotTriggers = 0;
+		LastIndice = 0;
+		IndiceCamera = -1;
+		IndiceTarget = -1;
+
+		for (i = 0; i < pGroup->TotTriggers; i++) {
+			pTrigger = &pGroup->VetTriggers[i];
+
+			if (pTrigger->Flags & TGROUP_ACTION) {
+				// e' un'azione ora vedere se e' una di quelle
+				// per attivare camera o target
+				//41:Trigger. (Camera) Activate <#>Camera or fixed camera with (E)Timer value
+				//42:Trigger. (Target) Set <#>Moveable as Target for camera or fixed camera
+				NAzione = pTrigger->Timer & 255;
+				switch (NAzione) {
+				case 41:
+					//  Trigger camera
+					// $0001: TO_CAMERA  +extra word
+					ItemIndex = GlobTomb4.VetRemapObjects[pTrigger->Object];
+
+					IndiceCamera = ItemIndex;
+					ValWord = (1 << 10) | ItemIndex;
+					LastIndice = TotTriggers;
+					VetTriggers[TotTriggers++] = ValWord;
+					// ora mettere valore timer
+					ValWord = pTrigger->Timer >> 8;
+					ValWord &= 127;
+					VetTriggers[TotTriggers++] = ValWord;
+					break;
+
+				case 42:
+					// trigger target
+					// $0006: TO_TARGET
+					ItemIndex = GlobTomb4.VetRemapObjects[pTrigger->Object];
+					IndiceTarget = ItemIndex;
+					ValWord = (6 << 10) | ItemIndex;
+					LastIndice = TotTriggers;
+					VetTriggers[TotTriggers++] = ValWord;
+					break;
+
+				}
+			}
+		}
+
+		if (TotTriggers) {
+			// aggiungere 0x8000 finale
+			VetTriggers[LastIndice] |= 0x8000;
+			tomb4::RefreshCamera(0x3e00, (short *) VetTriggers);
+
+			// crea azione progressiva  AZ_CAMERA_TARGET
+			IndiceAzione = CreaNuovaAzioneProgressiva();
+			pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+			pAzione->ActionType = AZ_CAMERA_TARGET;
+			pAzione->ItemIndex = IndiceCamera;
+			pAzione->Arg1 = 0;
+			// salvare i flag originali
+			GlobTomb4.OldDFPerCamera = GlobTomb4.TestDisableFeatures & (DF_GUARDA + DF_COMBAT_CAMERA);
+			if (IndiceCamera != -1) {
+				// controllare se e' fissa
+				if (GlobTomb4.pAdr->Camera.pVetCamera[IndiceCamera].Flags & 0x1) {
+					pAzione->Arg1 = 1;
+					GlobTomb4.TestDisableFeatures |= DF_GUARDA;
+					GlobTomb4.TestDisableFeatures |= DF_COMBAT_CAMERA;
+				}
+			}
+			// salvare indice di target (o -1) se e' con lara
+			pAzione->VetArg[4] = IndiceTarget;
+
+			// usare zona vetarg come vettore di word per ospitare
+			// le tre word usate
+			pWord = (WORD*) &pAzione->VetArg[0];
+			for (i = 0; i < TotTriggers; i++) {
+				pWord[i] = VetTriggers[i];
+			}
+
+		}
+	}
+
+	// resituisce l'indice per un nuovo record azione
+	// se trova un record non usato (con ActionType=0) restituisce quell'indice
+	// in caso contrario aumenta il numero di azioni
+	int CreaNuovaAzioneProgressiva(void)
+	{
+		int i;
+
+		for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+			if (GlobTomb4.VetProgressiveActions[i].ActionType == 0) {
+				return i;
+			}
+		}
+		i = GlobTomb4.TotProgressiveActions;
+		if (i >= MAX_ACTIONS) {
+
+			InviaLog("ERROR: reached max number of progressive actions");
+
+			return 0;
+		}
+		GlobTomb4.TotProgressiveActions++;
+		return i;
+	}
+
+	// usata SOLO per visualizzare nel (eventuale) log la descrizione del trigger command
+	void PrintLogCommand(StrScriptTrigger *pTrigger, int Index)
+	{
+		char MyBuf[256];
+
+		if (GlobTomb4.DebugModeCounter) {
+			sprintf_s(MyBuf, "%d) Perform Trigger: [$%X, %d, $%X]", Index, pTrigger->Flags, pTrigger->Object, pTrigger->Timer);
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug(MyBuf, 0, 0);
+			AddTabLogScript();
+
+			// visualizzare descrizione testuale
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug(GetTestoScriptTrigger(pTrigger), 0, 0);
+		}
+	}
+
+	// legge i comandi principali da tastiera e joystick evitando
+	// pero' le esecuzioni automatiche come estrazione flare, armi
+	// ricarica savegame ecc
+	// preserva i valori globali InputExtGameCommands e FlagComandiJoystick
+	// e restituisce la maschera dei comandi premuti sencondo
+	// il formato tradizionale di InputExtGameCommands
+	DWORD LeggiDirectInput(void)
+	{
+		DWORD *pFlagComandiJoystick;
+		DWORD SalvaFlagTastiPremuti;
+		DWORD SalvaComandiJoystick;
+		DWORD ValNow;
+		DWORD TempoNow;
+		int TempoPassato;
+
+		pFlagComandiJoystick = (DWORD *) &tomb4::joy_fire;
+		// vedere se eseguire adesso scansione oppure, se e' passato troppo poco tempo, se bisogna uscire
+		// subito restituendo solo l'uiltima scansione di tasti effettuata
+		TempoNow = (DWORD) GetTickCount64();
+
+		TempoPassato = TempoNow - GlobTomb4.BaseDirectInputMine.LastCheckTime;
+
+		if (TempoPassato < 55 && TempoPassato >= 0)
+			return GlobTomb4.BaseDirectInputMine.LastCheckFlags;
+
+		SalvaFlagTastiPremuti = *GlobTomb4.pAdr->pInputExtGameCommands;
+		SalvaComandiJoystick = *pFlagComandiJoystick;
+
+		*GlobTomb4.pAdr->pInputExtGameCommands = 0;
+		*pFlagComandiJoystick = 0;
+
+		ScansioneInput();
+		ValNow = *GlobTomb4.pAdr->pInputExtGameCommands;
+		// ora rifare codice simile a quello originale ma solo per coandi
+		// principlai
+		if (IsComandoPremuto(0)) {
+			ValNow |= 1;			// avanti
+		}
+
+		if (IsComandoPremuto(1)) {
+			ValNow |= 2;			// indietro
+		}
+
+		if (IsComandoPremuto(2)) {
+			ValNow |= 4;			// sinistra
+		}
+
+		if (IsComandoPremuto(3)) {
+			ValNow |= 8;			// destra
+		}
+		if (IsComandoPremuto(4)) {
+			ValNow |= 0x20000000;  // accucciarsi
+		}
+
+		if (IsComandoPremuto(5)) {
+			ValNow |= 0x40000000;  // scatto
+		}
+
+		if (IsComandoPremuto(6)) {
+			ValNow |= 0x80;			// cammina (passi di bimbo)
+		}
+
+		if (IsComandoPremuto(7)) {
+			ValNow |= 0x10;			// salta
+		}
+
+		if (IsComandoPremuto(8)) {
+			ValNow |= 0x40;			// ActionType (ctrl)
+		}
+
+		if (IsComandoPremuto(9)) {
+			ValNow |= 0x20;			// Estrae armi (spazio)
+		}
+
+		if (IsComandoPremuto(10)) {
+			ValNow |= 0x80000;		// estrae flare
+		}
+
+		if (IsComandoPremuto(11)) {
+			ValNow |= 0x0200;		// guarda
+		}
+
+		if (IsComandoPremuto(12)) {
+			ValNow |= 0x1000;		// rotola
+		}
+		if (IsComandoPremuto(13)) {
+			ValNow |= 0x200100;		// escape nota inventario era 0x100
+		}
+
+		if (IsComandoPremuto(14)) {
+			ValNow |= 0x84;			// passo di bimbo a sinistra
+		}
+
+		if (IsComandoPremuto(15)) {
+			ValNow |= 0x88;			// passo di bimbo a destra
+		}
+
+		if (IsComandoPremuto(16)) {
+			ValNow |= 0x2000;		// P pausa
+		}
+
+		if (IsComandoPremuto(17)) {
+			ValNow |= 0x100000;		// enter
+		}
+
+		*GlobTomb4.pAdr->pInputExtGameCommands = ValNow;
+
+		if (GlobTomb4.pBaseDemo->Status != RECF_STOP) {
+			GestioneDemo(true);
+			ValNow = *GlobTomb4.pAdr->pInputExtGameCommands;
+		}
+		// ripristina valori globali input
+
+		 GlobTomb4.BaseDirectInputMine.LastCheckFlags = ValNow;
+		 GlobTomb4.BaseDirectInputMine.LastCheckTime = (DWORD) GetTickCount64();
+
+		 *GlobTomb4.pAdr->pInputExtGameCommands = 0;
+		 *pFlagComandiJoystick = 0;
+
+		 return ValNow;
+	}
+
+	// fa lettura preliminare di tastiera ed eventualmente joystick
+	void ScansioneInput(void)
+	{
+		//inserisce in VetInputKeyboard la tastiera attuale
+		tomb4::DXReadKeyboard(tomb4::keymap);
+		if (tomb4::ControlMethod == 1) {
+			//legge joystick
+			tomb4::joy_fire = tomb4::ReadJoystick(tomb4::joy_x, tomb4::joy_y);
+		}
+		tomb4::linput = tomb4::IN_NONE;
+		if (tomb4::ControlMethod == 1) {
+			if (tomb4::joy_x < -8) {
+				tomb4::linput = tomb4::IN_LEFT;
+			} else {
+				if (tomb4::joy_x > 8)
+					tomb4::linput = tomb4::IN_RIGHT;
+			}
+
+			if (tomb4::joy_y > 8) {
+				tomb4::linput |= tomb4::IN_BACK;
+			} else {
+				if (tomb4::joy_y < -8)
+					tomb4::linput |= tomb4::IN_FORWARD;
+			}
+		}
+	}
+
+	// nota: se TestFakeUpdateInput = true,  vuol dire che e' stata chiamata da LeggiDirectInput o altra gestione
+	// mia interna
+
+	void GestioneDemo(bool TestFakeUpdateInput)
+	{
+		StrRecording *pRec;
+		StrItemTr4 *pLara;
+		StrGlobAddress *pAdr;
+		StrDemo *pDemo;
+		DWORD BaseMeshLara;
+		int OffsetMesh;
+		int i;
+		int *pOggettoSelezionato;
+		int *pZonaSave_9d_CordYDaPeloAcqua;
+		bool TestOkEscape;
+		WORD FlagGDemo;
+
+		pOggettoSelezionato = (int*) &tomb4::GLOBAL_lastinvitem;
+		pZonaSave_9d_CordYDaPeloAcqua = (int*) &tomb4::lara.water_surface_dist;
+		pRec = GlobTomb4.pBaseDemo;
+
+		switch (pRec->Status) {
+		case RECF_RECORDING:
+			if (pRec->TotFrames == 0) {
+				SalvaDatiInizioDemo(pRec);
+
+			}
+			GestioneComandiSpeech();
+			GestioneDemoOrganizer(GlobTomb4.pDemoLevel, pRec->IndexFrame);
+			// controllo per superamento limiti
+			if (pRec->TotFrames >= MAX_DEMO_FRAMES) {
+				pRec->Status = RECF_STOP;
+				TerminaAllSpeech();
+				SalvaDemo(GlobTomb4.DemoNumberLoaded);
+				InviaLog("WARNING: reached max frame quantity for demo recording. The recording has been stopped");
+				break;
+			}
+
+			pRec->VetFrames[pRec->TotFrames++] = ReadCurrentGameCommands();
+			pRec->IndexFrame = pRec->TotFrames;
+			break;
+		case RECF_PLAYING:
+			FlagGDemo = FDG_NONE;
+
+			if (GlobTomb4.pDemoTitle->TestDemoInProgress) {
+				pDemo = GlobTomb4.pDemoTitle;
+				FlagGDemo = FDG_FROM_TITLE;
+			} else {
+				pDemo = GlobTomb4.pDemoLevel;
+			}
+
+			if (pRec->IndexFrame == 0) {
+
+				GestioneDemoInProgress(FlagGDemo | FDG_START, pDemo);
+
+				// ora ripristinare tutti valori globali
+				pAdr = GlobTomb4.pAdr;
+
+				if (pRec->DatiLara.pLevelNow != *pAdr->pLevelNow) {
+					sprintf_s(BufferLog, "ERROR: current demo to play has been recorded to work on level %d, while now we are in level %d", pRec->DatiLara.pLevelNow, *pAdr->pLevelNow);
+					InviaLog(BufferLog);
+					pRec->Status = RECF_STOP;
+					TerminaAllSpeech();
+					break;
+				}
+				*pAdr->pEarthQuake = pRec->DatiLara.EarthQuake;
+				*pAdr->pTestFlybyInProgress = pRec->DatiLara.TestFlybyInProgress;
+				*pAdr->pTimerScreen = pRec->DatiLara.TimerScreen;
+				*pAdr->pFlareLifeTime = pRec->DatiLara.FlareLifeTime;
+				*pAdr->pObjectActive = pRec->DatiLara.ObjectActiveIndex;
+				*pAdr->pFlagsLaraHands = pRec->DatiLara.FlagsLaraHands;
+				*pAdr->pObjInLaraHandsNow = pRec->DatiLara.ObjInLaraHandsNow;
+				*pAdr->pObjInLaraHandsNext = pRec->DatiLara.ObjInLaraHandsNext;
+				*pAdr->pWeaponSelected = pRec->DatiLara.WeaponSelected;
+				*pAdr->pLaraLocationFlags = pRec->DatiLara.LaraLocationFlags;
+				*pAdr->pAirAvailable = pRec->DatiLara.AirAvailable;
+				*pAdr->pVehicleIndex = pRec->DatiLara.VehicleIndex;
+				*pAdr->pWeaponHolding = pRec->DatiLara.WeaponHolding;
+				*pAdr->pPoison1 = pRec->DatiLara.Poison1;
+				*pAdr->pPoison2 = pRec->DatiLara.Poison2;
+				*pAdr->pFlagsLara = pRec->DatiLara.FlagsLara;
+				*pAdr->pFlagsLara2 = pRec->DatiLara.FlagsLara2;
+				*pZonaSave_9d_CordYDaPeloAcqua = pRec->DatiLara.ZonaSave_9d_CordYDaPeloAcqua;
+
+				// ripristinare tutto il blocco per orientamento lara
+				tomb4::lara.turn_rate = pRec->DatiLara.VetBloccoOrient[0];
+				tomb4::lara.move_angle = pRec->DatiLara.VetBloccoOrient[1];
+				tomb4::lara.head_y_rot = pRec->DatiLara.VetBloccoOrient[2];
+				tomb4::lara.head_x_rot = pRec->DatiLara.VetBloccoOrient[3];
+				tomb4::lara.head_z_rot = pRec->DatiLara.VetBloccoOrient[4];
+				tomb4::lara.torso_y_rot = pRec->DatiLara.VetBloccoOrient[5];
+				tomb4::lara.torso_x_rot = pRec->DatiLara.VetBloccoOrient[6];
+				tomb4::lara.torso_z_rot = pRec->DatiLara.VetBloccoOrient[7];
+				tomb4::lara.left_arm.frame_number = pRec->DatiLara.VetBloccoOrient[10];
+				tomb4::lara.left_arm.anim_number = pRec->DatiLara.VetBloccoOrient[11];
+				tomb4::lara.left_arm.lock = pRec->DatiLara.VetBloccoOrient[12];
+				tomb4::lara.left_arm.y_rot = pRec->DatiLara.VetBloccoOrient[13];
+
+				// reimpostare mesh
+				i = GlobTomb4.pAdr->pVetSlot[0].IndexFirstMesh;
+				BaseMeshLara = (DWORD) GlobTomb4.pAdr->VetMeshPointer[i];
+
+				for (i = 0; i < 15; i++) {
+					OffsetMesh = pRec->DatiLara.VetMeshLaraOffset[i] + BaseMeshLara;
+					GlobTomb4.pAdr->VetMeshLara[i] = (StrMeshTr4*) OffsetMesh;
+				}
+
+				// ripristinare status di gocce su lara
+				for (i = 0; i < 16; i++) {
+					GlobTomb4.pAdr->pVetDrip[i] = pRec->DatiLara.VetDrip[i];
+				}
+
+				// indice item selezionato in inventario
+				*pOggettoSelezionato = pRec->DatiLara.InventoryItemIndex;
+
+				// impostare posizione di lara
+
+				pLara = GlobTomb4.pAdr->pLara;
+
+				AggiornaPositioneLara(pRec->DatiLara.Lara.CordX, pRec->DatiLara.Lara.CordY, pRec->DatiLara.Lara.CordZ, pRec->DatiLara.Lara.Room, false);
+
+				// ora copiare altri valori
+
+				pLara->AnimationNow = pRec->DatiLara.Lara.AnimationNow;
+
+				pLara->FlagsMain = pRec->DatiLara.Lara.FlagsMain;
+				pLara->FlagsSwapMesh = pRec->DatiLara.Lara.FlagsSwapMesh;
+				pLara->FrameNow = pRec->DatiLara.Lara.FrameNow;
+				pLara->StateIdAI = pRec->DatiLara.Lara.StateIdAI;
+				pLara->IdSprite1 = pRec->DatiLara.Lara.IdSprite1;
+				pLara->IdSprite2 = pRec->DatiLara.Lara.IdSprite2;
+				pLara->MeshVisibilityMask = pRec->DatiLara.Lara.MeshVisibilityMask;
+				pLara->OrientationH = pRec->DatiLara.Lara.OrientationH;
+				pLara->OrientationT = pRec->DatiLara.Lara.OrientationT;
+				pLara->OrientationV = pRec->DatiLara.Lara.OrientationV;
+				pLara->StateIdCurrent = pRec->DatiLara.Lara.StateIdCurrent;
+				pLara->StateIdNext = pRec->DatiLara.Lara.StateIdNext;
+				pLara->Trasparency = pRec->DatiLara.Lara.Trasparency;
+				pLara->SpeedH = pRec->DatiLara.Lara.SpeedH;
+				pLara->SpeedV = pRec->DatiLara.Lara.SpeedV;
+				pLara->Health = pRec->DatiLara.Lara.Health;
+				// -------------------
+			}
+			for (i = 0; i < 255; i++) {
+				GlobTomb4.pAdr->pVetInputKeyboard[i] = 0;
+			}
+
+			GestioneComandiSpeech();
+			if (pRec->IndexFrame >= pRec->TotFrames) {
+				pRec->Status = RECF_STOP;
+				TerminaAllSpeech();
+				// analisi per fine demo
+				if (GestioneDemoInProgress(FlagGDemo | FDG_END, pDemo) == 1) {
+
+					// chiamarlo di nuovo per impostare nuovo demo di stesso livello
+					GestioneDemo(TestFakeUpdateInput);
+					pRec->IndexFrame = 0;
+					break;
+
+				}
+
+			} else {
+
+				// se questo demo sta venendo eseguito su lancio da title gestire stringa e altra roba
+				GestioneDemoInProgress(FlagGDemo | FDG_IN_PROGRESS, pDemo);
+
+				*GlobTomb4.pAdr->pInputExtGameCommands = DecodeGameCommand(pRec->VetFrames[pRec->IndexFrame++]);
+
+				// vedere se si puo' interromprere con escape
+				TestOkEscape = true;
+
+				if (pDemo->TestDemoInProgress == true && (pDemo->Flags & DEMF_QUIT_WITH_ESCAPE) == 0)
+					TestOkEscape = false;
+
+				if (TestOkEscape) {
+					if (TastoVKPremuto(VK_ESCAPE)) {
+						pRec->Status = RECF_STOP;
+						TerminaAllSpeech();
+						// attendere rilascio di escape
+						while (TastoVKPremuto(VK_ESCAPE))
+							Sleep(0);
+
+						GestioneDemoInProgress(FlagGDemo | FDG_END | FDG_END_FOR_ESCAPE, pDemo);
+
+					}
+				}
+			}
+		}
+	}
+
+	// salva in pRec tutti i dati attuali di lara e status globali (usato all'inizio di registrazione demo)
+	void SalvaDatiInizioDemo(StrRecording *pRec)
+	{
+		StrItemTr4 *pLara;
+		DWORD BaseMeshLara;
+		int OffsetMesh;
+		int i;
+		int *pOggettoSelezionato;
+		int *pZonaSave_9d_CordYDaPeloAcqua;
+
+		pOggettoSelezionato = (int*) &tomb4::GLOBAL_lastinvitem;
+		pZonaSave_9d_CordYDaPeloAcqua = (int*) &tomb4::lara.water_surface_dist;
+
+		// ----- SALVA DATI STRUTTURA LARA -----------------------
+		pLara = GlobTomb4.pAdr->pLara;
+
+		memset(&pRec->DatiLara, 0, sizeof(StrSalvaDatiLara));
+
+		pRec->DatiLara.Lara.AnimationNow = pLara->AnimationNow;
+		pRec->DatiLara.Lara.CordX = pLara->CordX;
+		pRec->DatiLara.Lara.CordY = pLara->CordY;
+		pRec->DatiLara.Lara.CordZ = pLara->CordZ;
+		pRec->DatiLara.Lara.FlagsMain = pLara->FlagsMain;
+		pRec->DatiLara.Lara.FlagsSwapMesh = pLara->FlagsSwapMesh;
+		pRec->DatiLara.Lara.FrameNow = pLara->FrameNow;
+		pRec->DatiLara.Lara.StateIdAI = pLara->StateIdAI;
+		pRec->DatiLara.Lara.IdSprite1 = pLara->IdSprite1;
+		pRec->DatiLara.Lara.IdSprite2 = pLara->IdSprite2;
+		pRec->DatiLara.Lara.MeshVisibilityMask = pLara->MeshVisibilityMask;
+		pRec->DatiLara.Lara.OrientationH = pLara->OrientationH;
+		pRec->DatiLara.Lara.OrientationT = pLara->OrientationT;
+		pRec->DatiLara.Lara.OrientationV = pLara->OrientationV;
+		pRec->DatiLara.Lara.Room = pLara->Room;
+		pRec->DatiLara.Lara.StateIdCurrent = pLara->StateIdCurrent;
+		pRec->DatiLara.Lara.StateIdNext = pLara->StateIdNext;
+		pRec->DatiLara.Lara.Trasparency = pLara->Trasparency;
+		pRec->DatiLara.Lara.SpeedH = pLara->SpeedH;
+		pRec->DatiLara.Lara.SpeedV = pLara->SpeedV;
+		pRec->DatiLara.Lara.Health = pLara->Health;
+
+		// --------
+		// salvare offset delle mesh attuali
+		i = GlobTomb4.pAdr->pVetSlot[0].IndexFirstMesh;
+		BaseMeshLara = (DWORD) GlobTomb4.pAdr->VetMeshPointer[i];
+
+		for (i = 0; i < 15; i++) {
+			OffsetMesh = (DWORD) GlobTomb4.pAdr->VetMeshLara[i] - BaseMeshLara;
+			pRec->DatiLara.VetMeshLaraOffset[i] = OffsetMesh;
+		}
+
+		// salvare status di gocce su lara
+		for (i = 0; i < 16; i++) {
+			pRec->DatiLara.VetDrip[i] = GlobTomb4.pAdr->pVetDrip[i];
+		}
+
+		// salvare indice selezionato in inventario
+		pRec->DatiLara.InventoryItemIndex = *pOggettoSelezionato;
+
+		// ora salvare tutti valori globali
+		pRec->DatiLara.pLevelNow = *GlobTomb4.pAdr->pLevelNow;
+
+		pRec->DatiLara.EarthQuake = *GlobTomb4.pAdr->pEarthQuake;
+		pRec->DatiLara.TestFlybyInProgress = *GlobTomb4.pAdr->pTestFlybyInProgress;
+		pRec->DatiLara.TimerScreen = *GlobTomb4.pAdr->pTimerScreen;
+		pRec->DatiLara.FlareLifeTime = *GlobTomb4.pAdr->pFlareLifeTime;
+		pRec->DatiLara.ObjectActiveIndex = *GlobTomb4.pAdr->pObjectActive;
+		pRec->DatiLara.FlagsLaraHands = *GlobTomb4.pAdr->pFlagsLaraHands;
+		pRec->DatiLara.ObjInLaraHandsNow = *GlobTomb4.pAdr->pObjInLaraHandsNow;
+		pRec->DatiLara.ObjInLaraHandsNext = *GlobTomb4.pAdr->pObjInLaraHandsNext;
+		pRec->DatiLara.WeaponSelected = *GlobTomb4.pAdr->pWeaponSelected;
+		pRec->DatiLara.LaraLocationFlags = *GlobTomb4.pAdr->pLaraLocationFlags;
+		pRec->DatiLara.AirAvailable = *GlobTomb4.pAdr->pAirAvailable;
+		pRec->DatiLara.VehicleIndex = *GlobTomb4.pAdr->pVehicleIndex;
+		pRec->DatiLara.WeaponHolding = *GlobTomb4.pAdr->pWeaponHolding;
+		pRec->DatiLara.Poison1 = *GlobTomb4.pAdr->pPoison1;
+		pRec->DatiLara.Poison2 = *GlobTomb4.pAdr->pPoison2;
+		pRec->DatiLara.FlagsLara = *GlobTomb4.pAdr->pFlagsLara;
+		pRec->DatiLara.FlagsLara2 = *GlobTomb4.pAdr->pFlagsLara2;
+		pRec->DatiLara.ZonaSave_9d_CordYDaPeloAcqua = *pZonaSave_9d_CordYDaPeloAcqua;
+
+		// blocco di orient per lara
+		pRec->DatiLara.VetBloccoOrient[0] = tomb4::lara.turn_rate;
+		pRec->DatiLara.VetBloccoOrient[1] = tomb4::lara.move_angle;
+		pRec->DatiLara.VetBloccoOrient[2] = tomb4::lara.head_y_rot;
+		pRec->DatiLara.VetBloccoOrient[3] = tomb4::lara.head_x_rot;
+		pRec->DatiLara.VetBloccoOrient[4] = tomb4::lara.head_z_rot;
+		pRec->DatiLara.VetBloccoOrient[5] = tomb4::lara.torso_y_rot;
+		pRec->DatiLara.VetBloccoOrient[6] = tomb4::lara.torso_x_rot;
+		pRec->DatiLara.VetBloccoOrient[7] = tomb4::lara.torso_z_rot;
+		pRec->DatiLara.VetBloccoOrient[10] = tomb4::lara.left_arm.frame_number;
+		pRec->DatiLara.VetBloccoOrient[11] = tomb4::lara.left_arm.anim_number;
+		pRec->DatiLara.VetBloccoOrient[12] = tomb4::lara.left_arm.lock;
+		pRec->DatiLara.VetBloccoOrient[13] = tomb4::lara.left_arm.y_rot;
+	}
+
+	// verifica se esiste un triggergroup da esguire al frame attuale, nell'orgaznier collegato al demo attuale
+	void GestioneDemoOrganizer(StrDemo *pDemo, int IndexFrame)
+	{
+		int i;
+
+		if (pDemo->pOrganizer == NULL)
+			return;
+
+		if (GlobTomb4.TestEditingDemo == true && GlobTomb4.TestDisableDemoOrganizer == true)
+			return;
+
+		for (i = 0; i < pDemo->pOrganizer->TotCoppie; i++) {
+			if (pDemo->pOrganizer->VetCoppie[i].Secondi == IndexFrame) {
+				GlobTomb4.pMexLastTGCaller = "Demo Organizer";
+				FormattaLogCutscene("ORGANIZER", IndexFrame, "TriggerGroup=%d", pDemo->pOrganizer->VetCoppie[i].IdGroup, 0);
+				EseguiTriggerGroup(pDemo->pOrganizer->VetCoppie[i].IdGroup);
+
+			}
+			if (pDemo->pOrganizer->VetCoppie[i].Secondi > IndexFrame)
+				break;
+		}
+	}
+
+	void TerminaAllSpeech(void)
+	{
+		int i;
+		StrPlaySpeech *pPlay;
+
+		for (i = 0; i < GlobTomb4.pBaseSpeechActor->TotSpeechActor; i++) {
+			pPlay = &GlobTomb4.pBaseSpeechActor->VetPlay[i];
+
+			if (pPlay->TestAttivo) {
+				EliminaStringaSpeech(pPlay);
+				pPlay->TestAttivo = false;
+			}
+		}
+	}
+
+	// chiamato stop dopo registrazione
+	// salvare dati recording on disk
+	void SalvaDemo(int NumeroDemo)
+	{
+		FILE *pFile;
+		char NomeFile[256];
+		StrRecording *pRecording;
+		int SalvaIndexFrame;
+
+		pRecording = GlobTomb4.pBaseDemo;
+
+		sprintf_s(NomeFile, "data\\demo%d.pak", NumeroDemo);
+
+		if (fopen_s(&pFile, NomeFile, "wb") != 0) {
+			InviaLog("ERROR: trying to save last demo on disk");
+			return;
+		}
+		pRecording->Status = RECF_STOP;
+
+		fwrite(&pRecording->Status, 2, 1, pFile);
+		fwrite(&pRecording->Version, 2, 1, pFile);
+		fwrite(&pRecording->DatiLara, sizeof(StrSalvaDatiLara), 1, pFile);
+		fwrite(&pRecording->IndexFrame, 4, 1, pFile);
+		fwrite(&pRecording->TotFrames, 4, 1, pFile);
+		fwrite(&pRecording->VetFrames[0], 4, pRecording->TotFrames, pFile);
+		fclose(pFile);
+		SalvaIndexFrame = pRecording->IndexFrame;
+		AggiornaListaDemo();
+		pRecording->IndexFrame = SalvaIndexFrame;
+	}
+
+	void AggiornaListaDemo(void)
+	{
+		FILE *pFile;
+		StrRecording *pRecording;
+		int i;
+		char NomeFile[256];
+		int SalvaDemoNow;
+
+		pRecording = GlobTomb4.pBaseDemo;
+		SalvaDemoNow = GlobTomb4.DemoNumberLoaded;
+
+		TrovaDemoNumeri();
+		// ricreare lista di descrizione
+		if (fopen_s(&pFile, "Data//DemoInfos.txt", "wt") != 0)
+			return;
+		for (i = 0; i < GlobTomb4.DemoOnDisk; i++) {
+			CaricaDemo(GlobTomb4.DemoOnDiskArray[i]);
+			// creare descrizione
+			sprintf_s(BufferLog, "Level=%d Time=%s LaraRoom=%d", pRecording->DatiLara.pLevelNow, FormattaFrames2Time(pRecording->TotFrames, pRecording->IndexFrame), ConvertiTombRoomIndex2NgleIndex(pRecording->DatiLara.Lara.Room));
+
+			fprintf(pFile, "Demo%d.pak  Description: [%s]\r\n", GlobTomb4.DemoOnDiskArray[i], BufferLog);
+		}
+
+		fclose(pFile);
+
+		// ricaricare demo
+		GlobTomb4.DemoNumberLoaded = SalvaDemoNow;
+
+		sprintf_s(NomeFile, "data//demo%d.pak", GlobTomb4.DemoNumberLoaded);
+		if (EsisteFile(NomeFile) == true) {
+			CaricaDemo(GlobTomb4.DemoNumberLoaded);
+		} else {
+
+			pRecording->IndexFrame = 0;
+			pRecording->TotFrames = 0;
+		}
+	}
+
+	// aggiorna il numero di demo su disco in GlobTomb4.DemoOnDisk   / GlobTomb4.DemoOnDiskArray
+	void TrovaDemoNumeri(void)
+	{
+		int i;
+		char NomeFile[256];
+		int n;
+
+		n = 0;
+
+		for (i = 1; i < 1000; i++) {
+			sprintf_s(NomeFile, "data\\demo%d.pak", i);
+			if (EsisteFile(NomeFile)) {
+				GlobTomb4.DemoOnDiskArray[n++] = i;
+			}
+		}
+
+		GlobTomb4.DemoOnDisk = n;
+	}
+
+	bool CaricaDemo(int NumeroDemo)
+	{
+		FILE *pFile;
+		StrRecording *pRecording;
+		char NomeFile[256];
+
+		sprintf_s(NomeFile, "data\\demo%d.pak", NumeroDemo);
+
+		if (fopen_s(&pFile, NomeFile, "rb") != 0) {
+			sprintf_s(BufferLog, "ERROR: can't load %s file", NomeFile);
+			InviaLog(BufferLog);
+			return false;
+		}
+
+		GlobTomb4.DemoNumberLoaded = NumeroDemo;
+
+		pRecording = GlobTomb4.pBaseDemo;
+
+		fread(&pRecording->Status, 2, 1, pFile);
+		fread(&pRecording->Version, 2, 1, pFile);
+		fread(&pRecording->DatiLara, sizeof(StrSalvaDatiLara), 1, pFile);
+		fread(&pRecording->IndexFrame, 4, 1, pFile);
+		fread(&pRecording->TotFrames, 4, 1, pFile);
+		if (pRecording->TotFrames > 54000)
+			pRecording->TotFrames = 54000;
+#pragma warning(suppress: 6029)
+		fread(&pRecording->VetFrames[0], 4, pRecording->TotFrames, pFile);
+
+		fclose(pFile);
+
+		pRecording->Status = RECF_STOP;
+		pRecording->IndexFrame = 0;
+		return true;
+	}
+
+	// restituisce stringa di testo minuti secondi (mm:ss) corrispondente a totframes
+	char *FormattaFrames2Time(DWORD TotFrames, DWORD FrameIndex)
+	{
+		static char Buffer[60];
+
+		DWORD TotSecondi;
+		DWORD Secondi, Minuti;
+
+		TotSecondi = TotFrames / FRAME_SECONDO;
+		Minuti = TotSecondi / 60;
+		Secondi = TotSecondi % 60;
+
+		sprintf_s(Buffer, "%02d:%02d (%d/%d)", Minuti, Secondi, FrameIndex, TotFrames);
+
+		return Buffer;
+	}
+
+	// vetremaprooms per scoprire a quale ijndice ngle corrisponde la stanza con tomb index fornito
+	int ConvertiTombRoomIndex2NgleIndex(int RoomIndex)
+	{
+		int i;
+
+		for (i = 0; i < MAX_ROOMS; i++) {
+			if (GlobTomb4.VetRemapRooms[i] == RoomIndex)
+				return i;
+		}
+
+		return -1;
+	}
+
+	// usata per registrare in demo i comandi di gioco
+	// se sono stati premuti tasti numerici 0-9 restituisce una dword specialie con questi tasti premuti
+	// se non ci sono tasti numerici premuti restituisce normale solo *GlobTomb4.pAdr->pInputExtGameCommands
+	// nota: se ci sono tasti numerici viene imposta a 1 bit piu' significativo 0x80000000
+	// e nella parte bassa ci saranno i bit, ogni bit 1 vuol dire che quel tasto numerico e' stato premuto
+	// l'ordine dei tasti parte da "1" e finisce con "0"
+	DWORD ReadCurrentGameCommands(void)
+	{
+		DWORD Flags;
+		int i;
+
+		Flags = 0;
+
+		for (i = 2; i < 12; i++) {
+			if (GlobTomb4.pAdr->pVetInputKeyboard[i]) {
+				Flags |= 1;
+			}
+			Flags = Flags << 1;
+		}
+
+		if (Flags) {
+			// ci sono tasti numerici, restituire solo quelli
+			Flags |= 0x80000000;
+			return Flags;
+		}
+
+		return *GlobTomb4.pAdr->pInputExtGameCommands;
+	}
+
+	// chiamata all'inizio e alla fine di demo playing. viene passato il demotitle (se c''e un title in progress
+	// da title) o altrimento demolevel.
+	// se testinprogress=false non fa niente.
+	// usa flag FGD_...
+	// altrimenti gestisce inizio e fine di demo script command
+	// gestisce sia inizio che fine.
+	// se e' fine e demotitle restituisce un valore per dire che cosa fare dopo:
+	// nota: se ritonra 0 bisognera'tornare  atitle
+	//  se ritorna "1" vuol dire che bisogna chiamare subito di nuovo GestioneDemo() perche'
+	//			e' stato caricato un nuovo demo di stesso livello
+	// se ritorna "2" vuol dire che si deve caricare un nuovo livello con un nuovo demo
+
+	int GestioneDemoInProgress(WORD FlagGestioneDemo, StrDemo *pDemo)
+	{
+		static int *pSettingsSfxVolume = (int*) &tomb4::SFXVolume; // Setting_SFXVolume
+		static int *pSettingsMusicVolume = (int*) &tomb4::MusicVolume; // Setting_MusicVolume
+		static short *pTestAttivoFade = &tomb4::ScreenFading;
+		static char BufDemoLegend[256];
+
+		int NuovoLivello;
+		int i;
+		int DemoId;
+		StrScriptOrganizer *pOrganizer;
+
+		// eseguire cutscene camera
+		if ((GlobTomb4.pBaseDemo->Status & RECF_RECORDING) == 0)
+			AggiornaCutsceneCamera(&GlobTomb4.pBaseCutscene->BaseCamera);
+
+		if (FlagGestioneDemo & FDG_START) {
+		// ******************************** START OF DEMO *****************************
+			// salvare sempre volume di sfx e music originale (male non fa)
+			if (GlobTomb4.TestEditingDemo == true && GlobTomb4.pBaseDemo->Status & RECF_PLAYING) {
+				// salvare l'indizio di un nuovo play
+				FormattaLogCutscene("DEMO", 0, "-------- BEGIN PLAYING DEMO%d.PAK ----------\r\n", GlobTomb4.DemoNumberLoaded, 0);
+
+			}
+			pDemo->SalvaSfxVolume = *pSettingsSfxVolume;
+			pDemo->SalvaMusicVolume = *pSettingsMusicVolume;
+
+			// vedere se c'e' un organizer collegato a queso demo
+			pDemo->pOrganizer = NULL;
+
+			for (i = 0; i < GlobTomb4.pBaseOrganizer->TotOrganizer; i++) {
+				pOrganizer = &GlobTomb4.pBaseOrganizer->VetOrganizer[i];
+
+				if (pOrganizer->Flags & FO_DEMO_ORGANIZER) {
+					if (pOrganizer->Parameter == GlobTomb4.DemoNumberLoaded) {
+						// si
+						pDemo->pOrganizer = pOrganizer;
+						break;
+					}
+				}
+			}
+
+			// se siamo in modo esegui demo vedere inizializzazione
+
+			// disattivare suoni sfx?
+			if (pDemo->Flags & DEMF_MUTE_SFX) {
+				StopAllSounds();
+				*pSettingsSfxVolume = 0;
+			}
+
+			// disattivare suono musica?
+			if (pDemo->Flags & DEMF_MUTE_TRACK) {
+				StopBassSuoni(-1);
+				*pSettingsMusicVolume = 0;
+				tomb4::ACMSetVolume();
+			}
+
+			// attivare fade-in?
+			if (pDemo->Flags & DEMF_CROSS_FADE) {
+
+				*pTestAttivoFade = 0;
+				tomb4::SetScreenFadeIn(16);
+			}
+
+			// usare cinema effect?
+			if (pDemo->Flags & DEMF_CINEMA_SCREEN) {
+				// se pero' siamo in modalitga' editing NON attivarlo
+				if (GlobTomb4.TestEditingDemo == false)
+					EsecuzioneFlipeffect(0, 369, 2, SCANF_DIRECT_CALL);
+
+			}
+
+		}
+
+		if (FlagGestioneDemo & FDG_IN_PROGRESS) {
+
+			//  ************************ PLAYING IN PROGRESS *****************************
+
+			if (pDemo->StringDemoLegendIndex != -1 && pDemo->TestDemoInProgress == true) {
+				if ((FindSkipPhase() & SKIP_FLY_CAMERA) == 0 || GlobTomb4.pBaseCustomize->TestPrintOnFlyby == true) {
+					strcpy_s(BufDemoLegend, GetString(pDemo->StringDemoLegendIndex));
+					StampaStringaDef(BufDemoLegend, 1);
+				}
+
+			}
+			// se rischiesto cross fade iniziare un secondo prima della fine del demo
+			if ((pDemo->Flags & DEMF_CROSS_FADE) != 0) {
+
+				if ((GlobTomb4.pBaseDemo->TotFrames - GlobTomb4.pBaseDemo->IndexFrame) == 30) {
+					tomb4::SetScreenFadeOut(16, 0);
+				}
+			}
+
+			GestioneDemoOrganizer(pDemo, GlobTomb4.pBaseDemo->IndexFrame);
+
+		}
+
+		if (FlagGestioneDemo & FDG_END) {
+			// *************************** COMPLETED DEMO ****************************
+
+			pDemo->TestDemoInProgress = false;
+			pDemo->TestLoadAndPlay = false;
+			pDemo->TestTornaATitle = false;
+
+			if (pDemo->Flags & DEMF_MUTE_SFX) {
+
+				StopAllSounds();
+				*pSettingsSfxVolume = pDemo->SalvaSfxVolume;
+
+			}
+
+			if (pDemo->Flags & DEMF_MUTE_TRACK) {
+				StopBassSuoni(-1);
+				*pSettingsMusicVolume = pDemo->SalvaMusicVolume;
+
+				tomb4::ACMSetVolume();
+
+			}
+
+			// toglire cinemaeffect?
+			if (pDemo->Flags & DEMF_CINEMA_SCREEN) {
+				// se eravamo in modalita' editing non c'e' bisogno
+				if (GlobTomb4.TestEditingDemo == false)
+					EsecuzioneFlipeffect(0, 369, 0, SCANF_DIRECT_CALL);
+			}
+
+			GestioneDemoOrganizer(pDemo, GlobTomb4.pBaseDemo->IndexFrame);
+
+			if ((FlagGestioneDemo & (FDG_END_FOR_ESCAPE | FDG_END_FOR_TRIGGER)) == 0) {
+
+				// terminato demo precedente (completato in modo normale: no break)
+
+				// vedere se c'e' un altro demo da caricare
+				if (pDemo->Flags & DEMF_PLAY_LEVEL_SEQUENCE) {
+					// vedere se il prossimo id ha lo stesso livello attuale
+					for (i = 0; i < pDemo->TotDemoIDs; i++) {
+						if (pDemo->VetDemoIDs[i] == pDemo->LastIdPlayed)
+							break;
+					}
+
+					i++;
+
+					if (i < pDemo->TotDemoIDs) {
+						DemoId = pDemo->VetDemoIDs[i];
+						if (CaricaDemo(DemoId) == true) {
+
+							if (GlobTomb4.pBaseDemo->DatiLara.pLevelNow == *GlobTomb4.pAdr->pLevelNow) {
+								// tutto ok: e' stesso livello per cui basta solo attivare di nuovo il playing
+								GlobTomb4.TestEditingDemo = false;
+								pDemo->TestDemoInProgress = true;
+								pDemo->LastIdPlayed = DemoId;
+								pDemo->VetDemoPlayed[i]++;
+								GlobTomb4.pBaseDemo->IndexFrame = 0;
+								GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
+								GlobTomb4.DemoNumberLoaded = DemoId;
+								return 1;
+							}
+						}
+					}
+				}
+
+				if (pDemo->Flags & DEMF_PLAY_ALL_SEQUENCE) {
+					for (i = 0; i < pDemo->TotDemoIDs; i++) {
+						if (pDemo->VetDemoIDs[i] == pDemo->LastIdPlayed)
+							break;
+					}
+
+					i++;
+
+					if (i < pDemo->TotDemoIDs) {
+						DemoId = pDemo->VetDemoIDs[i];
+
+						if (CaricaDemo(DemoId) == true) {
+							GlobTomb4.DemoNumberLoaded = DemoId;
+							pDemo->LastIdPlayed = DemoId;
+							GlobTomb4.TestEditingDemo = false;
+							GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
+							pDemo->VetDemoPlayed[i]++;
+
+							// ok, controllare se il livello e' uguale al precedente
+							if (GlobTomb4.pBaseDemo->DatiLara.pLevelNow == *GlobTomb4.pAdr->pLevelNow) {
+								// tutto ok: e' stesso livello per cui basta solo attivare di nuovo il playing
+								pDemo->TestDemoInProgress = true;
+
+								return 1;
+							}
+
+							// livello e' diverso: iniziare procedura per caricare un nuovo livello
+
+							NuovoLivello = GlobTomb4.pBaseDemo->DatiLara.pLevelNow;
+							*GlobTomb4.pAdr->pInputExtGameCommands = 0;
+							pDemo->TestLoadAndPlay = true;
+							return 2;
+						}
+					}
+				}
+
+			}
+			if (FlagGestioneDemo & FDG_FROM_TITLE)
+				pDemo->TestTornaATitle = true;
+
+			*GlobTomb4.pAdr->pInputExtGameCommands = 0;
+			// attivare fade-in?
+			if (pDemo->Flags & DEMF_CROSS_FADE) {
+
+				*pTestAttivoFade = 0;
+				tomb4::SetScreenFadeIn(16);
+			}
+
+		}
+
+		return 0;
+	}
+
+	// stampa stringa seguendo indicazioni di attuale formattazione
+	// dimensione caratteri posizione ecc.
+	// attenzione: e' fondamentale che il testo
+	// sia una variabile statica che non verra' modificata
+	// questa verra' stampata in modo differito sempre dai punti giusti
+	void StampaStringaDef(char *pTesto, int NumeroCicli)
+	{
+		StrProgressiveAction* pAzione;
+		int IndiceAzione;
+		int i;
+		char *pChar;
+
+		// verificare che non sia gia' presente la stessa azione. se c'e' sostituire
+
+		pAzione = &GlobTomb4.VetProgressiveActions[0];
+
+		for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+			if (pAzione->ActionType == AZ_PRINT_STRING && pAzione->Arg2 == GlobTomb4.PrintString.FlagsMicro && pAzione->VetArg[0] == (int) pTesto) {
+
+				// e' tutto uguale.
+				// controllar pero' che sia uguale anche il testo
+				pChar = (char*) pAzione->VetArg[0];
+				if (strcmp(pChar, pTesto) == 0) {
+					// e' uguale: usare questa
+					break;
+				}
+			}
+			pAzione++;
+		}
+		if (i == GlobTomb4.TotProgressiveActions) {
+			// non c'era: crearne una nuova adesso
+
+			IndiceAzione = CreaNuovaAzioneProgressiva();
+
+			pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+		}
+
+		pAzione->ActionType = AZ_PRINT_STRING;
+
+		pAzione->Arg1 = NumeroCicli + 1;
+		pAzione->Arg2 = GlobTomb4.PrintString.FlagsMicro;
+		// salvare indice di stringa
+		pAzione->ItemIndex = -1; // segnale per stringa esterna
+		// alineamento = centrale
+		pAzione->VetArg[0] = (int) pTesto;
+		pAzione->VetArgWord[2] = GlobTomb4.PrintString.Flags;
+		pAzione->VetArgShort[3] = -1;
+		// salvare colore attuale per stringhe
+		pAzione->VetArgWord[4] = GlobTomb4.PrintString.Colore;
+		pAzione->VetArg[3] = GlobTomb4.PrintString.Posizione;
+
+		AggiornaPosStringa(pAzione);
+	}
+
+	// calcola coordinate x e y per stringa sulla base di valori
+	// presenti in pAzione
+	void AggiornaPosStringa(StrProgressiveAction *pAzione)
+	{
+		int CordX, CordY;
+		int SizeX, SizeY;
+		int AltezzaRiga;
+		int NRighe;
+		WORD Flags;
+		char *pTesto;
+		int IndiceParam;
+		bool TestUsaCordinate;
+		StrParamPrintText *pPrint;
+		int BaseY;
+		float ValFadeCurtain;
+		float FloatScreenY;
+		float Result;
+		StrBarraCust *pBar;
+
+		CordX = 4;
+		CordY = *GlobTomb4.pAdr->pRowCharHeight;
+		Flags = 0;
+		SizeX = *GlobTomb4.pAdr->pSizeScreenX;
+		SizeY = *GlobTomb4.pAdr->pSizeScreenY;
+		BaseY = 0;
+		// se ci sono righe cinema effect modificare dimensione sizey e BaseY
+		if (*GlobTomb4.pAdr->pFadeCurtain) {
+			ValFadeCurtain = (float) *GlobTomb4.pAdr->pFadeCurtain;
+			FloatScreenY = (float) *GlobTomb4.pAdr->pSizeScreenY - 1;
+
+			Result = (FloatScreenY * ValFadeCurtain) / 256.0f;
+
+			BaseY = (int) Result;
+			BaseY++;
+
+			SizeY -= BaseY;
+		}
+
+		CordY += BaseY;
+
+		AltezzaRiga = *GlobTomb4.pAdr->pRowCharHeight;
+		// vedere se c'e' un record parameter collegto
+
+		IndiceParam = pAzione->VetArgShort[3];
+		TestUsaCordinate = true;
+
+		if (IndiceParam != -1) {
+			IndiceParam = GlobTomb4.BaseParamPrint.VetID[IndiceParam];
+			if (IndiceParam != -1) {
+				pPrint = &GlobTomb4.BaseParamPrint.VetPrint[IndiceParam];
+
+				// se sono state fornite coordinate usare quelle
+				if (pPrint->OrgX != -1 && pPrint->OrgY != -1) {
+					TestUsaCordinate = false;
+					// calcolare adesso coordinate
+					CordX = pPrint->OrgX;
+					CordY = pPrint->OrgY;
+					ConvertiCord1024(&CordX,&CordY);
+
+				}
+
+			}
+		}
+
+		if (TestUsaCordinate) {
+
+			// calcolo cordy
+			switch(pAzione->VetArg[3]) {
+			case STRING_BOTTOM_CENTER:
+			case STRING_BOTTOM_LEFT:
+			case STRING_BOTTOM_RIGHT:
+
+				// contare quante righe ci sono
+				pTesto = (char *) pAzione->VetArg[0];
+				NRighe = ContaRigheInTesto(pTesto);
+
+				CordY = SizeY - 4 - NRighe * 16;
+				break;
+			case STRING_CENTER_CENTER:
+				// posizionato a mezza altezza,al centro dello schermo
+
+				// contare quante righe ci sono
+				pTesto = (char *) pAzione->VetArg[0];
+				NRighe = ContaRigheInTesto(pTesto);
+
+				CordY = BaseY + (SizeY - AltezzaRiga) / 2 - (NRighe / 2) * 16;
+				break;
+			case STRING_DOWN_LEFT_BARS:
+
+				CordX = AltezzaRiga / 4;
+				if (pAzione->Arg2 == 0) {
+					CordY = 65;
+				} else {
+					CordY = 55;
+				}
+				CordX = AdattaCordX(CordX);
+				CordY += AltezzaRiga;
+
+				CordY = AdattaCordY(CordY);
+				break;
+			case STRING_DOWN_DAMAGE_BAR:
+
+				pBar = &GlobTomb4.pBaseCustomize->VetBar[BAR_DAMAGE];
+
+				if (pBar->OrgX == -1 || pBar->OrgY == -1) {
+					CordX = AltezzaRiga / 4;
+					if (pAzione->Arg2 == 0) {
+						CordY = 65;
+					} else {
+						CordY = 55;
+					}
+				} else {
+					CordX = pBar->OrgX;
+					CordY = pBar->OrgY + pBar->SizeY;
+
+					if (pAzione->Arg2 == 0) {
+						CordY += 25;
+					} else {
+						CordY += 14;
+					}
+
+				}
+
+				CordX = AdattaCordX(CordX);
+				CordY = AdattaCordY(CordY);
+				break;
+
+			case STRING_DOWN_RIGHT_BARS:
+				CordX = 0x1EA - AltezzaRiga / 4;
+				if (pAzione->Arg2 == 0) {
+					CordY = 83;
+				} else {
+					CordY = 73;
+				}
+
+				CordX = AdattaCordX(CordX);
+				CordY += AltezzaRiga;
+				CordY = AdattaCordY(CordY);
+
+				break;
+			case STRING_DOWN_COLD_BAR:
+				pBar = &GlobTomb4.pBaseCustomize->VetBar[BAR_COLD];
+
+				if (pBar->OrgX == -1 || pBar->OrgY == -1) {
+
+					CordX = 0x1EA - AltezzaRiga / 4;
+					if (pAzione->Arg2 == 0) {
+						CordY = 83;
+					} else {
+						CordY = 73;
+					}
+				} else {
+					CordX = pBar->OrgX;
+					CordY = pBar->OrgY + pBar->SizeY;
+					if (pAzione->Arg2 == 0) {
+						CordY += 25;
+					} else {
+						CordY += 14;
+					}
+				}
+
+				CordX = AdattaCordX(CordX);
+				CordY = AdattaCordY(CordY);
+
+				break;
+
+			}
+
+			// calcolo cordx e flags allineamento
+			switch (pAzione->VetArg[3]) {
+			case STRING_TOP_LEFT:
+			case STRING_BOTTOM_LEFT:
+				CordX = 4;
+				break;
+			case STRING_BOTTOM_CENTER:
+			case STRING_TOP_CENTER:
+			case STRING_CENTER_CENTER:
+				CordX = SizeX / 2;
+				Flags |= FTS_ALIGN_CENTER;
+				break;
+			case STRING_TOP_RIGHT:
+			case STRING_BOTTOM_RIGHT:
+				CordX = SizeX - 4;
+				Flags |= FTS_ALIGN_RIGHT;
+				break;
+			}
+			// aggiornare flag allineamento
+			pAzione->VetArgWord[2] &= (FTS_STRETCH_TEXT + FTS_BLINK);
+			pAzione->VetArgWord[2] |= Flags;
+		}
+		// salvare valori cord
+		pAzione->VetArg[4] = CordX;
+		pAzione->VetArg[5] = CordY;
+	}
+
+	// converte le coordinate di input sulla base di dimensione
+	// schermo attuale, considerandole come basate
+	// su uno schermo di 1024 x768
+	void ConvertiCord1024(int *pCordX, int *pCordY)
+	{
+		WORD *pSchermoX; // Screen_SalvaSizeX
+		float Alfa, Beta;
+
+		pSchermoX = (WORD *) &tomb4::App.dx.dwRenderWidth;
+		SalvaDimensioneSchermo();
+
+		Alfa = *pSchermoX;
+		Beta = 1024;
+		Alfa = Alfa / Beta;
+		Beta = (float) *pCordX;
+		Alfa = Alfa * Beta;
+
+		*pCordX = (WORD) Alfa;
+
+		Alfa = GlobTomb4.ScreenSizeY;
+
+		Beta = 768;
+		Alfa = Alfa / Beta;
+		Beta = (float) *pCordY;
+		Alfa = Alfa * Beta;
+
+		*pCordY = (WORD) Alfa;
+	}
+
+	// conta quanti caratteri \n sono presenti in pTesto
+	int ContaRigheInTesto(char *pTesto)
+	{
+		DWORD i;
+		int TotRighe;
+
+		TotRighe = 0;
+		for (i = 0; i < strlen(pTesto); i++) {
+			if (pTesto[i] == '\n')
+				TotRighe++;
+		}
+
+		TotRighe++;
+		return TotRighe;
+	}
+
+	// converte coordinata x da quella di schermo 640 pixel a quella
+	// di schermo attuale
+	int AdattaCordX(int CordX)
+	{
+		WORD *pSizeSchermoX;
+		float Result;
+		float Temp;
+
+		pSizeSchermoX = (WORD*) &tomb4::phd_winxmax;
+		Temp = (float) *pSizeSchermoX;
+
+		Result = Temp / (float) 640;
+		Result *= (float) CordX;
+
+		return (int) Result;
+	}
+
+	// converte coordinata y da quella di schermo 480 pixel pixel a quella
+	// di schermo attuale
+	int AdattaCordY(int CordY)
+	{
+		float Result;
+		float Temp;
+
+		Temp = (float) *GlobTomb4.pAdr->pSizeScreenY;
+
+		Result = Temp / (float) 480;
+		Result *= (float) CordY;
+
+		return (int) Result;
+	}
+
+	// aggiorna posizione di lara
+	// funziona in modo simile a AggiornaPositioneItem ma lavora
+	// per lara aggiornando anche teelecamera
+	void AggiornaPositioneLara(DWORD CordX, int CordY, DWORD CordZ, short NewRoom, bool TestVariaAltezza)
+	{
+		short OldRoom;
+		StrItemTr4 *pLara;
+		short TempRoom;
+		int DifferenzaAltezza;
+		int Indice;
+		void *pFloor;
+		int SalvaTest;
+
+		pLara = GlobTomb4.pAdr->pLara;
+
+		// salvare differenza relativa tra cordy e pavimento
+		DifferenzaAltezza = pLara->HeightFloor - pLara->CordY;
+
+		OldRoom = pLara->Room;
+		TempRoom = NewRoom;
+
+		pLara->CordX = CordX;
+		pLara->CordY = CordY;
+		pLara->CordZ = CordZ;
+
+		pFloor = tomb4::GetFloor(CordX, CordY - 128, CordZ, &TempRoom);
+
+		pLara->HeightFloor = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, CordX, CordY, CordZ);
+
+		if (TestVariaAltezza) {
+			pLara->CordY = pLara->HeightFloor - DifferenzaAltezza;
+		}
+
+		if (OldRoom != NewRoom) {
+			SalvaTest = *GlobTomb4.pAdr->pTestWorkingOnMoveables;
+			*GlobTomb4.pAdr->pTestWorkingOnMoveables = 1;
+			Indice = *GlobTomb4.pAdr->pLaraIndex;
+
+			tomb4::ItemNewRoom(Indice, NewRoom);
+			*GlobTomb4.pAdr->pTestWorkingOnMoveables = SalvaTest;
+
+		}
+		tomb4::SetMapRoom();
+		tomb4::InitialiseCamera();
+	}
+
+	// decomprime (se necessario) i dati CommandData che erano stati registrati in demo
+	// se ci sono tasti numerici premuti li attiva e poi restituisce
+	// solo i tasti flag
+	DWORD DecodeGameCommand(DWORD CommandData)
+	{
+		int i;
+		char *pMex;
+		char MioBuffer[256];
+		char MiniBuf[20];
+		int n;
+
+		if ((CommandData & 0x80000000) == 0) {
+			// se e' attivo cutscene_log mettere messaggio
+			if (CommandData != 0 && (GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) && (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG)) {
+				pMex = FormattaGameCommands(CommandData);
+				FormattaLogCutscene("DEMO", GetCutsceneFrame(), pMex, 0, 0);
+			}
+
+			return CommandData;
+		}
+
+		// sono tasti numerici: riattivarli
+		MioBuffer[0] = 0;
+
+		for (i = 11; i >= 2; i--) {
+			CommandData = CommandData >> 1;
+			if (CommandData & 1) {
+				GlobTomb4.pAdr->pVetInputKeyboard[i] = 1;
+				if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) && (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG)) {
+					n = i - 1;
+					if (n == 10)
+						n = 0;
+					sprintf_s(MiniBuf, "Key %d ", n);
+					strcat_s(MioBuffer, MiniBuf);
+				}
+			}
+
+		}
+
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) && (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG)) {
+			FormattaLogCutscene("DEMO", GetCutsceneFrame(), MioBuffer, 0, 0);
+		}
+
+		return 0;
+	}
+
+	// riceve in input i comandi relativi a comandi di gioco e restituisce una lista testuale di questi comandi.
+
+	char *FormattaGameCommands(DWORD Flags)
+	{
+		static char MioBuffer[256];
+		static const char *VetMexComandi[32] = {"Forward", "Backward", "Left", "Right",
+						"Jump", "DrawWeapon", "Action", "Walk",
+						"Inventory", "Look", "$400", "$800",
+						"Roll", "Pause", "$4000", "$8000",
+						"$10000", "$20000", "$40000", "UseFlare",
+						"$100000", "$200000", "SaveGame", "LoadGame",
+						"$1000000", "$2000000", "$4000000", "$8000000",
+						"$10000000", "Duck", "Dash","$80000000"};
+
+		int i;
+
+		MioBuffer[0] = 0;
+
+		for (i = 0; i < 32; i++) {
+			if (Flags & 1) {
+				strcat_s(MioBuffer, VetMexComandi[i]);
+				strcat_s(MioBuffer, " ");
+			}
+			Flags = Flags >> 1;
+		}
+
+		return MioBuffer;
+	}
+
+	// restituisce true se il tasto virtualkey e' attualmente premuto
+	bool TastoVKPremuto(int VirtualKey)
+	{
+		if (GetAsyncKeyState(VirtualKey) < 0)
+			return true;
+
+		return false;
+	}
+
+	// usa vetremapobjects per scoprire a quale indice ngle corrisponde l'indice item in formato tomb
+	// restituisce -1 se non corrsiponde a nessun indice
+	int ConvertiTombItemIndex2NgleIndex(int TombIndex)
+	{
+		int i;
+
+		i = GlobTomb4.VetRemapInverseObjects[TombIndex];
+		if (i == -1) {
+			sprintf_s(BufferLog, "ERROR: cann't locate the NGLE index for tomb4 index=%d", TombIndex);
+			InviaLog(BufferLog);
+		}
+
+		return i;
+	}
+
+	// esegue uno script trigger
+	// se e' una condizione restituisce 1 o 0
+	// se e' un flipeffect o un action lo esegue
+	// nota per i trigger che sono solo esecuzione di comandi
+	// restituisce sempre 1
+	// nota: Il PluginId nel trigger e' sempre riferito allo script, per cui andra' convertito
+	int EseguiScriptTrigger(StrScriptTrigger *pTrigger, int Index)
+	{
+		static const char *VetEsito[2] = {"false", "true"};
+
+		int ItemIndex;
+		bool TestRestore, TestSalta;
+		int RepeatType;
+		const char *pMexType;
+		char MyBuf[256];
+		int TestEsito;
+		int PluginId;
+
+		// se e' un trigger command, esce subito
+		if ((pTrigger->Flags & TGROUP_COMMAND) == TGROUP_COMMAND)
+			return 1;
+
+		PluginId = 0;
+		if (pTrigger->PluginId > 0) {
+			// convertire il plugin id da script a indice plugin di dll
+			PluginId = GetPluginIndex(pTrigger->PluginId, PLUG_FROM_SCRIPT);
+			if (PluginId == -1) {
+				sprintf_s(BufferLog, "ERROR: in PerformScriptTrigger() cann't find script plugin Id for plugin with id=%d", pTrigger->PluginId);
+				InviaLog(BufferLog);
+				return 0;
+			}
+
+		}
+
+		if (GlobTomb4.DebugModeCounter) {
+			sprintf_s(MyBuf, "%d) Perform Trigger: [$%X, %d, $%X]", Index, pTrigger->Flags, pTrigger->Object, pTrigger->Timer);
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug(MyBuf, 0, 0);
+			AddTabLogScript();
+
+			// visualizzare descrizione testuale
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug(GetTestoScriptTrigger(pTrigger), 0, 0);
+		}
+
+		// vedere se bisogna cambiare indicecorrente
+		if (pTrigger->Flags & TGROUP_USE_TRIGGER_ITEM_INDEX) {
+			// elimina indice item corrente precedente
+
+			if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+				ShowMsgDebug("Required to use index of trigger (TGROUP_USE_TRIGGER_ITEM_INDEX)", 0, 0);
+			GlobTomb4.ItemIndexTgroup = -1;
+		}
+		// se richiede il possessore delanim comman che ha avviato
+		// tutto questo allora impostarlo
+		if (pTrigger->Flags & TGROUP_USE_OWNER_ANIM_ITEM_INDEX) {
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("Required index of AnimCommand's owner", 0, 0);
+
+			if (GlobTomb4.ItemIndexAnimCommand != -1) {
+				GlobTomb4.ItemIndexTgroup = GlobTomb4.ItemIndexAnimCommand;
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("Found Owner NgleIndex=%d  (Abs=%d)", GetNgleIndice(GlobTomb4.ItemIndexAnimCommand), GlobTomb4.ItemIndexAnimCommand);
+
+			} else {
+				InviaLog("ERROR: cann't locate index of animcommand owner");
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("ERROR: cann't locate index of animcmmand owner", 0, 0);
+
+			}
+		}
+		if (pTrigger->Flags & TGROUP_USE_EXECUTOR_ITEM_INDEX) {
+			if (GlobTomb4.ItemIndexEnabledTrigger != -1) {
+
+				GlobTomb4.ItemIndexTgroup = GlobTomb4.ItemIndexEnabledTrigger;
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("Required to use index of executor item (index=%d)", GetNgleIndice(GlobTomb4.ItemIndexTgroup), 0);
+			} else {
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("ERROR: the required EXECUTOR item is not present", 0, 0);
+			}
+		}
+		// se viene richiesto l'uso di indice trovato in una condzione env
+		// farlo adesso
+		if (pTrigger->Flags & TGROUP_USE_FOUND_ITEM_INDEX) {
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("Required index of last found item with some test condition", 0, 0);
+
+			if (GlobTomb4.IndiceItemCondizione != -1) {
+				GlobTomb4.ItemIndexTgroup = GlobTomb4.IndiceItemCondizione;
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("Found Condition Item NgleIndex=%d  (Abs=%d)", GetNgleIndice(GlobTomb4.IndiceItemCondizione), GlobTomb4.IndiceItemCondizione);
+			} else {
+				InviaLog("ERROR: cann't locate found movebale index from condition");
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("ERROR: cann't locate found movebale index from condition", 0, 0);
+			}
+		}
+
+		if (pTrigger->Flags & TGROUP_USE_ITEM_USED_BY_LARA_INDEX) {
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("Required index of last item used by Lara", 0, 0);
+
+			if (GlobTomb4.ItemIndexUsedByLara != -1) {
+				GlobTomb4.ItemIndexTgroup = GlobTomb4.ItemIndexUsedByLara;
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("Item used by Lara NgleIndex=%d  (Abs=%d)", GetNgleIndice(GlobTomb4.ItemIndexUsedByLara), GlobTomb4.ItemIndexUsedByLara);
+			} else {
+				InviaLog("ERROR: missing index of last used item by Lara");
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("ERROR: missing index of last used item by Lara", 0, 0);
+			}
+		}
+
+		if (pTrigger->Flags & TGROUP_FLIPEFFECT) {
+			// eseguire flipeffect
+			if (GlobTomb4.ItemIndexTgroup != -1)
+				GlobTomb4.ItemIndexCurrent = GlobTomb4.ItemIndexTgroup;
+
+			EsecuzioneFlipeffect(PluginId, pTrigger->Object, pTrigger->Timer, SCANF_SCRIPT_TRIGGER);
+
+			if (GlobTomb4.DebugModeCounter) {
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("TriggerResult=true", 0, 0);
+				SubTabLogScript();
+			}
+			return 1;
+		}
+
+		if ((pTrigger->Flags & TGROUP_ACTION) != 0 || (pTrigger->Flags & TGROUP_CONDITION_TRIGGER) != 0) {
+			// int EsecuzioneActionTrigger(WORD AzioneTimer, int ItemIndex, WORD Flags)
+			// se questa azione utilizza un indice moveable
+			// fare analisi particolare
+			ItemIndex = pTrigger->Object;
+
+			if (pTrigger->Flags & TGROUP_MOVEABLE) {
+				// ora vedee se si deve ussre indice di trgoup oppure questo
+				if (GlobTomb4.ItemIndexTgroup != -1) {
+					ItemIndex = GlobTomb4.ItemIndexTgroup;
+				} else {
+					// usare questo e convertirlo
+					ItemIndex = GlobTomb4.VetRemapObjects[ItemIndex];
+					if (ItemIndex == -1) {
+						if (pTrigger->Flags & TGROUP_ACTION) {
+							pMexType = "action";
+						} else {
+							pMexType = "condition";
+						}
+						sprintf_s(BufferLog, "ERROR: item index (%d) of %s trigger %d, doesn't exist", pTrigger->Object, pMexType, pTrigger->Timer & 0xff);
+						InviaLog(BufferLog);
+						return 0;
+					}
+
+				}
+
+			}
+			if (pTrigger->Flags & TGROUP_CONDITION_TRIGGER) {
+				// condizione
+				TestEsito = EseguiCondizione(PluginId, pTrigger->Timer & 0xff, ItemIndex, (pTrigger->Timer >> 8) & 0xff, &TestRestore, &TestSalta, &RepeatType, SCANF_SCRIPT_TRIGGER);
+
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("TrigggerResult=%s", VetEsito[TestEsito], 0);
+				SubTabLogScript();
+
+				return TestEsito;
+			}
+
+			// deve essere un'azione
+
+			EsecuzioneActionTrigger(PluginId, pTrigger->Timer, ItemIndex, SCANF_SCRIPT_TRIGGER);
+
+		}
+		if (GlobTomb4.DebugModeCounter) {
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("TriggerResult=true", 0, 0);
+			SubTabLogScript();
+		}
+		return 1;
+	}
+
+	// esegue calcolo a ritroso
+	// da indice interno di tomb, restituisce l'indice usato in ngle
+	int GetNgleIndice(int TombIndice)
+	{
+		int i;
+
+		i = GlobTomb4.VetRemapInverseObjects[TombIndice];
+
+		if (i == -1) {
+			sprintf_s(BufferLog, "ERROR: cann't locate the ngle index for tomb index = %d", TombIndice);
+			InviaLog(BufferLog);
+		}
+
+		return i;
+	}
+
+	 // esegue condizione e riceve l'esito
+	// la funzione imposta a nche i valori in
+	// pTESTSALTA metterlo a true quando la condizione lavora su
+	// un oggetto e bisogna saltrlo altrimenti l'engine cercherebbe di attivaarlo
+	// mettere pTESTRESTORE=true se la condizione usa extrabuttons
+	// *pRepeatType per
+	//			0 = ossia ripetere sempre
+	//			1  =  non ripetere su blocco se condizione e' vera
+	//			2  = non ripetere piu' se condizione e' vera
+	//			3  = non ripetere anche se condizione e' falsa
+	// gestione eventuali condizioni di plugin e callback su trng conditions
+	int EseguiCondizione(WORD PluginId, WORD Condizione, WORD Indice, WORD ExtraButtons, bool *pTestRestore, bool *pTestSalta, int *pRepeatType, WORD Flags)
+	{
+		CALL_CONDITION pCall;
+		CALL_CONDITION_MINE pCallMine;
+		int Responso;
+		int ValEsito;
+		StrPluginRec *pRec;
+		bool TestReplaced;
+		StrRecordCallBack *pCB;
+		int i, j;
+		bool TestEsito;
+
+		*pTestSalta = false;
+		*pTestRestore = false;
+		*pRepeatType = 0;
+		ValEsito = 0;
+
+		if (GlobTomb4.BaseSalvaFloor.InsideCondition != 0) {
+			*pRepeatType = 0;
+			*pTestRestore = false;
+			*pTestSalta = false;
+			return 0;
+		}
+		if (GlobTomb4.BaseSalvaFloor.InsideDummyTrigger) {
+
+			if (PluginId > 0) {
+				//  se e' di plugin ignorarla in modalita' dummy
+				*pRepeatType = 0;
+				*pTestRestore = false;
+				*pTestSalta = false;
+				return 0;
+			}
+			// vedere se condizione e' di quelle valide
+			if (IsValidConditionForDummy(Condizione, Indice, true) == false) {
+				*pRepeatType = 0;
+				*pTestRestore = false;
+				*pTestSalta = false;
+				return 0;
+			}
+		}
+		// ------------------------  CONDITION DI PLUGIN ? -------------------------------------------
+
+		if (PluginId > 0) {
+			if (PluginId > 255) {
+				// plugin non trovato: restituire false
+				sprintf_s(BufferLog, "ERROR: Invalid plugin ID for Conditon Trigger %d", Condizione);
+				InviaLog(BufferLog);
+				*pRepeatType = 0;
+				*pTestRestore = false;
+				*pTestSalta = false;
+				return 0;
+			}
+
+			pCallMine = (CALL_CONDITION_MINE) MyGlobPrivate.DataBase.pVetPlugins[PluginId].VetDirectCB[CB_CONDITION_MINE];
+
+			if (pCallMine == NULL) {
+				sprintf_s(BufferLog, "ERROR: the \"%s\" plugin has not set the callback for its conditional triggers", MyGlobPrivate.DataBase.pVetPlugins[PluginId].Nome);
+				*pRepeatType = 3;
+				InviaLog(BufferLog);
+				return ValEsito;
+			}
+
+			// int (__cdecl *CALL_CONDITION_MINE) (WORD ConditionIndex, int ItemIndex, WORD Extra, WORD ActivationMode);
+			Responso = pCallMine(Condizione, Indice, ExtraButtons, Flags);
+			if (Responso & CTRET_IS_TRUE)
+				ValEsito = 1;
+			if (Responso & CTRET_EXTRA_PARAM)
+				*pTestRestore = true;
+			if (Responso & CTRET_ON_MOVEABLE)
+				*pTestSalta = true;
+			if (Responso & CTRET_PERFORM_ALWAYS) {
+				*pRepeatType = 0;
+			}
+			if (Responso & CTRET_ONLY_ONCE_ON_TRUE) {
+				*pRepeatType = 1;
+			}
+
+			if (Responso & CTRET_NEVER_MORE_ON_TRUE) {
+				*pRepeatType = 2;
+			}
+
+			if (Responso & CTRET_PERFORM_ONCE_AND_GO) {
+				*pRepeatType = 3;
+			}
+			return ValEsito;
+
+		}
+
+		// --------------------- CALLBACK FIRST ? -----------------------------------------------------------
+
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetConditions[Condizione] & CBT_FIRST) {
+
+			// ok, sappiamo che esiste almeno una callback first per questa condizione
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCB->CB_Tipo == CB_CONDITION && pCB->Numero == Condizione && (pCB->Flags & CBT_FIRST) != 0) {
+						// trovata call back
+
+						pCall = (CALL_CONDITION) pCB->pCall;
+						pCall(Condizione, Indice, ExtraButtons, Flags, false, CBT_FIRST);
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+
+		// ------------------ CALLBACK REPLACE ? -------------------------------------------------
+		TestReplaced = false;
+		pCall = (CALL_CONDITION) MyGlobPrivate.BaseVetCbReplace.VetConditions[Condizione];
+		if (pCall != NULL) {
+			TestReplaced = true;
+			Responso = pCall(Condizione, Indice, ExtraButtons, Flags, false, CBT_REPLACE);
+			if (Responso & CTRET_EXECUTE_ORIGINAL) {
+				TestReplaced = false;
+			} else {
+				if (Responso & CTRET_IS_TRUE)
+					ValEsito = 1;
+				if (Responso & CTRET_EXTRA_PARAM)
+					*pTestRestore = true;
+				if (Responso & CTRET_ON_MOVEABLE)
+					*pTestSalta = true;
+				if (Responso & CTRET_PERFORM_ALWAYS) {
+					*pRepeatType = 0;
+				}
+				if (Responso & CTRET_ONLY_ONCE_ON_TRUE) {
+					*pRepeatType = 1;
+				}
+
+				if (Responso & CTRET_NEVER_MORE_ON_TRUE) {
+					*pRepeatType = 2;
+				}
+
+				if (Responso & CTRET_PERFORM_ONCE_AND_GO) {
+					*pRepeatType = 3;
+				}
+
+			}
+		}
+
+		// --------------------------  ORIGINAL TRNG CONDITION -------------------------------------
+		if (TestReplaced == false) {
+			ValEsito = PerformTRNGCondition(Condizione, Indice, ExtraButtons, pTestRestore, pTestSalta, pRepeatType, Flags);
+		}
+
+		// -------------------------- CALLBACK AFTER ? -----------------------------------------------
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetConditions[Condizione] & CBT_AFTER) {
+
+			// ok, sappiamo che esiste almeno una callback after  per questa condizione
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+
+					if (pCB->CB_Tipo == CB_CONDITION && pCB->Numero == Condizione && (pCB->Flags & CBT_AFTER) != 0) {
+						// trovata call back
+
+						pCall = (CALL_CONDITION) pCB->pCall;
+						TestEsito = false;
+						if (ValEsito)
+							TestEsito = true;
+
+						Responso = pCall(Condizione, Indice, ExtraButtons, Flags, TestEsito, CBT_AFTER);
+						if ((Responso & CTRET_EXECUTE_ORIGINAL) == 0) {
+
+							ValEsito = 0;
+							*pTestRestore = false;
+							*pTestSalta = false;
+							*pRepeatType = 0;
+
+							if (Responso & CTRET_IS_TRUE)
+								ValEsito = 1;
+							if (Responso & CTRET_EXTRA_PARAM)
+								*pTestRestore = true;
+							if (Responso & CTRET_ON_MOVEABLE)
+								*pTestSalta = true;
+							if (Responso & CTRET_PERFORM_ALWAYS) {
+								*pRepeatType = 0;
+							}
+							if (Responso & CTRET_ONLY_ONCE_ON_TRUE) {
+								*pRepeatType = 1;
+							}
+
+							if (Responso & CTRET_NEVER_MORE_ON_TRUE) {
+								*pRepeatType = 2;
+							}
+
+							if (Responso & CTRET_PERFORM_ONCE_AND_GO) {
+								*pRepeatType = 3;
+							}
+						}
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+		return ValEsito;
+	}
+
+	// verifica se e' una condizione valide per dummy mode.
+	// ossia; tutte le condizioni dirette per fragmented triggers + condizone multipla basata su triggergroup
+	// nota: le chiamate esterne saranno tutte con TestFirst==true
+	// poi questa procedura chiamera' se stessa in modo ricorsivo con TestFirst=false
+	// quando TestFirst=true, viene fatta un'analisi complessa nel caso la condizione sia la condizione 15 che
+	// esegue un triggergroup. verranno analizzati tutti i trigger del triggergroup
+	// e se annche uno solo e' diverso da una condizione fragmented triggers, restituira' false
+	bool IsValidConditionForDummy(int Condizione, int MainArgument, bool TestFirst)
+	{
+		StrScriptTrigger *pTrigger;
+		StrTriggerGroup *pGroup;
+		int i;
+
+		if (TestFirst == true && Condizione == 15) {
+			// analisi per i trigger interni a triggergroup
+			i = GlobTomb4.pBaseTriggerGroups->VetID[MainArgument];
+			if (i == -1)
+				return false;
+
+			pGroup = &GlobTomb4.pBaseTriggerGroups->VetTriggerGroups[i];
+
+			for (i = 0; i < pGroup->TotTriggers; i++) {
+				pTrigger = &pGroup->VetTriggers[i];
+				if (pTrigger->PluginId > 0)
+					return false;
+
+				if ((pTrigger->Flags & TGROUP_CONDITION_TRIGGER) == 0)
+					return false;
+				// e' una condizione
+				// considerarla valida solo se e' una di quelle fragment triggers
+				if (IsValidConditionForDummy(pTrigger->Timer & 0xff, (pTrigger->Timer >> 8) & 0xff, false) == false)
+					return false;
+			}
+			// tutte giuste, ok
+			return true;
+
+		}
+
+		if ((Condizione >= 6 && Condizione <= 8) || (Condizione >= 60 && Condizione <= 80)) {
+			// e' una delle condizioni usate per bridge collision
+			return true;
+		}
+
+		return false;
+	}
+
+	// esegue condizione e riceve l'esito
+	// la funzione imposta a nche i valori in
+	// pTestSkipObject metterlo a true quando la condizione lavora su
+	// un oggetto e bisogna saltrlo altrimenti l'engine cercherebbe di attivaarlo
+	// mettere pTESTRESTORE=true se la condizione usa extrabuttons
+	// *pRepeatType per
+	//			0 = ossia ripetere sempre
+	//			1  =  non ripetere su blocco se condizione e' vera
+	//			2  = non ripetere piu' se condizione e' vera
+	//			3  = non ripetere anche se condizione e' falsa
+	int PerformTRNGCondition(WORD ConditionNumber, WORD MainArgument, WORD ExtraButtons, bool *pTestRestore, bool *pTestSkipObject, int *pRepeatType, WORD Flags)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// questa e' la procedura che poi puo' smistare il controllo ad action trigger di altri plugin
+	// o che sottopone a callback le varie trng actions
+
+	int EsecuzioneActionTrigger(WORD PluginID, WORD AzioneTimer, int ItemIndex, WORD Flags)
+	{
+		int Responso;
+		WORD ExtraTimer;
+		WORD ActionNumber;
+		CALL_ACTION_MINE pCallMine;
+		CALL_ACTION pCallAction;
+		StrPluginRec *pRec;
+		bool TestReplaced;
+		StrRecordCallBack *pCB;
+		int RepeatType;
+		int i, j;
+
+		ActionNumber = AzioneTimer & 0xFF;
+		ExtraTimer = (ActionNumber >> 8) & 0x7F;
+		RepeatType = 1;
+
+		// se siamo in modalita' inside dummy aboertire l'esecuzione
+		if (GlobTomb4.BaseSalvaFloor.InsideDummyTrigger)
+			return 1;
+
+		// --------------------  ACTION DI ALTRO PLUGIN --------------------------------------------
+		if (PluginID > 0) {
+
+			if (PluginID > 255) {
+				// id plugin illegale (plugin non presente)
+				sprintf_s(BufferLog, "ERROR: Invalid plugin Id for Action Trigger %d", ActionNumber);
+				InviaLog(BufferLog);
+				return 2;
+			}
+
+			pCallMine = (CALL_ACTION_MINE) MyGlobPrivate.DataBase.pVetPlugins[PluginID].VetDirectCB[CB_ACTION_MINE];
+			if (pCallMine == NULL) {
+				sprintf_s(BufferLog, "ERROR: plugin \"%s\" has not set a callback for its Action triggers", MyGlobPrivate.DataBase.pVetPlugins[PluginID].Nome);
+				InviaLog(BufferLog);
+				return 2;
+			}
+			// typedef int (__cdecl *CALL_ACTION) (WORD ActionIndex, int ItemIndex, WORD Extra, WORD ActivationMode);
+			return pCallMine(ActionNumber, ItemIndex, ExtraTimer, Flags);
+		}
+
+		// -------------------- CALLBACK FIRST ? ----------------------------------------------------
+
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetActions[ActionNumber] & CBT_FIRST) {
+			// ok, sappiamo che esiste almeno una callback first per questo flipeffect
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCB->CB_Tipo == CB_ACTION && pCB->Numero == ActionNumber && (pCB->Flags & CBT_FIRST) != 0) {
+						// trovata call back
+
+						pCallAction = (CALL_ACTION) pCB->pCall;
+						pCallAction(ActionNumber, ItemIndex, ExtraTimer, Flags, CBT_FIRST);
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+
+		// --------------- CALLBACK REPLACE ? -------------------------------------------------------------
+		TestReplaced = false;
+		pCallAction = (CALL_ACTION) MyGlobPrivate.BaseVetCbReplace.VetActions[ActionNumber];
+
+		if (pCallAction != NULL) {
+			TestReplaced = true;
+
+			Responso = pCallAction(ActionNumber, ItemIndex, ExtraTimer, Flags, CBT_REPLACE);
+			if (Responso == TRET_EXECUTE_ORIGINAL) {
+				TestReplaced = false;
+			} else {
+				RepeatType = Responso;
+			}
+		}
+
+		// ----------------  ACTION TRNG ORIGINALE --------------------------------------------------------
+
+		if (TestReplaced == false) {
+			// int PerformTRNGAction(WORD AzioneTimer, int ItemIndex, WORD Flags)
+			PerformTRNGAction(AzioneTimer, ItemIndex, Flags);
+		}
+
+		// ----------------- CALLBACK AFTER ? -------------------------------------------------------------
+		if (MyGlobPrivate.BaseVetCbFirstAfter.VetActions[ActionNumber] & CBT_AFTER) {
+			// ok, sappiamo che esiste almeno una callback first per questo flipeffect
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				pCB = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCB->CB_Tipo == CB_ACTION && pCB->Numero == ActionNumber && (pCB->Flags & CBT_AFTER) != 0) {
+						// trovata call back
+
+						pCallAction = (CALL_ACTION) pCB->pCall;
+						RepeatType = pCallAction(ActionNumber, ItemIndex, ExtraTimer, Flags, CBT_AFTER);
+						break;
+					}
+					pCB++;
+				}
+				pRec++;
+			}
+		}
+
+		return RepeatType;
+	}
+
+	// esegue la singola azione scandita
+	// in alcuni casi la esegue subito in altri casi
+	// la trasferira' come azione progressiva
+	// restituisce il tipo di blocco
+	//		=0 nessun blocco / 1 = blocco temp / 2= blocco totale
+	// nota: IndiceScan contiene l'indice al ettore
+	int PerformTRNGAction(WORD AzioneTimer, int ItemIndex, WORD Flags)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// restituisce il prossimo flag di trigger NON command. Se e' terminata la lista di trigger
+	// restituisce zero
+	// IndexNow sara' il primo indice da controllare
+	WORD GetNextTriggerFlag(StrTriggerGroup *pGroup, int IndexNow)
+	{
+		int i;
+
+		for (i = IndexNow; i < pGroup->TotTriggers; i++) {
+			if ((pGroup->VetTriggers[i].Flags & TGROUP_COMMAND) != TGROUP_COMMAND)
+				return pGroup->VetTriggers[i].Flags;
+			// era un command, andare avanti, a meno che non sia un command ce interrompe la seuqnza
+			// come goto o exit
+			if (pGroup->VetTriggers[i].Object == TCMD_GOTO || pGroup->VetTriggers[i].Object == TCMD_EXIT)
+				return 0;
+		}
+		return 0;
+	}
+
+	// imposta inizio di nuovo comando pPlay->IndexCommandNow
+	void ImpostaComandoSpeech(StrPlaySpeech *pPlay)
+	{
+		WORD ComandoNow;
+		WORD FrameSet;
+		WORD MeshIndex;
+		int Numero;
+		int Inizio;
+		int Fine;
+		DWORD FrameNow;
+
+		ComandoNow = pPlay->pParam->VetCommands[pPlay->IndexCommandNow];
+
+		FrameNow = GetCutsceneFrame();
+
+		switch (ComandoNow & SPC_MASK_COMMANDS) {
+		case SPC_MESH:
+			// localizza mesh con indice assoluto
+			MeshIndex = ComandoNow & SPC_MASK_MESH;
+			pPlay->TestAbs = true;
+			pPlay->SpeechIndexNow = MeshIndex;
+			pPlay->SpeechIndexInc = 0;
+
+			if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+				ShowMsgDebug("Frame=%d: SPC_MESH mesh %d", FrameNow, MeshIndex);
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_MESH (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+
+			if (FrameSet == 0)
+				FrameSet = pPlay->pParam->FrameRate;
+			pPlay->FrameEndSpeech = FrameNow + FrameSet;
+
+			break;
+		case SPC_SYLL:
+
+			pPlay->TestAbs = false;
+			// preparare sequenza tra min -> max o da max -> min
+			Numero = ComandoNow & SPC_MASK_MESH;
+			if (Numero == 0)
+				Numero=1;
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			if (FrameSet == 0)
+				FrameSet = pPlay->pParam->FrameRate;
+
+			// stabiire inizio e fine
+			if (pPlay->SpeechIndexNow < 2) {
+				Inizio = 0;
+				Fine = pPlay->TotSpeech;
+
+			} else {
+				Inizio = pPlay->TotSpeech - 1;
+				Fine = -1;
+			}
+
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_SYLL (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+
+			PreparaSequenzaSpeech(pPlay, Inizio, Fine, FrameSet, Numero);
+			pPlay->FrameEndSpeech = FrameNow + pPlay->FrameRateSpeech;
+			break;
+		case SPC_SEQUENCE:
+			pPlay->TestAbs = true;
+			Inizio = ComandoNow & SPC_MASK_MESH;
+			Numero = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			if (Numero == 0)
+				Numero = 1;
+
+			FrameSet = pPlay->pParam->FrameRate;
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_SEQUENCE (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			PreparaSequenzaSpeech(pPlay, Inizio, Inizio + Numero, FrameSet, 1);
+			pPlay->FrameEndSpeech = FrameNow + pPlay->FrameRateSpeech;
+			break;
+		case SPC_PAUSE:
+			pPlay->TestAbs = false;
+			pPlay->TestPause = true;
+			Numero = ComandoNow & SPC_MASK_PAUSE;
+			if (Numero == 0)
+				Numero = pPlay->pParam->FrameRate;
+
+			if (ComandoNow & DEMO_FRAME) {
+
+				pPlay->FrameEndSpeech = Numero;
+			} else {
+				pPlay->FrameEndSpeech = FrameNow + Numero;
+			}
+
+			if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+				ShowMsgDebug("Frame=%d: SPC_PAUSE start pause and keep until frame=%d", FrameNow, pPlay->FrameEndSpeech);
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_PAUSE (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			pPlay->SpeechIndexNow = 0;
+			pPlay->SpeechIndexInc = 0;
+
+			break;
+		case SPC_LOOK_UP:
+		case SPC_LOOK_DOWN:
+			if (pPlay->TestLara == false) {
+				// ignorare comando
+				pPlay->IndexCommandNow++;
+				ImpostaComandoSpeech(pPlay);
+				break;
+			}
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			// frameset sono decimi di secondo: devo moltiplicare per 3 questo valore
+			FrameSet *= 3;
+
+			Numero = ComandoNow & SPC_MASK_MESH;
+
+			// moltiplicare i gradi
+			Numero *= 182;
+			if (Numero == 0)
+				Numero = 0x1000;
+			if (FrameSet == 0)
+				FrameSet = pPlay->pParam->FrameRate * 5;
+			pPlay->IndiceSecondarioRotateV = 0; // fase per raggiungere orientamento richiesto
+			pPlay->FrameEndVTurn = FrameNow + FrameSet;
+			pPlay->OrientVLastCommand = ComandoNow & SPC_MASK_COMMANDS;
+			pPlay->OrientVTurnInc = Numero >> 4; // diviso 16
+			pPlay->OrientVTurnNow = 0;
+
+			if ((ComandoNow & SPC_MASK_COMMANDS) == SPC_LOOK_DOWN) {
+				pPlay->OrientVTurnInc = -pPlay->OrientVTurnInc;
+				Numero = -Numero;
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Frame=%d: SPC_LOOK_DOWN for %d frames", FrameNow, FrameSet);
+				FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_LOOK_DOWN (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			} else {
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Frame=%d: SPC_LOOK_UP for %d frames", FrameNow, FrameSet);
+				FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_LOOK_UP (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			}
+			pPlay->OrientVTurnEnd = Numero;
+
+			// ora bisogna saltare a prossimo comando
+			pPlay->IndexCommandNow++;
+			ImpostaComandoSpeech(pPlay);
+			break;
+		case SPC_LOOK_RIGHT:
+		case SPC_LOOK_LEFT:
+			// fare ruotare rapidamnte testa a destra fino a massimo valore
+			if (pPlay->TestLara == false) {
+				// ignorare comando
+				pPlay->IndexCommandNow++;
+				ImpostaComandoSpeech(pPlay);
+				break;
+			}
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			// frameset sono decimi di secondo: devo moltiplicare per 3 questo valore
+			FrameSet *= 3;
+
+			Numero = ComandoNow & SPC_MASK_MESH;
+
+			// moltiplicare i gradi
+			Numero *= 182;
+			if (Numero == 0)
+				Numero = 0x1000;
+			if (FrameSet == 0)
+				FrameSet = pPlay->pParam->FrameRate * 5;
+
+			pPlay->IndiceSecondarioRotateH = 0; // fase per raggiungere orientamento richiesto
+			pPlay->FrameEndHTurn = FrameNow + FrameSet;
+			pPlay->OrientHLastCommand = ComandoNow & SPC_MASK_COMMANDS;
+			pPlay->OrientHTurnInc = Numero >> 4; // diviso 16
+			pPlay->OrientHTurnNow = 0;
+
+			if ((ComandoNow & SPC_MASK_COMMANDS) == SPC_LOOK_LEFT) {
+				pPlay->OrientHTurnInc = -pPlay->OrientHTurnInc;
+				Numero = -Numero;
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Frame=%d: SPC_LOOK_LEFT for %d frames", FrameNow, FrameSet);
+				FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_LOOK_LEFT (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			} else {
+				if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+					ShowMsgDebug("Frame=%d: SPC_LOOK_RIGHT for %d frames", FrameNow, FrameSet);
+				FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_LOOK_RIGHT (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			}
+			pPlay->OrientHTurnEnd = Numero;
+			// ora bisogna saltare a prossimo comando
+			pPlay->IndexCommandNow++;
+			ImpostaComandoSpeech(pPlay);
+			break;
+		case SPC_HEAD_SHAKE:
+			if (pPlay->TestLara == false) {
+				// ignorare comando
+				pPlay->IndexCommandNow++;
+				ImpostaComandoSpeech(pPlay);
+				break;
+			}
+			// prendere speed di rotazione
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			if (FrameSet == 0) {
+				FrameSet = 273;
+			} else {
+				FrameSet *= 91;
+			}
+			// angolo di rotazione
+			Numero = ComandoNow & SPC_MASK_MESH;
+			if (Numero == 0) {
+				Numero = 15;
+			}
+			Numero *= 91;
+
+			if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+				ShowMsgDebug("Frame=%d: SPC_HEAD_SHAKE", FrameNow, 0);
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_HEAD_SHAKE (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			pPlay->OrientHTimes = 3;
+			pPlay->OrientHLastCommand = SPC_HEAD_SHAKE;
+			pPlay->OrientHTurnInc = FrameSet;
+			pPlay->OrientHTurnEnd = Numero;
+			pPlay->OrientHTurnNow = 0;
+			pPlay->IndiceSecondarioRotateH = 0;
+			// ora bisogna saltare a prossimo comando
+			pPlay->IndexCommandNow++;
+			ImpostaComandoSpeech(pPlay);
+			break;
+		case SPC_HEAD_NOD:
+			if (pPlay->TestLara == false) {
+				// ignorare comando
+				pPlay->IndexCommandNow++;
+				ImpostaComandoSpeech(pPlay);
+				break;
+			}
+			// prendere speed di rotazione
+			FrameSet = (ComandoNow & SPC_MASK_FRAMES) >> 6;
+			if (FrameSet == 0) {
+				FrameSet = 182;
+			} else {
+				FrameSet *= 91;
+			}
+			// angolo di rotazione
+			Numero = ComandoNow & SPC_MASK_MESH;
+			if (Numero == 0) {
+				Numero = 20;
+			}
+			Numero *= 91;
+			pPlay->OrientVTimes = 3;
+			pPlay->OrientVLastCommand = SPC_HEAD_NOD;
+			pPlay->OrientVTurnInc = -FrameSet;
+			pPlay->OrientVTurnEnd = -Numero;
+			pPlay->OrientVTurnNow = 0;
+			pPlay->IndiceSecondarioRotateV = 0;
+			// ora bisogna saltare a prossimo comando
+			pPlay->IndexCommandNow++;
+			if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
+				ShowMsgDebug("Frame=%d: SPC_HEAD_NOD", FrameNow, 0);
+			FormattaLogCutscene("SPEECH", FrameNow, "SPEECH, %d: start SPC_HEAD_NOD (index=%d)", pPlay->pParam->IdSpeech, pPlay->IndexCommandNow + 1);
+			ImpostaComandoSpeech(pPlay);
+			break;
+
+		default:
+			// per tutti i comandi che non modificano mesh head, azzerare semplicemente
+			// i valori di frame per mostrare head
+			pPlay->FrameEndSpeech = FrameNow;
+			pPlay->SpeechIndexInc = 0;
+			break;
+		}
+	}
+
+	// imposta dati sequenza
+	void PreparaSequenzaSpeech(StrPlaySpeech *pPlay, int Inizio, int Fine, int FrameSet, int TotSyll)
+	{
+		pPlay->FrameRateSpeech = FrameSet;
+		pPlay->SpeechTotSequence = abs(Fine - Inizio);
+		pPlay->SpeechTotSyll = TotSyll;
+		if (Inizio < Fine) {
+			pPlay->SpeechIndexInc = 1;
+		} else {
+			pPlay->SpeechIndexInc = -1;
+		}
+		pPlay->SpeechIndexNow = Inizio;
+	}
+
+	// se veicolo attivo e' rubber boat o motorboat e c'e' ocb OCB_BOAT_ANCHORED
+	// salva posizione attuale di barca in modo da poterla poi ripristinar e tenerla ferma
+	void ControllaAnchoredBoat(int IndiceVeicolo)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// verifica se, sulla base di animazione attuale di lara va attivato o disattivato
+	// se restituisce true allora patch e' attiva e push away animazione va eliminata
+	bool AnalisiPatchPushAway(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// c''e stata un richiesta di avviare diario, farlo adesso
+	void AvviaDiario(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// azzere le azioni scandite gia' eseguite
+
+	void ResetScanActions(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// azzera i flipeffect scanditi e gia' eseguiti
+	void ResetScanFlipEffects(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// controlla se qualche pushable e' sopra una pedana
+	void GestioneRaisePushables(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void GestioneItemsSuElevatore(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// imposta a false tutte le condizioni
+	void InizializzaCondizioniGlobali(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// chiamata all'inizio di ogni ciclo, azzera le collisioni da verificare
+	// per questo ciclo ma prima salva le collisioni trovate nel ciclo preceente
+	// nel vettore delle vecchie collisioni
+
+	void InizializzaCollisioniLara(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// salva il valroe di room dove si trova lara
+	void ImpostaStatusRoom(void)
 	{
 		__try { throw __func__; } __finally {}
 	}
@@ -6042,4 +10047,68 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10069074, (unsigned int)trng::ModificaFogStart, replace);
 	ProcessInject(0x100690B1, (unsigned int)trng::ModificaHardwareFog, replace);
 	ProcessInject(0x10068FEF, (unsigned int)trng::ModificaFogBulbDistance, false);
+	ProcessInject(0x1007B4B3, (unsigned int)trng::InizioCiclo, replace);
+	ProcessInject(0x1007E486, (unsigned int)trng::AggiornaCutsceneCamera, replace);
+	ProcessInject(0x1003BFB7, (unsigned int)trng::GetCutsceneFrame, replace);
+	ProcessInject(0x10057613, (unsigned int)trng::ProporzioneDistanza, replace);
+	ProcessInject(0x1003C0D6, (unsigned int)trng::GestioneComandiSpeech, replace);
+	ProcessInject(0x10037700, (unsigned int)trng::ShowMsgDebug, replace);
+	ProcessInject(0x1003BF43, (unsigned int)trng::ImpostaMeshHead, replace);
+	ProcessInject(0x1003BE88, (unsigned int)trng::GetMeshSpeech, replace);
+	ProcessInject(0x1003BFE6, (unsigned int)trng::EliminaStringaSpeech, replace);
+	ProcessInject(0x10052C76, (unsigned int)trng::GestioneCompletedProgActions, replace);
+	ProcessInject(0x10047A95, (unsigned int)trng::FormattaLogCutscene, replace);
+	ProcessInject(0x10047A26, (unsigned int)trng::StampaLogCutscene, replace);
+	ProcessInject(0x1007E99F, (unsigned int)trng::EsecuzioneFlipeffect, replace);
+	ProcessInject(0x1007CE19, (unsigned int)trng::ImpostaPosizioneSuono, replace);
+	ProcessInject(0x1007624E, (unsigned int)trng::EseguiTriggerGroup, replace);
+	ProcessInject(0x1005AD3B, (unsigned int)trng::SubTabLogScript, replace);
+	ProcessInject(0x10075FA3, (unsigned int)trng::AnalisiCameraTarget, replace);
+	ProcessInject(0x1003AA64, (unsigned int)trng::CreaNuovaAzioneProgressiva, replace);
+	ProcessInject(0x1007590E, (unsigned int)trng::PrintLogCommand, replace);
+	ProcessInject(0x1003AC82, (unsigned int)trng::LeggiDirectInput, replace);
+	ProcessInject(0x1003ABE6, (unsigned int)trng::ScansioneInput, replace);
+	ProcessInject(0x100801FA, (unsigned int)trng::GestioneDemo, replace);
+	ProcessInject(0x1007F516, (unsigned int)trng::SalvaDatiInizioDemo, replace);
+	ProcessInject(0x1007F516, (unsigned int)trng::GestioneDemoOrganizer, replace);
+	ProcessInject(0x1003C075, (unsigned int)trng::TerminaAllSpeech, replace);
+	ProcessInject(0x10047860, (unsigned int)trng::SalvaDemo, replace);
+	ProcessInject(0x10047533, (unsigned int)trng::AggiornaListaDemo, replace);
+	ProcessInject(0x10047319, (unsigned int)trng::TrovaDemoNumeri, replace);
+	ProcessInject(0x100473BC, (unsigned int)trng::CaricaDemo, replace);
+	ProcessInject(0x100479C8, (unsigned int)trng::FormattaFrames2Time, replace);
+	ProcessInject(0x10063278, (unsigned int)trng::ConvertiTombRoomIndex2NgleIndex, replace);
+	ProcessInject(0x1007FFAC, (unsigned int)trng::ReadCurrentGameCommands, replace);
+	ProcessInject(0x1007F9AE, (unsigned int)trng::GestioneDemoInProgress, replace);
+	ProcessInject(0x100754C4, (unsigned int)trng::StampaStringaDef, replace);
+	ProcessInject(0x1007BA75, (unsigned int)trng::AggiornaPosStringa, replace);
+	ProcessInject(0x1007567E, (unsigned int)trng::ConvertiCord1024, replace);
+	ProcessInject(0x1007BA1C, (unsigned int)trng::ContaRigheInTesto, replace);
+	ProcessInject(0x1007B9AB, (unsigned int)trng::AdattaCordX, replace);
+	ProcessInject(0x1007B9E4, (unsigned int)trng::AdattaCordY, replace);
+	ProcessInject(0x100828B1, (unsigned int)trng::AggiornaPositioneLara, replace);
+	ProcessInject(0x10080089, (unsigned int)trng::DecodeGameCommand, replace);
+	ProcessInject(0x1008001F, (unsigned int)trng::FormattaGameCommands, replace);
+	ProcessInject(0x10037AC8, (unsigned int)trng::TastoVKPremuto, replace);
+	ProcessInject(0x10063236, (unsigned int)trng::ConvertiTombItemIndex2NgleIndex, replace);
+	ProcessInject(0x1007599D, (unsigned int)trng::EseguiScriptTrigger, replace);
+	ProcessInject(0x100606C8, (unsigned int)trng::GetNgleIndice, replace);
+	ProcessInject(0x1007A71B, (unsigned int)trng::EseguiCondizione, replace);
+	ProcessInject(0x10076DAD, (unsigned int)trng::IsValidConditionForDummy, replace);
+	ProcessInject(0x10076EBD, (unsigned int)trng::PerformTRNGCondition, false);
+	ProcessInject(0x100412CA, (unsigned int)trng::EsecuzioneActionTrigger, replace);
+	ProcessInject(0x1003E315, (unsigned int)trng::PerformTRNGAction, false);
+	ProcessInject(0x10075897, (unsigned int)trng::GetNextTriggerFlag, replace);
+	ProcessInject(0x1003D426, (unsigned int)trng::ImpostaComandoSpeech, replace);
+	ProcessInject(0x1003D3D3, (unsigned int)trng::PreparaSequenzaSpeech, replace);
+	ProcessInject(0x1007B1BD, (unsigned int)trng::ControllaAnchoredBoat, false);
+	ProcessInject(0x1007B0F5, (unsigned int)trng::AnalisiPatchPushAway, false);
+	ProcessInject(0x1005F69E, (unsigned int)trng::AvviaDiario, false);
+	ProcessInject(0x1007B2CF, (unsigned int)trng::ResetScanActions, false);
+	ProcessInject(0x1007B246, (unsigned int)trng::ResetScanFlipEffects, false);
+	ProcessInject(0x1005AC85, (unsigned int)trng::GestioneRaisePushables, false);
+	ProcessInject(0x1007B05A, (unsigned int)trng::GestioneItemsSuElevatore, false);
+	ProcessInject(0x1007AFC4, (unsigned int)trng::InizializzaCondizioniGlobali, false);
+	ProcessInject(0x1007AFF2, (unsigned int)trng::InizializzaCollisioniLara, false);
+	ProcessInject(0x1007B027, (unsigned int)trng::ImpostaStatusRoom, false);
 }

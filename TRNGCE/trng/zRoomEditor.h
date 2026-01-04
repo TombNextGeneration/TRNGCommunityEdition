@@ -20,6 +20,7 @@ namespace trng {
 	char * SoloNome(char FileName[]);
 	void GetDataDelFile(char *pNomeFile, FILETIME *pFileTime);
 	bool PrendiNumero(char *pTesto, int *pValore);
+	char *GetTestoScriptTrigger(StrScriptTrigger *pTrigger);
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace);

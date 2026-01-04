@@ -141,6 +141,7 @@
     <ClInclude Include="tomb4\specific\LoadSave.h" />
     <ClInclude Include="tomb4\specific\output.h" />
     <ClInclude Include="tomb4\specific\polyinsert.h" />
+    <ClInclude Include="tomb4\specific\specificfx.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
     <ClInclude Include="tomb4\types.h" />
     <ClInclude Include="tomb4\math_tbls.h" />
@@ -151,9 +152,11 @@
     <ClInclude Include="trng\MyStructures.h" />
     <ClInclude Include="trng\Oggetti.h" />
     <ClInclude Include="trng\plugin.h" />
+    <ClInclude Include="trng\RoomEditor.h" />
     <ClInclude Include="trng\structures.h" />
     <ClInclude Include="trng\Tomb_NextGeneration.h" />
     <ClInclude Include="trng\trng_elevator.h" />
+    <ClInclude Include="trng\trng_flipeffects.h" />
     <ClInclude Include="trng\trng_weather.h" />
     <ClInclude Include="trng\zPatchesTomb4.h" />
     <ClInclude Include="trng\zRoomEditor.h" />
@@ -208,12 +211,14 @@
     <ClCompile Include="tomb4\specific\LoadSave.cpp" />
     <ClCompile Include="tomb4\specific\output.cpp" />
     <ClCompile Include="tomb4\specific\polyinsert.cpp" />
+    <ClCompile Include="tomb4\specific\specificfx.cpp" />
     <ClCompile Include="tomb4\specific\winmain.cpp" />
     <ClCompile Include="trng\ListTr4Patch.cpp" />
     <ClCompile Include="trng\Oggetti.cpp" />
     <ClCompile Include="trng\plugin.cpp" />
     <ClCompile Include="trng\Tomb_NextGeneration.cpp" />
     <ClCompile Include="trng\trng_elevator.cpp" />
+    <ClCompile Include="trng\trng_flipeffects.cpp" />
     <ClCompile Include="trng\trng_weather.cpp" />
     <ClCompile Include="trng\zPatchesTomb4.cpp" />
     <ClCompile Include="trng\zRoomEditor.cpp" />

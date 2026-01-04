@@ -44,6 +44,9 @@
 #include "tomb4/game/scarab.h"
 #include "tomb4/game/text.h"
 #include "tomb4/game/effects.h"
+#include "trng/trng_flipeffects.h"
+#include "tomb4/specific/audio.h"
+#include "tomb4/specific/specificfx.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -107,6 +110,7 @@ static void LoadTombNextGenerationInject(bool replace) {
 	LoadTombNextGenerationInject_ZPatchesTomb4(replace);
 	LoadTombNextGenerationInject_Oggetti(replace);
 	LoadTombNextGenerationInject_TrngElevator(replace);
+	LoadTombNextGenerationInject_TrngFlipeffects(replace);
 }
 
 static void __stdcall LoadInject(ULONG NotificationReason, LDR_DLL_NOTIFICATION_DATA *NotificationData, PVOID Context) {
@@ -149,6 +153,8 @@ static void Inject(bool replace) {
 	Inject_Scarab(replace);
 	Inject_Text(replace);
 	Inject_Effects(replace);
+	Inject_Audio(replace);
+	Inject_Specificfx(replace);
 }
 
 static LPSTR __stdcall CallInject() {

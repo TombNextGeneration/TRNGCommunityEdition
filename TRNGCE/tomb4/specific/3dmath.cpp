@@ -8,6 +8,7 @@ namespace tomb4
 	long &phd_winwidth = *reinterpret_cast<decltype(&phd_winwidth)>(0x753C60);
 	long &phd_winheight = *reinterpret_cast<decltype(&phd_winheight)>(0x753BB0);
 	float &FogStart = *reinterpret_cast<decltype(&FogStart)>(0x4B2498);
+	short &phd_winxmax = *reinterpret_cast<decltype(&phd_winxmax)>(0x753BEC);
 
 	ulong phd_sqrt(ulong num)
 	{
@@ -33,7 +34,7 @@ namespace tomb4
 
 	void phd_PopMatrix()
 	{
-		phd_mxptr -= (long)matrix_indices::indices_count;
+		phd_mxptr -= indices_count;
 	}
 
 	void AlterFOV(short fov)

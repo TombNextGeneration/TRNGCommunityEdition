@@ -8,6 +8,7 @@ namespace tomb4
 	extern DXINFO* &G_dxinfo;
 
 	long DXAttempt(HRESULT r);
+	void DXReadKeyboard(char* KeyMap);
 }
 
 void Inject_Dxshell(bool replace);

@@ -5,7 +5,7 @@ namespace tomb4
 {
 	SoundSlot (&LaSlot)[32] = *reinterpret_cast<decltype(&LaSlot)>(0x7F7100);
 
-	long SoundEffect(sound_effect_names sfx, PHD_3DPOS* pos, sfx_options flags)
+	long SoundEffect(long sfx, PHD_3DPOS* pos, long flags)
 	{
 		__try { throw __func__; } __finally {}
 	}

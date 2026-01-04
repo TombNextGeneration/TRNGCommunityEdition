@@ -7,6 +7,7 @@ namespace tomb4
 	extern short &FlashFadeG;
 	extern short &FlashFadeB;
 	extern short &FlashFader;
+	extern short &ScreenFading;
 
 	void TriggerBlood(long x, long y, long z, long angle, long num);
 	void ClearFires();
@@ -20,6 +21,8 @@ namespace tomb4
 	void UpdateShockwaves();
 	void UpdateLightning();
 	void UpdateFadeClip();
+	void SetScreenFadeIn(short speed);
+	void SetScreenFadeOut(short speed, short back);
 }
 
 void Inject_Tomb4fx(bool replace);

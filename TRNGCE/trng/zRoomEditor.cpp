@@ -1,6 +1,7 @@
 #include "zRoomEditor.h"
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
+#include "RoomEditor.h"
 
 namespace trng {
 	char (&MexVersione)[30] = *reinterpret_cast<decltype(&MexVersione)>(0x106A4BD0);
@@ -174,6 +175,114 @@ namespace trng {
 		else
 			return true;
 	}
+
+	// usato solo per debug di comandi script in modalita' tomb4
+	// restituisce un testo descrittivo del trigger esportato pTrigger
+	char *GetTestoScriptTrigger(StrScriptTrigger *pTrigger)
+	{
+		static const char * VetMexCmd[11] = {"<undefined>", "GOTO", "EXIT", "TCMD_SET_TIMER", "TCMD_SET_FULL_TIMER",
+									"TCMD_SET_EXTRA_TIMER", "TCMD_SET_EXTRA_CONDITION", "TCMD_SET_OBJECT",
+									"TCMD_LOG", "TCMD_PAUSE", "TCMD_TIMER_FIELD"};
+		static char Buffer[300];
+		static char MiniBuf[80];
+
+		int i, j;
+		int TipoCampoTrigger;  // SEZ_...
+		int NumeroCampo;
+		int Valore;
+		int Indice;
+		const char *pMexTipo;
+		const char *pArg3;
+		int z;
+		StrNGConstants * pBaseCostanti;
+		StrRecordSezione *pSezione;
+
+		pBaseCostanti = &MainBaseCostanti;
+
+		pMexTipo = "UNKNOWN";
+
+		if ((pTrigger->Flags & TGROUP_COMMAND) == TGROUP_COMMAND) {
+			switch (pTrigger->Object) {
+			case TCMD_EXIT:
+				// e' TCMD_EXIT e llora il terzo valore e' vero o false
+				if (pTrigger->Timer == 0) {
+					pArg3 = "FALSE";
+				} else {
+					pArg3 = "TRUE";
+				}
+				break;
+			default:
+				sprintf_s(MiniBuf, "%d ($%04X)", pTrigger->Timer, pTrigger->Timer);
+				pArg3 = MiniBuf;
+				break;
+			}
+			z = pTrigger->Object;
+			if (z >= TCMD_MAX_ID)
+				z = 0;
+
+			sprintf_s(Buffer, "COMMAND: %s %s", VetMexCmd[z], pArg3);
+			return Buffer;
+		}
+
+		TipoCampoTrigger = SEZ_TOT;
+		NumeroCampo = 0;
+		Valore = 0;
+
+		if (pTrigger->Flags & TGROUP_FLIPEFFECT) {
+			pMexTipo = "FLIPEFFECT";
+
+			TipoCampoTrigger = SEZ_TRIGGERWHAT;
+			NumeroCampo = 9;
+			Valore = pTrigger->Object & 0x3ff;
+
+			sprintf_s(MiniBuf, "<&> = %d  (E) = %d", pTrigger->Timer & 0xff, (pTrigger->Timer & 0x7f00) >> 8);
+		}
+
+		if (pTrigger->Flags & TGROUP_ACTION) {
+			pMexTipo = "ACTION";
+			TipoCampoTrigger = SEZ_TRIGGERWHAT;
+			NumeroCampo = 11;
+			Valore = pTrigger->Timer & 0xff;
+			Indice = pTrigger->Object & 0x3ff;
+
+			sprintf_s(MiniBuf, "NgleIndex=%d (E) = %d", Indice, (pTrigger->Timer & 0x7f00) >> 8);
+		}
+
+
+		if (pTrigger->Flags & TGROUP_CONDITION_TRIGGER) {
+			pMexTipo = "CONDITION";
+			TipoCampoTrigger = SEZ_TRIGGERTYPE;
+			NumeroCampo = 12;
+			Valore = pTrigger->Timer & 0xff;
+			sprintf_s(MiniBuf, "<#> = %d (E) = %d", pTrigger->Object & 0x3ff, (pTrigger->Timer & 0x7f00) >> 8);
+		}
+
+		if (pTrigger->PluginId > 0) {
+
+			sprintf_s(Buffer, "%s trigger of plugin with ScriptID=%d  <%s>", pMexTipo, pTrigger->PluginId, MiniBuf);
+
+			return Buffer;
+		}
+
+		for (i = 0; i < pBaseCostanti->TotSezioni; i++) {
+			pSezione = &pBaseCostanti->pVetSezioni[i];
+
+			if (pSezione->TipoSezione == TipoCampoTrigger && pSezione->NumeroSezione == NumeroCampo) {
+
+				// ok, ora cercare il numero specifico nella lista
+				for (j = 0; j < pSezione->TotValori; j++) {
+					if (pSezione->pVetValori[j].Numero == Valore) {
+						// trovato
+						// ora calcolare anche gli argomenti
+
+						sprintf_s(Buffer, "%s trigger: \"%s\" <%s>", pMexTipo, pSezione->pVetValori[j].pDescrizione, MiniBuf);
+						return Buffer;
+					}
+				}
+			}
+		}
+		return MiniBuf;
+	}
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
@@ -187,4 +296,5 @@ void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
 	ProcessInject(0x100E95C6, (unsigned int)trng::SoloNome, replace);
 	ProcessInject(0x100FBCEA, (unsigned int)trng::GetDataDelFile, replace);
 	ProcessInject(0x10114BF2, (unsigned int)trng::PrendiNumero, replace);
+	ProcessInject(0x100E8D4E, (unsigned int)trng::GetTestoScriptTrigger, replace);
 }

@@ -6,6 +6,11 @@ namespace trng {
 	void InviaErroreLog(const char *pMessage, DWORD PluginID, bool TestMsgBox);
 	bool TryMessageBox(const char *pMessage, DWORD ID_Plugin);
 	void Tomb4MessageBox(const char *pMessaggio, char *pTitolo);
+	void DeleteParamCommand(int ParamType, int IdParam, bool TestSempre, bool TestSottoCommandi);
+	bool LogOnDebug(const char *szFormat, ...);
+	void DeleteColorRgb(int IdColorRgb, bool TestSempre);
+	void DeleteTriggerGroup(int IdTriggerGroup, bool TestSempre);
+	void DeleteAddEffect(int IdEffect, bool TestSempre);
 }
 
 void LoadTombNextGenerationInject_Plugin(bool replace);

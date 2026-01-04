@@ -227,6 +227,186 @@ namespace trng {
 		pFont->hFont = CreateFontIndirect(&TempFont);
 		return pFont->hFont;
 	}
+
+	// restituisce il valore della variabile sulla base del valore
+	// codificato in CodiceVariabile
+	// e' in grado di leggere tutte le variabili numeriche ma non quelle di testo
+	int LeggiVariabile(WORD CodiceVariabile)
+	{
+		int Result;
+		int Indice;
+		WORD N;
+		StrBaseVarAll *pVar;
+
+		pVar = GlobTomb4.pBaseVariableTRNG;
+
+		// vedere se e' variabile speciale
+		if (CodiceVariabile & VAR_TYPE_INPUT_NUMBER) {
+			if (GlobTomb4.DebugModeCounter) {
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("{LastInputNumber} = %d", pVar->Globals.LastInputNumber, 0);
+			}
+
+			return pVar->Globals.LastInputNumber;
+		}
+
+		if (CodiceVariabile & VAR_TYPE_CURRENT_VALUE) {
+			if (GlobTomb4.DebugModeCounter) {
+				if (GlobTomb4.DebugModeCounter)
+					ShowMsgDebug("{CurrentValue} = %d", pVar->Globals.CurrentValue, 0);
+			}
+			return pVar->Globals.CurrentValue;
+		}
+
+		Result = 0;
+
+		// vedere se e' di tipo store
+		if (CodiceVariabile & VAR_TYPE_STORE) {
+			// si
+			Indice = CodiceVariabile & STORE_MASK_INDEX;
+			N = CodiceVariabile & STORE_MASK_SIZE;
+
+			switch (N) {
+			case STORE_TYPE_BYTE:
+				Result = pVar->Globals.VetStoreByte[Indice];
+				break;
+			case STORE_TYPE_SHORT:
+				Indice &= STORE_MASK_INDEX > 1;
+				Result = pVar->Globals.VetStoreShort[Indice];
+				break;
+			case STORE_TYPE_LONG:
+				Indice &= STORE_MASK_INDEX > 2;
+				Result = pVar->Globals.VetStoreLong[Indice];
+				break;
+			}
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("{%s} = %d", GetNomeVariabile(CodiceVariabile), Result);
+
+			return Result;
+		}
+		// non e' store
+		Indice = CodiceVariabile & VAR_MASK_INDEX;
+		N = CodiceVariabile & VAR_MASK_SIZE;
+
+		// vedere se e' variabile locale
+		if (CodiceVariabile & VAR_TYPE_LOCAL) {
+			// e' locale
+
+			switch (N) {
+			case VAR_TYPE_BYTE:
+				Result = pVar->Locals.VetNumeriByte[Indice];
+				break;
+			case VAR_TYPE_SHORT:
+				Indice &= VAR_MASK_INDEX > 1;
+				Result = pVar->Locals.VetNumeriShort[Indice];
+				break;
+			case VAR_TYPE_LONG:
+				Indice &= VAR_MASK_INDEX > 2;
+				Result = pVar->Locals.VetNumeriLong[Indice];
+				break;
+			}
+
+			if (GlobTomb4.DebugModeCounter)
+				ShowMsgDebug("{%s} = %d", GetNomeVariabile(CodiceVariabile), Result);
+			return Result;
+		}
+
+		// deve essere variabile numerica globale
+		switch (N) {
+		case VAR_TYPE_BYTE:
+			Result = pVar->Globals.NumWar.VetNumeriByte[Indice];
+			break;
+		case VAR_TYPE_SHORT:
+			Indice &= VAR_MASK_INDEX > 1;
+			Result = pVar->Globals.NumWar.VetNumeriShort[Indice];
+			break;
+		case VAR_TYPE_LONG:
+			Indice &= VAR_MASK_INDEX > 2;
+			Result = pVar->Globals.NumWar.VetNumeriLong[Indice];
+			break;
+		}
+
+		if (GlobTomb4.DebugModeCounter)
+			ShowMsgDebug("{%s} = %d", GetNomeVariabile(CodiceVariabile), Result);
+		return Result;
+	}
+
+	// restituisce il nome descrittivo della variabile numerica Codice
+	const char *GetNomeVariabile(WORD Codice)
+	{
+		static char Buffer[128];
+		static const char *VetNomeNum[4] = {"Alfa", "Beta", "Delta", "Timer"};
+
+		const char *pTipo;
+		int Indice;
+		int N;
+
+		// analisi per codici speciali:
+		switch (Codice) {
+		case VAR_TYPE_INPUT_NUMBER:
+			return "Last Input Number";
+		case VAR_TYPE_INPUT_TEXT:
+			return "Last Input Text";
+		case VAR_TYPE_CURRENT_VALUE:
+			return "Current Value";
+		case VAR_TYPE_BIG_TEXT:
+			return "Big Text";
+		}
+
+		if (Codice & VAR_TYPE_STORE) {
+			strcat_s(Buffer, "Store ");
+			N = Codice & STORE_MASK_SIZE;
+			Indice = Codice & STORE_MASK_INDEX;
+
+			switch (N) {
+			case STORE_TYPE_BYTE:
+
+				Indice /= 4;
+				sprintf_s(Buffer, "Store Byte %c%c", 'A' + Indice, '1' + (Codice & 0x3));
+
+				break;
+			case STORE_TYPE_SHORT:
+				Indice &= STORE_MASK_INDEX > 1;
+				Indice /= 2;
+				sprintf_s(Buffer, "Store Short %c%c", 'A' + Indice, '1' + (Codice & 0x1));
+				break;
+			case STORE_TYPE_LONG:
+				Indice &= STORE_MASK_INDEX > 2;
+				sprintf_s(Buffer, "Store Long %c", 'A' + Indice);
+				break;
+			}
+
+			return Buffer;
+		}
+
+		Indice = Codice & VAR_MASK_INDEX;
+		N = Codice & VAR_MASK_SIZE;
+
+		// vedere se e' variabile locale
+		if (Codice & VAR_TYPE_LOCAL) {
+			pTipo = "Local";
+		} else {
+			pTipo = "Global";
+		}
+
+		switch (N) {
+		case VAR_TYPE_BYTE:
+			Indice /= 4;
+			sprintf_s(Buffer, "%s Byte %s%c", pTipo, VetNomeNum[Indice], '1' + (Codice & 0x3));
+			break;
+		case VAR_TYPE_SHORT:
+			Indice &= VAR_MASK_INDEX > 1;
+			Indice /= 2;
+			sprintf_s(Buffer, "%s Short %s%c", pTipo, VetNomeNum[Indice], '1' + (Codice & 0x1));
+			break;
+		case VAR_TYPE_LONG:
+			Indice &= VAR_MASK_INDEX > 2;
+			sprintf_s(Buffer, "%s Long %s", pTipo, VetNomeNum[Indice]);
+			break;
+		}
+		return Buffer;
+	}
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace)
@@ -251,4 +431,6 @@ void LoadTombNextGenerationInject_Oggetti(bool replace)
 	ProcessInject(0x10024E6E, (unsigned int)trng::NascondiTaskBar, false);
 	ProcessInject(0x100235F5, (unsigned int)trng::CreaWindowsFontForCB, replace);
 	ProcessInject(0x100233EA, (unsigned int)trng::CreaWindowsFont, replace);
+	ProcessInject(0x10021182, (unsigned int)trng::LeggiVariabile, replace);
+	ProcessInject(0x10020F12, (unsigned int)trng::GetNomeVariabile, replace);
 }

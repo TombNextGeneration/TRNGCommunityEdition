@@ -10,9 +10,7 @@ namespace tomb4
 	extern short* &frames;
 	extern long &number_cameras;
 	extern short &nAIObjects;
-#define THREAD struct THREAD_ { volatile long active; volatile long ended; ulong handle; ulong address; }
-	extern THREAD &LevelLoadingThread;
-#undef THREAD
+	inline struct { volatile long active; volatile long ended; ulong handle; ulong address; } &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
 
 	bool LoadObjects();
 }

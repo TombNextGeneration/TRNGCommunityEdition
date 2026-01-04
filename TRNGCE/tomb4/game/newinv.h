@@ -4,13 +4,14 @@
 namespace tomb4
 {
 	extern long &GLOBAL_lastinvitem;
-	extern short (&options_table)[(long)invobj_types::NUM_INVOBJ];
-	extern INVOBJ (&inventry_objects_list)[(long)invobj_types::NUM_INVOBJ];
+	extern short (&options_table)[NUM_INVOBJ];
+	extern INVOBJ (&inventry_objects_list)[NUM_INVOBJ];
 	extern long &GLOBAL_inventoryitemchosen;
 	extern long &GLOBAL_enterinventory;
 	extern long &InventoryActive;
 
 	long S_CallInventory2();
+	long convert_obj_to_invobj(short obj);
 }
 
 void Inject_Newinv(bool replace);

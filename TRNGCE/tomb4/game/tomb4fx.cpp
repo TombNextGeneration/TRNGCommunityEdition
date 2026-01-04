@@ -8,6 +8,7 @@ namespace tomb4
 	short &FlashFadeG = *reinterpret_cast<decltype(&FlashFadeG)>(0x4BF260);
 	short &FlashFadeB = *reinterpret_cast<decltype(&FlashFadeB)>(0x4BF262);
 	short &FlashFader = *reinterpret_cast<decltype(&FlashFader)>(0x4BF264);
+	short &ScreenFading = *reinterpret_cast<decltype(&ScreenFading)>(0x4BF254);
 
 	void TriggerBlood(long x, long y, long z, long angle, long num)
 	{
@@ -68,6 +69,16 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void SetScreenFadeIn(short speed)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void SetScreenFadeOut(short speed, short back)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Tomb4fx(bool replace)
@@ -84,4 +95,6 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x43A6A0, (unsigned int)tomb4::UpdateShockwaves, false);
 	ProcessInject(0x43A910, (unsigned int)tomb4::UpdateLightning, false);
 	ProcessInject(0x4396F0, (unsigned int)tomb4::UpdateFadeClip, false);
+	ProcessInject(0x439790, (unsigned int)tomb4::SetScreenFadeIn, false);
+	ProcessInject(0x439740, (unsigned int)tomb4::SetScreenFadeOut, false);
 }

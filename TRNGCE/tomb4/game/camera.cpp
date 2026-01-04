@@ -13,9 +13,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void InitialiseCamera()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Camera(bool replace)
 {
 	ProcessInject(0x444040, (unsigned int)tomb4::CalculateCamera, false);
+	ProcessInject(0x442630, (unsigned int)tomb4::InitialiseCamera, false);
 }
