@@ -32,7 +32,10 @@
 #include "../tomb4/specific/specificfx.h"
 #include "../tomb4/game/camera.h"
 #include "../tomb4/game/hair.h"
+#include "../tomb4/game/traps.h"
+#include "trng_elevator.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
+#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	StrGlobaliTomb4 &GlobTomb4 = *reinterpret_cast<decltype(&GlobTomb4)>(0x101C9578);
@@ -87,6 +90,7 @@ namespace trng {
 	short (&VetDetectorLittle)[6] = *reinterpret_cast<decltype(&VetDetectorLittle)>(0x10159ACC);
 	TYPE_IsComandoPremuto &IsComandoPremuto = *reinterpret_cast<decltype(&IsComandoPremuto)>(0x10159810);
 	TYPE_StopAllSounds &StopAllSounds = *reinterpret_cast<decltype(&StopAllSounds)>(0x10159964);
+	HDC &GlobHdcTomb = *reinterpret_cast<decltype(&GlobHdcTomb)>(0x1054D350);
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -4370,7 +4374,7 @@ namespace trng {
 				sprintf_s(NomeImmagine, "image%d.bmp", NImage);
 			}
 
-			if (EsisteFile(NomeImmagine)==false) {
+			if (EsisteFile(NomeImmagine) == false) {
 				sprintf_s(BufferLog, "ERROR cann't find file: %s", NomeImmagine);
 				InviaLog(BufferLog);
 				return false;
@@ -9899,50 +9903,898 @@ Concludi:
 	// salva posizione attuale di barca in modo da poterla poi ripristinar e tenerla ferma
 	void ControllaAnchoredBoat(int IndiceVeicolo)
 	{
-		__try { throw __func__; } __finally {}
+		StrItemTr4 *pItem;
+		StrAnchoredBoat *pAncora;
+
+		pItem = &GlobTomb4.pAdr->pVetItems[IndiceVeicolo];
+		pAncora = &GlobTomb4.BoatAnchored;
+
+		if (pItem->SlotID == GlobTomb4.BaseIndiciNew.IndiceMotorBoat || pItem->SlotID == GlobTomb4.BaseIndiciNew.IndiceRubberBoat) {
+
+			pAncora->Slot = pItem->SlotID;
+
+			pAncora->OldPosition.CordX = pItem->CordX;
+			pAncora->OldPosition.CordY = pItem->CordY;
+			pAncora->OldPosition.CordZ = pItem->CordZ;
+			pAncora->OldPosition.Orient = pItem->OrientationH;
+		}
+	}
+
+	// ottiene hdc di schermo tomb e dimensione attuale
+	// se TestHdcTemp = true crea anche un altro hdc duplicato
+	//		dello schermo di tomb raider
+	// se TestWriteHdc = true: vuol dire che si effettueranno operazioni di scrittura sull'hdc e
+	//							verra' allocato l'hdc back directx
+	// se testwritehdc = false : si usa solo come riferimento o per operazioni di lettura e
+	//							verra' catturato l'hdc della finestra
+	bool AllocaHdcTomb(StrShowImage *pBase, bool TestHdcTemp, bool TestWriteHdc)
+	{
+		BYTE *pFlagsWindow;
+		RECT SizeHdc;
+		int SizeX, SizeY;
+		HDC HdcSrc;
+		int OrgX;
+		float Rapporto;
+		float SizeXTeorica;
+
+		pFlagsWindow = (BYTE *) &tomb4::App.dx.Flags;
+		if (pBase->TestTombAllocato == true) {
+			InviaLog("WARNING: hdc tomb was already allocated");
+			LiberaHdcTomb(pBase, false);
+		}
+		pBase->TestTempHdc = TestHdcTemp;
+		pBase->TestHdcBack = true;
+		pBase->TestWriteHdc = TestWriteHdc;
+
+		pBase->TestFullScreen = ScopreModoFullScreen();
+
+		if (TestWriteHdc == true) {
+
+			pBase->HdcTomb = GetHdcTomb();
+
+		} else {
+			pBase->HdcTomb = GetDC(*GlobTomb4.pAdr->pWindowHandle);
+		}
+
+		if (pBase->HdcTomb == NULL) {
+			pBase->TestTombAllocato = false;
+			InviaLog("ERROR: cann't get DX tomb raider hdc");
+
+			return false;
+		}
+
+		if (pBase->TestFullScreen == false) {
+			//e' modo finestra
+			// tralare sulla bas di posizione
+
+			GetClientRect(*GlobTomb4.pAdr->pWindowHandle, &SizeHdc);
+
+		} else {
+			// e' full screen
+			// impostare i dati per schermo
+
+			SizeHdc.left = 0;
+			SizeHdc.top = 0;
+			SizeHdc.right = *GlobTomb4.pAdr->pSizeScreenX;
+			SizeHdc.bottom = *GlobTomb4.pAdr->pSizeScreenY;
+		}
+
+		// qui fare correzione dimensione di widescreen se e' impostato
+		if (pBase->TestWideScreen && pBase->TestFullScreen) {
+			// prima controllare se il monitor e' di tipo wide-screen
+
+			Rapporto = GlobTomb4.BaseWideScreen.RapportoSchermo;
+
+			sprintf_s(BufferLog,"Rapporto schermo = %0.3f", Rapporto);
+			InviaLog(BufferLog);
+
+			if (Rapporto > 1.4f) {
+				SizeXTeorica = (float) SizeHdc.bottom * Rapporto;
+
+				Rapporto = (float) (float) SizeHdc.right / (float) SizeXTeorica;
+
+				// ok, diciamo che siamo in modo di schdermo wide screen
+				// adesso calcolare la larghezza sizex che dovrerbe avere
+				// scheermo per essere proporzionale con un fatto 1.3
+
+				SizeX = Float2Int((float) SizeHdc.right * Rapporto);
+
+				// adesso calcolare il left in modo che il rettangolo
+				// sia in mezzo
+
+				OrgX = (SizeHdc.right - SizeX) / 2;
+				SizeHdc.right = SizeX;
+				SizeHdc.left = OrgX;
+			}
+		}
+
+		pBase->ZonaSchermoTomb = SizeHdc;
+
+		if (pBase->TestTempHdc == true) {
+			// allocare un hdc temporaneo che conterra' lo schermo di tomb raider
+			SizeX = pBase->ZonaSchermoTomb.right;
+			SizeY = pBase->ZonaSchermoTomb.bottom;
+			HdcSrc = pBase->HdcTomb;
+
+			pBase->Temp.MemHdc = CreateCompatibleDC(HdcSrc);
+			if (pBase->Temp.MemHdc == NULL) {
+				InviaLog("ERROR: cann't Create compatible DC for Temp");
+				return false;
+			}
+			pBase->Temp.hBitMap = CreateCompatibleBitmap(HdcSrc, SizeX, SizeY);
+			pBase->Temp.hOldBitMap = SelectObject(pBase->Temp.MemHdc, pBase->Temp.hBitMap);
+			// ora copiare il contenuto
+			pBase->Temp.SizeX = SizeX;
+			pBase->Temp.SizeY = SizeY;
+
+			BitBlt(pBase->Temp.MemHdc, 0, 0, SizeX, SizeY, HdcSrc, 0, 0, SRCCOPY);
+
+			pBase->Temp.TestUsata = true;
+		}
+
+		pBase->TestTombAllocato = true;
+		return true;
+	}
+
+	// nota: Se TestMantieniTemp = true, allora NON rilascera hdc temoraneo
+	// se invece TestMantieniTemp = false e c'era un hdc temp lo rimuovera'
+
+	void LiberaHdcTomb(StrShowImage *pBase, bool TestMantieniTemp)
+	{
+		if (pBase->TestTombAllocato == false) {
+			InviaLog("WARNING: hdc tomb had been already freed");
+			return;
+		}
+
+		// se c'era un hdc temporaneo liberare anche questo
+		if (pBase->TestTempHdc == true && TestMantieniTemp == false) {
+
+			LiberaImmagine(&pBase->Temp);
+			pBase->TestTempHdc = false;
+		}
+
+		if (pBase->TestWriteHdc == true) {
+			RilasciaTomb4Hdc();
+
+		} else {
+			ReleaseDC(*GlobTomb4.pAdr->pWindowHandle, pBase->HdcTomb);
+		}
+
+		pBase->TestTombAllocato = false;
+	}
+
+	void RilasciaTomb4Hdc(void)
+	{
+		LPDIRECTDRAWSURFACE4 pSurf;
+
+		pSurf = tomb4::App.dx.lpPrimaryBuffer;
+		if (GlobTomb4.BaseImages.TestHdcBack != false)
+			pSurf = tomb4::App.dx.lpBackBuffer;
+		pSurf->ReleaseDC(GlobTomb4.BaseImages.HdcTomb);
+	}
+
+	// cerca di localzizare l'hdc di tomb directx
+	HDC GetHdcTomb(void)
+	{
+		LPDIRECTDRAWSURFACE4 pSurf;
+
+		pSurf = tomb4::App.dx.lpPrimaryBuffer;
+		if (GlobTomb4.BaseImages.TestHdcBack != false)
+		{
+			// usare secondario
+			pSurf = tomb4::App.dx.lpBackBuffer;
+		}
+		tomb4::DXAttempt(pSurf->GetDC(&GlobHdcTomb));
+		return GlobHdcTomb;
+	}
+
+	// carica da disco l'immagine con numero NImage e inserisce i dati in pRecord
+	// se c'e' qualche errore restituisce false
+	// se numero image  = -1 non carica un'immagine ma crea un bitmap
+	// vuoto con dimensione dell' hdc tomb e alloca l'hdc mem
+	// nota: se ForceSizeX/Y sono =-1 si usera la dimensione dello schermo tomb per immagine vuota
+	// e la dimenioine del bitmap originale per l'immagine caricata
+	// se invece ForceSizeX/Y sono diverse da -1 si forzera questa dimensione
+	bool AllocaImmagine(int NImage, StrRecordImage *pRecord, int ForceSizeX, int ForceSizeY)
+	{
+		BITMAP HeaderBitMap;
+		char NomeImmagine[512];
+		char NomeCryptImmagine[512];
+		int i;
+		StrShowImage *pBase;
+		bool TestCrypted;
+		bool TestTombAllocatoNow;
+		int SizeX, SizeY;
+		HANDLE OldImage;
+
+		TestCrypted = false;
+
+		pBase = &GlobTomb4.BaseImages;
+		if (MyGlobPrivate.TestDebugVersione) {
+
+			if (NImage != -1) {
+				sprintf_s(BufferLog, "AllocateImage(): image%d.bmp", NImage);
+				InviaLog(BufferLog);
+			}
+		}
+		TestTombAllocatoNow = false;
+
+		if (pRecord->TestUsata == true) {
+			// controllare se immagine e' uguake a quella precedente
+			if (pRecord->NImage == NImage && NImage != 999 && NImage != -1)
+				return true;
+			if (NImage != 999 && NImage != -1) {
+				sprintf_s(BufferLog, "WARNING: trying to allocate image %d but the record was already allocated by image %d", NImage, pRecord->NImage);
+				InviaLog(BufferLog);
+			}
+
+			// e' diversa: liberare quella precedente
+			LiberaImmagine(pRecord);
+		}
+
+		pRecord->TestPreload = false;
+
+		if (pBase->TestTombAllocato == false) {
+			AllocaHdcTomb(pBase, false, false);
+			TestTombAllocatoNow = true;
+		}
+
+		if (NImage == -1) {
+			strcpy_s(NomeImmagine, "EmptyImage");
+			// bitmap vuoto con dimensione di schermo tomb
+			if (ForceSizeX == -1) {
+				SizeX = *GlobTomb4.pAdr->pSizeScreenX;
+				SizeY = *GlobTomb4.pAdr->pSizeScreenY;
+			} else {
+				SizeX = ForceSizeX;
+				SizeY = ForceSizeY;
+			}
+
+			pRecord->hBitMap = CreateCompatibleBitmap(pBase->HdcTomb, SizeX, SizeY);
+		} else {
+
+			// verificare se questa immagine e' una di quelle con preload
+			for (i = 0; i < GlobTomb4.BasePreloadImages.TotPreload; i++) {
+				if (GlobTomb4.BasePreloadImages.VetPreload[i].ImageId == NImage) {
+					pRecord->TestPreload = true;
+					pRecord->hBitMap = GlobTomb4.BasePreloadImages.VetPreload[i].hBitMap;
+					break;
+				}
+			}
+
+			if (pRecord->TestPreload == false) {
+
+				sprintf_s(NomeImmagine, "pix\\image%d.bmp", NImage);
+
+				if (EsisteFile(NomeImmagine) == false) {
+					sprintf_s(NomeImmagine, "image%d.bmp", NImage);
+					if (EsisteFile(NomeImmagine) == false) {
+						sprintf_s(BufferLog, "ERROR: Cann't find image: %s", NomeImmagine);
+						InviaLog(BufferLog);
+						return false;
+					}
+				}
+
+				pRecord->hBitMap = LoadImage(NULL, NomeImmagine, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+
+				// se e' richiesto di forzare una dimnesione specifica usare copyimage
+				if (ForceSizeX != -1) {
+					OldImage = pRecord->hBitMap;
+					pRecord->hBitMap = CopyImage(OldImage, IMAGE_BITMAP, ForceSizeX, ForceSizeY, 0);
+					// ora bisognerebbe cancellare il precedente handle a meno che non fosse di tipo preload
+					if (pRecord->TestPreload == false)
+						DeleteObject(OldImage);
+				}
+			}
+		}
+
+		if (TestCrypted) {
+			memset(NomeCryptImmagine, 0, 511);
+			memset(NomeImmagine, 0, 511);
+			sprintf_s(NomeImmagine, "image%d.bmp", NImage);
+		}
+
+		if (pRecord->hBitMap == NULL) {
+
+			sprintf_s(BufferLog, "ERROR trying to load image: %s", NomeImmagine);
+			InviaLog(BufferLog);
+			if (TestTombAllocatoNow)
+				LiberaHdcTomb(pBase, true);
+
+			return false;
+		}
+
+		pRecord->MemHdc = CreateCompatibleDC(pBase->HdcTomb);
+		if (pRecord->MemHdc == NULL) {
+
+			sprintf_s(BufferLog, "ERROR trying to create a compatible DC for image: %s", NomeImmagine);
+			InviaLog(BufferLog);
+			if (TestTombAllocatoNow)
+				LiberaHdcTomb(pBase, true);
+			// eliminare immagine
+			DeleteObject(pRecord->hBitMap);
+			return false;
+		}
+
+		pRecord->hOldBitMap = SelectObject(pRecord->MemHdc, pRecord->hBitMap);
+		if (pRecord->hOldBitMap == NULL) {
+
+			sprintf_s(BufferLog, "ERROR trying to select image %s in compatible hdc", NomeImmagine);
+			InviaLog(BufferLog);
+
+			if (TestTombAllocatoNow)
+				LiberaHdcTomb(pBase, true);
+			DeleteObject(pRecord->hBitMap);
+			return false;
+		}
+		// ora scoprire dimnesione immagine
+		GetObject(pRecord->hBitMap, sizeof(BITMAP), &HeaderBitMap);
+		pRecord->SizeX = HeaderBitMap.bmWidth;
+		pRecord->SizeY = HeaderBitMap.bmHeight;
+		pRecord->NImage = NImage;
+		pRecord->TestUsata = true;
+		if (TestTombAllocatoNow)
+			LiberaHdcTomb(pBase, true);
+		return true;
 	}
 
 	// verifica se, sulla base di animazione attuale di lara va attivato o disattivato
 	// se restituisce true allora patch e' attiva e push away animazione va eliminata
 	bool AnalisiPatchPushAway(void)
 	{
-		__try { throw __func__; } __finally {}
+		short AnimNow;
+		int i;
+		StrDisablePushAway *pBase;
+
+		if (GlobTomb4.pBaseCustomize->TestDisablePushAway == true)
+			return true;
+
+		AnimNow = GlobTomb4.pAdr->pLara->AnimationNow;
+
+		pBase = &GlobTomb4.BaseDisablePushAway;
+
+		for (i = 0; i < pBase->TotDisable; i++) {
+			if (AnimNow == pBase->VetAnimNumber[i])
+				return true;
+
+		}
+
+		return false;
 	}
 
 	// c''e stata un richiesta di avviare diario, farlo adesso
 	void AvviaDiario(void)
 	{
-		__try { throw __func__; } __finally {}
+		StrBaseDiario *pDiario;
+
+		GlobTomb4.TestStartDiary = false;
+
+		pDiario = GetDiarioConID(GlobTomb4.DiaryIDToStart);
+		if (pDiario == NULL)
+			return;
+
+		pDiario->IndicePaginaToShow = GlobTomb4.DiaryPage;
+		pDiario->IndicePaginaToShow--;
+		MostraDiario(pDiario);
+	}
+
+	// resitituisce la struttura del diario corrispondente a ID di input
+	// se non lo trovoa visualizza errore in log e restituisce NULL
+	StrBaseDiario* GetDiarioConID(WORD Id)
+	{
+		int i;
+
+		for (i = 0; GlobTomb4.BaseDiari.TotDiari; i++) {
+			if (GlobTomb4.BaseDiari.VetBaseDiario[i].ID_Diario == Id) {
+				return &GlobTomb4.BaseDiari.VetBaseDiario[i];
+			}
+		}
+
+		sprintf_s(BufferLog, "ERROR: cann't find Diary=%d, ...", Id);
+		InviaLog(BufferLog);
+		return NULL;
+	}
+
+	void LiberaWindowsFont(StrWindowsFont *pFont)
+	{
+		SelectObject(pFont->HdcConFont, pFont->hFontOld);
+		DeleteObject(pFont->hFont);
+		pFont->hFont = NULL;
+	}
+
+	// restituisce la posizione attuale del suono nel canale pCanale
+	DWORD TrovaPosizioneSuono(StrCanaleBass *pCanale)
+	{
+		DWORD Offset;
+		StrBassHandles *pBass;
+
+		pBass = &GlobTomb4.BaseBassHandles;
+
+		Offset = (DWORD) pBass->Proc.BASS_ChannelGetPosition(pCanale->Canale, BASS_POS_BYTE);
+		return Offset;
+	}
+
+	// sospende thread di notifica
+	void SospendiThreadNotifica(void)
+	{
+		SuspendThread(tomb4::NotificationThreadHandle);
+	}
+
+	// restituisce il numero di tick Valore come testo nel
+	// formato:  mm:ss:dd
+	// mm = minuti
+	// ss = secondi
+	// dd = decimi
+
+	char *FormattaTimer(int Valore)
+	{
+		static char Buffer[80];
+
+		int Minuti, Secondi;
+		float Resto;
+		char MiniBuf[60];
+		char BufDecimi[60];
+		int i;
+		int j;
+		char MioCar;
+		bool TestPreso;
+
+		// ok, ora calcolare tempo
+		Minuti = Valore / (FRAME_SECONDO * 60);
+		Secondi = Valore % (FRAME_SECONDO * 60);
+
+		Resto = (float) Secondi / FRAME_SECONDO;
+		sprintf_s(MiniBuf, "%0.1f", Resto);
+		Secondi /= FRAME_SECONDO;
+
+		// ora prendere le due cifre decimali
+		j = 0;
+		i = 0;
+		TestPreso = false;
+		while (MiniBuf[i]) {
+			MioCar = MiniBuf[i];
+			if (TestPreso) {
+				BufDecimi[j++] = MioCar;
+				break;
+			}
+			if (MioCar == '.' || MioCar == ',')
+				TestPreso = true;
+
+			i++;
+		}
+
+		BufDecimi[j] = 0;
+
+		sprintf_s(Buffer, "%02d:%02d:%s", Minuti, Secondi, BufDecimi);
+		return Buffer;
+	}
+
+	// nota: Se TestFullScreen=true, salva su disco un file
+	// con NomeFile, il formato sara' sempre RGB
+	// e con dimensione uguale a quella di schermo tomb raider
+	// se invece TestFullScreen= false
+	// salva un minishot solo in memeoria
+	// prendendo i dati per dimensione e rgb da GlobTomb4.ScreenShot
+	// e salvando anche in questa struttura la zona di memoria
+	// dell'immagine catturata.
+
+	void SalvaShotTomb4(char *NomeFile, bool TestFullScreen)
+	{
+		BITMAPINFO *pInfoDIB;
+		int OrgX, OrgY, SizeX, SizeY;
+		int DestX, DestY;
+		HWND *pMiaWind;
+		FILE *pTemp;
+		BYTE *pByte;
+		BITMAPFILEHEADER HeaderBmp;
+		BYTE *pMiaMemoria;
+		DWORD SizeTotale;
+		DWORD SizeHeader1;
+		DWORD SizeHeader2;
+		HDC HdcScreen, MemHdc;
+		HBITMAP MioBitMap, VecchioBmp;
+		POINT Origine;
+		HDC RoomHdc;
+		int SizeImage;
+		bool TestRgb;
+		int NLinee;
+		int TotColori;
+		StrMiniShot *pShot;
+
+		pMiaWind = (HWND*) 0x75385C;
+		pShot = &GlobTomb4.ScreenShot;
+
+		if (TestFullScreen == false) {
+			TestRgb = pShot->TestRGB;
+		} else {
+			TestRgb = true;
+		}
+
+		// calcolare dimensione di schermo tomb
+
+		OrgX = 0;
+		OrgY = 0;
+		Origine.x = 0;
+		Origine.y = 0;
+
+		RoomHdc = GetDC(*pMiaWind);
+		if (ScopreModoFullScreen() == false) {
+			// trovare origine di hdc se e' in modalita' windowed
+
+			GetDCOrgEx(RoomHdc, &Origine);
+			ReleaseDC(*pMiaWind, RoomHdc);
+		}
+		SizeX = *GlobTomb4.pAdr->pSizeScreenX;
+		SizeY = *GlobTomb4.pAdr->pSizeScreenY;
+		if (TestFullScreen == true) {
+			DestX = SizeX;
+			DestY = SizeY;
+		} else {
+			DestX = pShot->ShotSizeX;
+			DestY = pShot->ShotSizeY;
+		}
+		// solo per esperimento usare hdc di tomb raider
+		HdcScreen = GetDC(0);
+
+		MioBitMap = CreateCompatibleBitmap(HdcScreen, DestX, DestY);
+		MemHdc = CreateCompatibleDC(HdcScreen);
+
+		VecchioBmp = (HBITMAP) SelectObject(MemHdc, MioBitMap);
+
+		// ora copiare nell'hdc compatibile la porzione richiesta
+		if (TestFullScreen == true) {
+			BitBlt(MemHdc, 0, 0, DestX, DestY, HdcScreen, OrgX + Origine.x, OrgY + Origine.y, SRCCOPY);
+		} else {
+			SetStretchBltMode(MemHdc, COLORONCOLOR);
+			StretchBlt(MemHdc, 0, 0, DestX, DestY, HdcScreen, OrgX + Origine.x, OrgY + Origine.y, SizeX, SizeY, SRCCOPY);
+		}
+
+		if (TestRgb == true)
+			TotColori = 0;
+		else
+			TotColori = 256;
+
+		pInfoDIB = (BITMAPINFO*) malloc(sizeof(BITMAPINFO) + 4 * TotColori);
+
+		memset(pInfoDIB, 0, sizeof(BITMAPINFO));
+
+		pInfoDIB->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		pInfoDIB->bmiHeader.biWidth = DestX;
+		pInfoDIB->bmiHeader.biHeight = DestY;
+		pInfoDIB->bmiHeader.biPlanes = 1;
+
+		if (TestRgb == true) {
+			pInfoDIB->bmiHeader.biBitCount = 24;
+			pInfoDIB->bmiHeader.biCompression = BI_RGB;
+			SizeImage = DestX * DestY * 3;
+		} else {
+			pInfoDIB->bmiHeader.biBitCount = 8;
+			pInfoDIB->bmiHeader.biClrUsed = 256;
+			pInfoDIB->bmiHeader.biCompression = BI_RLE8;
+			SizeImage = DestX * DestY;
+			pInfoDIB->bmiHeader.biSizeImage = SizeImage;
+		}
+
+		pInfoDIB->bmiHeader.biXPelsPerMeter = 0xB12;
+		pInfoDIB->bmiHeader.biYPelsPerMeter = 0xB12;
+
+		pInfoDIB->bmiHeader.biClrImportant = 0;
+
+		pMiaMemoria = (BYTE*) malloc(SizeImage);
+		NLinee = GetDIBits(MemHdc, MioBitMap, 0, DestY, pMiaMemoria, pInfoDIB, DIB_RGB_COLORS);
+
+		if (TestRgb == false)
+			SizeImage = pInfoDIB->bmiHeader.biSizeImage;
+
+
+		HeaderBmp.bfType = 0x4d42;  // tipo "BM"
+		HeaderBmp.bfReserved1 = 0;
+		HeaderBmp.bfReserved2 = 0;
+		HeaderBmp.bfSize = sizeof(BITMAPFILEHEADER) + SizeImage + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * TotColori;
+		HeaderBmp.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * TotColori;
+
+		SizeHeader1 = sizeof(BITMAPFILEHEADER);
+		SizeHeader2 = sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * TotColori;
+
+		if (TestFullScreen == true) {
+
+			if (fopen_s(&pTemp, NomeFile, "wb") == 0) {
+				fwrite(&HeaderBmp, SizeHeader1, 1, pTemp);
+				fwrite(pInfoDIB, SizeHeader2, 1, pTemp);
+				fwrite(pMiaMemoria, SizeImage, 1, pTemp);
+				fclose(pTemp);
+			}
+		} else {
+			// e' minishot
+			// salvarlo in memoria
+			if (pShot->pMemMiniShot != NULL) {
+				free(pShot->pMemMiniShot);
+				pShot->pMemMiniShot = NULL;
+			}
+			// ora calcolare la memoria necessaria per salvarlo
+			SizeTotale = SizeHeader1 + SizeHeader2 + SizeImage;
+
+			pShot->pMemMiniShot = (BYTE *) malloc(SizeTotale);
+			// ora copiare in questa zona di memroia l'intero file
+			pShot->SizeMemMiniShot = SizeTotale;
+
+			pByte = pShot->pMemMiniShot;
+
+			memcpy(pByte, &HeaderBmp, SizeHeader1);
+			pByte += SizeHeader1;
+
+			memcpy(pByte, pInfoDIB, SizeHeader2);
+			pByte += SizeHeader2;
+
+			memcpy(pByte, pMiaMemoria, SizeImage);
+
+		}
+		// liberare hdc e bitmap
+
+		ReleaseDC(0, HdcScreen);
+
+		SelectObject(MemHdc, VecchioBmp);
+		DeleteObject(MioBitMap);
+		DeleteDC(MemHdc);
+		free(pInfoDIB);
+		free(pMiaMemoria);
+	}
+
+	void AttendiFineEscape(void)
+	{
+		DWORD TastiNow;
+
+		do {
+			Sleep(50);
+			TastiNow = LeggiDirectInput();
+
+		} while (TastiNow & 0x200000);
+	}
+
+	void RiprendiThreadNotifica(void)
+	{
+		ResumeThread(tomb4::NotificationThreadHandle);
 	}
 
 	// azzere le azioni scandite gia' eseguite
 
 	void ResetScanActions(void)
 	{
-		__try { throw __func__; } __finally {}
+		int i;
+		int j;
+
+		j = 0;
+		for (i = 0; i < GlobTomb4.TotScanActions; i++) {
+			if (GlobTomb4.VetScanActions[i].Flags & SCANF_YET_TO_PERFORM) {
+				// preservarla
+				GlobTomb4.VetScanActions[j++] = GlobTomb4.VetScanActions[i];
+			}
+		}
+		GlobTomb4.TotScanActions = j;
 	}
 
 	// azzera i flipeffect scanditi e gia' eseguiti
 	void ResetScanFlipEffects(void)
 	{
-		__try { throw __func__; } __finally {}
+		int i;
+		int j;
+
+		j = 0;
+		for (i = 0; i < GlobTomb4.TotScanFlipEffects; i++) {
+			if (GlobTomb4.VetScanFlipEffects[i].Flags & SCANF_YET_TO_PERFORM) {
+				// preservarlo
+				GlobTomb4.VetScanFlipEffects[j++] = GlobTomb4.VetScanFlipEffects[i];
+			}
+		}
+
+		GlobTomb4.TotScanFlipEffects = j;
 	}
 
 	// controlla se qualche pushable e' sopra una pedana
 	void GestioneRaisePushables(void)
 	{
-		__try { throw __func__; } __finally {}
+		int i;
+		int Indice;
+		int CordY;
+
+		if (GlobTomb4.TotPedane == 0 || GlobTomb4.BasePushables.TotPushables == 0)
+			return;
+
+		for (i = 0; i < GlobTomb4.BasePushables.TotPushables; i++) {
+			Indice = GlobTomb4.BasePushables.VetPushablesIndex[i];
+
+			if (IsSopraPedana(GlobTomb4.BasePushables.VetPushables[i], &CordY) == true) {
+				// mettere flag 2
+				GlobTomb4.BasePushables.VetCollisionePushable[Indice] |= CP_RAISE_PAD;
+				// aggiornare coordinata
+				GlobTomb4.BasePushables.VetPushables[i]->CordY = CordY;
+			} else {
+				// togleire flag 2
+				GlobTomb4.BasePushables.VetCollisionePushable[Indice] &= ~CP_RAISE_PAD;
+			}
+		}
+	}
+
+	// verifica se ogggetto pOggetto, e' (approssimativamente come y)
+	// sopra uno qualunque degli oggetti tipo pedana mobile.
+	bool IsSopraPedana(StrItemTr4 *pOggetto, int *pCordY)
+	{
+		DWORD GridX, GridZ;
+		int BaseY;
+		DWORD OggX, OggZ;
+		int i;
+		WORD Slot;
+		StrItemTr4 *pItem;
+		int DifY;
+		int CordY;
+
+		BaseY = pOggetto->CordY;
+		GridX = pOggetto->CordX >> 10;
+		GridZ = pOggetto->CordZ >> 10;
+
+		for (i = 0; i < GlobTomb4.TotPedane; i++) {
+
+			pItem = GlobTomb4.VetPlatforms[i];
+
+			Slot = pItem->SlotID;
+
+			switch (Slot) {
+			case 149:  // one block platform
+			case 151: // raising block1
+			case 152: // raising block2
+			case 153: // EXPANDING_PLATFORM
+				// controllo su singolo settore griglia
+				OggX = pItem->CordX >> 10;
+				OggZ = pItem->CordZ >> 10;
+
+				if (OggX == GridX && OggZ == GridZ) {
+					// griglia e' giusta, ora fare calcolo approssimmativo
+					// per cord y
+					CordY = TrovaCordYRais(pItem, pOggetto->CordY);
+					DifY = abs(BaseY - CordY);
+					if (DifY < 128) {
+						*pCordY = CordY;
+
+						return true;
+					}
+				}
+				break;
+			case 150:
+				// TWOBLOCK_PLATFORM
+				// calcolo particolare per twoblock platform
+				// usare funzione specifica
+				CordY = TrovaCordYRais(pItem, pOggetto->CordY);
+				DifY = abs(BaseY - CordY);
+				if (DifY < 128) {
+					if (tomb4::OnTwoBlockPlatform((tomb4::ITEM_INFO *) pItem, pOggetto->CordX, pOggetto->CordZ)) {
+						*pCordY = CordY;
+
+						return true;
+					}
+				}
+				break;
+			}
+
+		}
+
+		return false;
+	}
+
+	int TrovaCordYRais(StrItemTr4 *pRaise, int PushY)
+	{
+		int MaxDistanza;
+		int CordY;
+
+		// prima fare calcolo particolare nel caso sia ascensore
+		if (pRaise->SlotID == 150) {
+			// slot two block platform
+
+			CordY = pRaise->CordY;
+			// effettuare analisi per soffitto SOLO se e' anche elevatore
+			if (GlobTomb4.BaseElevator.TotElelevators == 0) {
+				// non ci sono elevatori, e' il normale twoblockplatform
+				return CordY;
+			}
+
+			if (PushY > (CordY - 0x400)) {
+				// usare cordy di pavimento
+				return CordY;
+			}
+			// usare coordinata di soffitto
+			return CordY - 0x800;
+		}
+
+		if (pRaise->SlotID == 0x98)
+			// RAISING_BLOCK2
+			MaxDistanza = 2048;
+		else
+			MaxDistanza = 1024;
+
+		CordY = (pRaise->Reserved_36 * MaxDistanza) / 4096;
+
+		CordY = pRaise->CordY - CordY;
+		return CordY;
 	}
 
 	void GestioneItemsSuElevatore(void)
 	{
-		__try { throw __func__; } __finally {}
+		int i;
+		StrItemTr4 *pItem;
+		int Indice;
+		int CordY;
+
+		for (i = 0; i < GlobTomb4.BaseVeicoli.TotVeicoli; i++) {
+			Indice = GlobTomb4.BaseVeicoli.VetIndiciVeicoli[i];
+			pItem = &GlobTomb4.pAdr->pVetItems[Indice];
+			if (IsSopraPedana(pItem, &CordY) == true) {
+				// se lara NON e' su uesto veicolo fare calcolo
+				// complicato
+				if (*GlobTomb4.pAdr->pVehicleIndex != Indice) {
+					AggiornaPosY(Indice, CordY - pItem->CordY);
+				} else {
+					pItem->CordY = CordY;
+
+				}
+
+			}
+		}
+	}
+
+	// modifica posizione item da quella attuale  a quella delle nuove
+	// coordinate fornite
+	// questa funzione va usata dopo aver ricaricato da savegame posizione
+	// aniating, oppure dopo aver mosso animating
+	void AggiornaPosizioneItem(short ItemIndex, DWORD CordX, int CordY, DWORD CordZ, int ExtraY)
+	{
+		short NewRoom;
+		short OldRoom;
+		StrItemTr4 *pItem;
+		BYTE SalvaTest;
+		void *pFloor;
+
+		pItem = &GlobTomb4.pAdr->pVetItems[ItemIndex];
+
+		OldRoom = pItem->Room;
+
+		pItem->CordX = CordX;
+		pItem->CordY = CordY;
+		pItem->CordZ = CordZ;
+
+		NewRoom = OldRoom;
+
+		pFloor = tomb4::GetFloor(CordX, CordY + ExtraY, CordZ, &NewRoom);
+		pItem->HeightFloor = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, CordX, CordY, CordZ);
+
+		if (OldRoom != NewRoom && IsDoor(pItem->SlotID) == false) {
+			SalvaTest = *GlobTomb4.pAdr->pTestWorkingOnMoveables;
+
+			*GlobTomb4.pAdr->pTestWorkingOnMoveables = 1;
+
+			tomb4::ItemNewRoom(ItemIndex, NewRoom);
+			*GlobTomb4.pAdr->pTestWorkingOnMoveables = SalvaTest;
+
+		}
+	}
+
+	// se slot corrisponde a door restituisce true
+	bool IsDoor(WORD Slot)
+	{
+		if ((Slot >= 122 && Slot <= 129) || (Slot >= 322 && Slot <= 335))
+			return true;
+		return false;
 	}
 
 	// imposta a false tutte le condizioni
 	void InizializzaCondizioniGlobali(void)
 	{
-		__try { throw __func__; } __finally {}
+		StrBaseGlobalTriggers *pBase;
+
+		pBase = GlobTomb4.pBaseGlobalTriggers;
+
+		pBase->TestPresoLittleMedipack = false;
+		pBase->TestPresoBigMedipack = false;
+
+		pBase->TestSalvatoSavegame = false;
 	}
 
 	// chiamata all'inizio di ogni ciclo, azzera le collisioni da verificare
@@ -9951,13 +10803,20 @@ Concludi:
 
 	void InizializzaCollisioniLara(void)
 	{
-		__try { throw __func__; } __finally {}
+		GlobTomb4.BaseSalvaOldCollisioni.TotCollisioni = GlobTomb4.BaseSalvaCollisioni.TotCollisioni;
+		// copiare tutti i dati
+		memcpy(GlobTomb4.BaseSalvaOldCollisioni.VetCollisioni, GlobTomb4.BaseSalvaCollisioni.VetCollisioni, sizeof(StrSalvaCollisioni) * GlobTomb4.BaseSalvaCollisioni.TotCollisioni);
+
+		GlobTomb4.BaseSalvaCollisioni.TotCollisioni = 0;
 	}
 
 	// salva il valroe di room dove si trova lara
 	void ImpostaStatusRoom(void)
 	{
-		__try { throw __func__; } __finally {}
+		int IndiceRoom;
+
+		IndiceRoom = GlobTomb4.pAdr->pLara->Room;
+		GlobTomb4.FlagsRoom = GlobTomb4.pAdr->pVetRooms[IndiceRoom].FlagsRoom;
 	}
 }
 
@@ -10101,14 +10960,31 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10075897, (unsigned int)trng::GetNextTriggerFlag, replace);
 	ProcessInject(0x1003D426, (unsigned int)trng::ImpostaComandoSpeech, replace);
 	ProcessInject(0x1003D3D3, (unsigned int)trng::PreparaSequenzaSpeech, replace);
-	ProcessInject(0x1007B1BD, (unsigned int)trng::ControllaAnchoredBoat, false);
-	ProcessInject(0x1007B0F5, (unsigned int)trng::AnalisiPatchPushAway, false);
-	ProcessInject(0x1005F69E, (unsigned int)trng::AvviaDiario, false);
-	ProcessInject(0x1007B2CF, (unsigned int)trng::ResetScanActions, false);
-	ProcessInject(0x1007B246, (unsigned int)trng::ResetScanFlipEffects, false);
-	ProcessInject(0x1005AC85, (unsigned int)trng::GestioneRaisePushables, false);
-	ProcessInject(0x1007B05A, (unsigned int)trng::GestioneItemsSuElevatore, false);
-	ProcessInject(0x1007AFC4, (unsigned int)trng::InizializzaCondizioniGlobali, false);
-	ProcessInject(0x1007AFF2, (unsigned int)trng::InizializzaCollisioniLara, false);
-	ProcessInject(0x1007B027, (unsigned int)trng::ImpostaStatusRoom, false);
+	ProcessInject(0x1007B1BD, (unsigned int)trng::ControllaAnchoredBoat, replace);
+	ProcessInject(0x1003914B, (unsigned int)trng::AllocaHdcTomb, replace);
+	ProcessInject(0x10038ED2, (unsigned int)trng::LiberaHdcTomb, replace);
+	ProcessInject(0x10038EAD, (unsigned int)trng::RilasciaTomb4Hdc, replace);
+	ProcessInject(0x1004A5FF, (unsigned int)trng::GetHdcTomb, replace);
+	ProcessInject(0x10039419, (unsigned int)trng::AllocaImmagine, replace);
+	ProcessInject(0x1007B0F5, (unsigned int)trng::AnalisiPatchPushAway, replace);
+	ProcessInject(0x1005F69E, (unsigned int)trng::AvviaDiario, replace);
+	ProcessInject(0x1007DF5B, (unsigned int)trng::GetDiarioConID, replace);
+	ProcessInject(0x10052F45, (unsigned int)trng::LiberaWindowsFont, replace);
+	ProcessInject(0x1007CDF4, (unsigned int)trng::TrovaPosizioneSuono, replace);
+	ProcessInject(0x1004A57F, (unsigned int)trng::SospendiThreadNotifica, replace);
+	ProcessInject(0x10046F2A, (unsigned int)trng::FormattaTimer, replace);
+	ProcessInject(0x10081ED0, (unsigned int)trng::SalvaShotTomb4, replace);
+	ProcessInject(0x1004AAE8, (unsigned int)trng::AttendiFineEscape, replace);
+	ProcessInject(0x1004A591, (unsigned int)trng::RiprendiThreadNotifica, replace);
+	ProcessInject(0x1007B2CF, (unsigned int)trng::ResetScanActions, replace);
+	ProcessInject(0x1007B246, (unsigned int)trng::ResetScanFlipEffects, replace);
+	ProcessInject(0x1005AC85, (unsigned int)trng::GestioneRaisePushables, replace);
+	ProcessInject(0x100571A9, (unsigned int)trng::IsSopraPedana, replace);
+	ProcessInject(0x1005AB2D, (unsigned int)trng::TrovaCordYRais, replace);
+	ProcessInject(0x1007B05A, (unsigned int)trng::GestioneItemsSuElevatore, replace);
+	ProcessInject(0x10082A15, (unsigned int)trng::AggiornaPosizioneItem, replace);
+	ProcessInject(0x100829CC, (unsigned int)trng::IsDoor, replace);
+	ProcessInject(0x1007AFC4, (unsigned int)trng::InizializzaCondizioniGlobali, replace);
+	ProcessInject(0x1007AFF2, (unsigned int)trng::InizializzaCollisioniLara, replace);
+	ProcessInject(0x1007B027, (unsigned int)trng::ImpostaStatusRoom, replace);
 }

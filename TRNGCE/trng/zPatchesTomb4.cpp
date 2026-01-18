@@ -30,6 +30,7 @@
 #include "../tomb4/specific/audio.h"
 #include "zRoomEditor.h"
 #include "../tomb4/game/laraskin.h"
+#include "../tomb4/game/sphere.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -1872,27 +1873,245 @@ namespace trng {
 	// verra' poi rilasciata alla fine di tutto.
 	void AllocaTitleImage(void)
 	{
-		__try { throw __func__; } __finally {}
+		StrBaseImgBackGround *pTitle;
+		StrShowImage *pBase;
+		BLENDFUNCTION Blend;
+
+		pTitle = &GlobTomb4.BaseImgTitle;
+
+		if (pTitle->TestEnabled == false)
+			return;
+		if (pTitle->TestAllocatedImage == true)
+			return;
+		InviaLog("Allocate Title Image");
+		pBase = &GlobTomb4.BaseImages;
+
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+			pTitle->TestEnabled = false;
+			return;
+		}
+
+		if ((pTitle->Flags & BKGDF_KEEP_GAME_SCREEN) == 0) {
+
+			if (AllocaImmagine(pTitle->ImageNumber, &pBase->ImageTitle, -1, -1) == false) {
+				pTitle->TestEnabled = false;
+				LiberaHdcTomb(pBase, false);
+				return;
+			}
+
+			SetStretchBltMode(pBase->Temp.MemHdc, COLORONCOLOR);
+
+			// ora ridimensionare e copiare immagine title in temphdc con dimensione uguali a quelle di tomb
+			StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageTitle.MemHdc, 0, 0, pBase->ImageTitle.SizeX, pBase->ImageTitle.SizeY, SRCCOPY);
+			// ora liberare title perche' poi usero' title con immagine di temp
+			LiberaImmagine(&pBase->ImageTitle);
+
+		} else {
+			// c'e' flag BKGDF_KEEP_GAME_SCREEN
+			if (pTitle->Flags & BKGDF_SEMI_TRANSPARENT) {
+				// allocare immagine e copiarla con effetto trasparenza su quella temp
+				if (AllocaImmagine(pTitle->ImageNumber, &pBase->ImageTitle, -1, -1) == false) {
+					InviaLog("ERROR: Failed loading image for BKGDT_TITLE of CUST_BACKGROUND command");
+
+					return;
+				}
+				Blend.AlphaFormat = 0; // 1= valore di AC_SRC_ALPHA;
+				Blend.BlendFlags = 0;
+				Blend.BlendOp = AC_SRC_OVER;
+				Blend.SourceConstantAlpha = (BYTE) pTitle->Parameter;  // livello trasparenza 0=trasparenza / 255=opaco
+
+				AlphaBlend(pBase->Temp.MemHdc, 0, 0, pBase->Temp.SizeX, pBase->Temp.SizeY, pBase->ImageTitle.MemHdc, 0, 0, pBase->ImageTitle.SizeX, pBase->ImageTitle.SizeY, Blend);
+				LiberaImmagine(&pBase->ImageTitle);
+			}
+		}
+
+		pTitle->TestAllocatedImage = true;
+		InviaLog("Save in TitleImage the image from temp hdc");
+		// adesso traferire dati di temp hdc in title
+		pBase->ImageTitle = pBase->Temp;
+		// ora segnalare temp come gia' liberato
+		memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
 	}
 
 	// immagine per binocolo viene allocata all'inizio del livello e verra' poi rilasciata
 	// solo al cariamento di un nuovo livello
 	void AllocaBinocularImage(void)
 	{
-		__try { throw __func__; } __finally {}
+		StrBaseImgBackGround *pBin;
+		StrShowImage *pBase;
+		StrCustBinocular *pCust;
+
+		pBin = &GlobTomb4.BaseImgBinocular;
+		if (pBin->TestEnabled == false)
+			return;
+
+		if (pBin->TestAllocatedImage == true)
+			return;
+
+		pBase = &GlobTomb4.BaseImages;
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+
+			pBin->TestEnabled = false;
+			return;
+		}
+
+		// dovrei convertire l'immagine in una dimensioje fissa?
+		// magari per ora no, solo dopo customize per binocular faro' sta cosa
+
+		if (AllocaImmagine(pBin->ImageNumber, &pBase->ImageBinocular, -1, -1) == false) {
+			pBin->TestEnabled = false;
+			LiberaHdcTomb(pBase, false);
+			return;
+		}
+
+		pBin->TestAllocatedImage = true;
+
+		pCust = &GlobTomb4.pBaseCustomize->CustBinoculars;
+
+		if (pCust->TestPresente == true) {
+			// c''e cusotmize, non cambiare dimensione e richiedere che sia 1024x768
+			if (pBase->ImageBinocular.SizeX != 1024 || pBase->ImageBinocular.SizeY != 768) {
+				InviaLog("ERROR: binocular image background different than 1024x768");
+			}
+			// allocare immagine eventuale per compass
+			if ((pCust->Flags & BINF_COMPASS) != 0 && (pCust->CompassRect & BINT_STRIP) != 0) {
+				if (AllocaImmagine(pCust->CompassImage, &pBase->ImageBinocCompass, -1, -1) == false) {
+					InviaLog("Error trying to allocate image for compass strip of binocular");
+					pBin->TestEnabled = false;
+					pCust->TestPresente = false;
+					LiberaHdcTomb(pBase, false);
+					return;
+				}
+			}
+
+			if ((pCust->Flags & BINF_SEXTANT) != 0 && (pCust->SextantRect & BINT_STRIP) != 0) {
+				if (AllocaImmagine(pCust->SextantImage, &pBase->ImageBinocSextant, -1, -1) == false) {
+					InviaLog("Error trying to allocate image for sextant strip of binocular");
+					pBin->TestEnabled = false;
+					pCust->TestPresente = false;
+					LiberaHdcTomb(pBase, false);
+					return;
+				}
+			}
+
+		} else {
+
+			// ora ridimensionare e copiare immagine binocolo in temphdc con dimensione uguali a quelle di tomb
+			StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageBinocular.MemHdc, 0, 0, pBase->ImageBinocular.SizeX, pBase->ImageBinocular.SizeY, SRCCOPY);
+			// ora liberare imagebinocula perche' poi usero' title con immagine di temp
+			LiberaImmagine(&pBase->ImageBinocular);
+
+			// adesso traferire dati di temp hdc in title
+			pBase->ImageBinocular = pBase->Temp;
+			// ora segnalare temp come gia' liberato
+			memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+		}
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+		InviaLog("Allocated binocular image");
 	}
 
 	// immagine per mirino viene allocata all'inizio del livello e verra' poi rilasciata
 	// solo al cariamento di un nuovo livello
 	void AllocaLaserSightImage(void)
 	{
+		StrBaseImgBackGround *pMirino;
+		StrShowImage *pBase;
+
+		pMirino = &GlobTomb4.BaseImgLaserSight;
+		if (pMirino->TestEnabled == false)
+			return;
+
+		if (pMirino->TestAllocatedImage == true)
+			return;
+
+		pBase = &GlobTomb4.BaseImages;
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+
+			pMirino->TestEnabled = false;
+			return;
+		}
+
+		if (AllocaImmagine(pMirino->ImageNumber, &pBase->ImageLaserSight, -1, -1) == false) {
+			pMirino->TestEnabled = false;
+			LiberaHdcTomb(pBase, false);
+			return;
+		}
+
+		pMirino->TestAllocatedImage = true;
+
+		// ora ridimensionare e copiare immagine title in temphdc con dimensione uguali a quelle di tomb
+		StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageLaserSight.MemHdc, 0, 0, pBase->ImageLaserSight.SizeX, pBase->ImageLaserSight.SizeY, SRCCOPY);
+		// ora liberare title perche' poi usero' title con immagine di temp
+		LiberaImmagine(&pBase->ImageLaserSight);
+
+		// adesso traferire dati di temp hdc in title
+		InviaLog("Save temp image in Laser Sight image record");
+		pBase->ImageLaserSight = pBase->Temp;
+		// ora segnalare temp come gia' liberato
+		memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+		InviaLog("Allocated LaserSight image");
+	}
+
+	void SalvaScreenShotTr4(void)
+	{
+		DWORD TempoNow;
+		char NomeFile[256];
+
+		TempoNow = (DWORD) GetTickCount64();
+
+		if ((TempoNow - GlobTomb4.ScreenShot.LastTimeScreenShot) < 500)
+			return;
+		TrovaNuovoNomeShot(NomeFile);
+
+		SalvaShotTomb4(NomeFile, true);
+
+		// avviare un soundeffect sempre presente
+		tomb4::SoundEffect(GlobTomb4.pBaseCustomize->VetCustSFX[TS_SCREENSHOT_CAPTURE], NULL, 2);
+
+		GlobTomb4.ScreenShot.LastTimeScreenShot = (DWORD) GetTickCount64();
+	}
+
+	void TrovaNuovoNomeShot(char *pNuovoNome)
+	{
+#if 0
+		int i;
+
+		// ora trovare un nome shot?.bmp ancora libero
+		for (i = 0; i < 1000; i++) {
+			sprintf(pNuovoNome, "shot%03d.bmp", i);
+			if (EsisteFile(pNuovoNome) == false)
+				return;
+		}
+		return;
+#else
 		__try { throw __func__; } __finally {}
+#endif
 	}
 
 	// restituisce true se i piedi di lara sono in palude
 	bool IsLaraPiediInPalude(void)
 	{
-		__try { throw __func__; } __finally {}
+		StrMovePosition TriRec;
+		void *pFloor;
+		short Room;
+		int BaseLaraY;
+
+		TriRec.RelX = 0;
+		TriRec.RelY = 0;
+		TriRec.RelZ = 0;
+		tomb4::GetJointAbsPosition((tomb4::ITEM_INFO *) GlobTomb4.pAdr->pLara, (tomb4::PHD_VECTOR *) &TriRec, JOINT_LEFT_ANCKLE);
+		BaseLaraY = TriRec.RelY;
+
+		Room = GlobTomb4.pAdr->pLara->Room;
+		pFloor = tomb4::GetFloor(GlobTomb4.pAdr->pLara->CordX, BaseLaraY, GlobTomb4.pAdr->pLara->CordZ, &Room);
+
+		if (GlobTomb4.pAdr->pVetRooms[Room].FlagsRoom & 0x4)
+			return true;
+		return false;
 	}
 }
 
@@ -1935,8 +2154,10 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100AFE13, (unsigned int)trng::AddTabLogScript, replace);
 	ProcessInject(0x100C0D03, (unsigned int)trng::FindSkipPhase, replace);
 	ProcessInject(0x100CCD5E, (unsigned int)trng::TastoPremutoTomb4, replace);
-	ProcessInject(0x100CA197, (unsigned int)trng::AllocaTitleImage, false);
-	ProcessInject(0x100C7F9E, (unsigned int)trng::AllocaBinocularImage, false);
-	ProcessInject(0x100C9ECA, (unsigned int)trng::AllocaLaserSightImage, false);
-	ProcessInject(0x100CC782, (unsigned int)trng::IsLaraPiediInPalude, false);
+	ProcessInject(0x100CA197, (unsigned int)trng::AllocaTitleImage, replace);
+	ProcessInject(0x100C7F9E, (unsigned int)trng::AllocaBinocularImage, replace);
+	ProcessInject(0x100C9ECA, (unsigned int)trng::AllocaLaserSightImage, replace);
+	ProcessInject(0x100CD777, (unsigned int)trng::SalvaScreenShotTr4, replace);
+	ProcessInject(0x100CD726, (unsigned int)trng::TrovaNuovoNomeShot, false);
+	ProcessInject(0x100CC782, (unsigned int)trng::IsLaraPiediInPalude, replace);
 }

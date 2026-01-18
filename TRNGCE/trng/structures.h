@@ -1721,6 +1721,47 @@ namespace trng {
 	inline constexpr int CTRET_PERFORM_ONCE_AND_GO = 0x040; // No more performing until lara is over this sector, no matter if the conditon was true or false
 	inline constexpr int CTRET_EXECUTE_ORIGINAL = 0x0080;  // Only for CBT_REPLACE and CBT_AFTER callbacks.  it lets to original trng code the target to return a response.
 
+	// flag per diario
+	inline constexpr int LDF_SILENT = 0x0100;
+	inline constexpr int LDF_PLAY_TRACK = 0x0200;
+	inline constexpr int LDF_SOUND_EFFECTS = 0x0400;
+	inline constexpr int LDF_ZOOM_START = 0x0800;
+	inline constexpr int LDF_TRANSPARENT_BKG = 0x2000;
+
+	// flags per PARAM_WTEXT command
+	inline constexpr int WTF_FLYING_TEXT = 0x0001;
+	inline constexpr int WTF_PULSING_TEXT = 0x0002;
+	inline constexpr int WTF_CHANGE_COLOR = 0x0004;
+	inline constexpr int WTF_OVER_INVENTORY = 0x0008;
+	inline constexpr int WTF_OVER_IMAGE = 0x0010;
+	inline constexpr int WTF_OVER_FLYCAMERA = 0x0020;
+	inline constexpr int WTF_OVER_FIXCAMERA = 0x0040;
+	inline constexpr int WTF_OVER_BINOCULAR = 0x0080;
+	inline constexpr int WTF_OVER_LASER_SIGHT = 0x0100;
+
+	// flag per VetCollisionePushable[]
+	inline constexpr int CP_NULL = 0x00;
+	inline constexpr int CP_COLLISION = 0x01;
+	inline constexpr int CP_RAISE_PAD = 0x02;
+	inline constexpr int CP_FALLING = 0x04;
+	inline constexpr int CP_MOVING_ACTION = 0x08;
+
+	// costanti per indie di joint da usare con funzione
+	inline constexpr int JOINT_LEFT_THIGH = 1;
+	inline constexpr int JOINT_LEFT_KNEE = 2;
+	inline constexpr int JOINT_LEFT_ANCKLE = 3;
+	inline constexpr int JOINT_RIGHT_THIGH = 4;
+	inline constexpr int JOINT_RIGHT_KNEE = 5;
+	inline constexpr int JOINT_RIGHT_ANCKLE = 6;
+	inline constexpr int JOINT_ABDOMEN = 7;
+	inline constexpr int JOINT_NECK = 8;
+	inline constexpr int JOINT_LEFT_SHOULDER = 9;
+	inline constexpr int JOINT_LEFT_ELBOW = 10;
+	inline constexpr int JOINT_LEFT_WRIST = 11;
+	inline constexpr int JOINT_RIGHT_SHOULDER = 12;
+	inline constexpr int JOINT_RIGHT_ELBOW = 13;
+	inline constexpr int JOINT_RIGHT_WRIST = 14;
+
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
 #pragma pack(push, 1)
@@ -1765,7 +1806,7 @@ namespace trng {
 		StrRelocatedMem Old_7FE100;  // 29
 		StrRelocatedMem Old_4AB9B8;  // 30
 		StrRelocatedMem Old_4ABB90; // 31
-		StrRelocatedMem Reserved[80-14]; // sosttiuire -0 con nuove aggiunte (ultima era con indice = 17)
+		StrRelocatedMem Reserved[66]; // sosttiuire -0 con nuove aggiunte (ultima era con indice = 17)
 	};
 
 	struct StrPrefTomb {
@@ -1884,9 +1925,9 @@ namespace trng {
 		short Reserved_38;				// 38
 		short Reserved_3A;				// 3A
 		void *pZonaSavegame;		// 3C	or pCreatureInfo structure for enemies
-		DWORD  CordX;					// 40
-		int  CordY;					// 44
-		DWORD  CordZ;					// 48
+		DWORD CordX;					// 40
+		int CordY;					// 44
+		DWORD CordZ;					// 48
 		short OrientationV;  // 4c
 		short OrientationH;  // 4e
 		short OrientationT;		// 50
@@ -1947,7 +1988,7 @@ namespace trng {
 	struct StrBaseScaleItem {
 		WORD TotScale;
 		StrScaleItem VetScaleItem[MAX_SCALE_ITEM];
-		short VetIdScale[MAX_SCALE_ITEM*10];
+		short VetIdScale[MAX_SCALE_ITEM * 10];
 	};
 
 	struct StrBasevehicles {
@@ -1989,7 +2030,7 @@ namespace trng {
 		WORD StateIdNext;
 		WORD FrameNow;
 		DWORD LaraX;
-		int  LaraY;
+		int LaraY;
 		DWORD LaraZ;
 		short LaraRoom;
 		WORD Orient;
@@ -2034,7 +2075,7 @@ namespace trng {
 	struct StrBaseShowSprite {
 		WORD TotShowSprites;
 		StrShowSprite VetShowSprites[MAX_SHOW_SPRITES];
-		short VetIdShowSprites[MAX_SHOW_SPRITES*10];
+		short VetIdShowSprites[MAX_SHOW_SPRITES * 10];
 	};
 
 	struct StrPointFloat {
@@ -2057,7 +2098,7 @@ namespace trng {
 	struct StrBaseParamTriangles {
 		WORD TotTriangles;
 		StrParamTriangle VetTriangles[MAX_TRIANGLES];
-		short VetIdTriangles[MAX_TRIANGLES*10];
+		short VetIdTriangles[MAX_TRIANGLES * 10];
 	};
 
 	struct StrQuad {
@@ -2070,7 +2111,7 @@ namespace trng {
 	struct StrBaseQuads {
 		WORD TotQuads;
 		StrQuad VetQuads[MAX_QUADS];
-		short VetIdQuads[MAX_QUADS*10];
+		short VetIdQuads[MAX_QUADS * 10];
 	};
 
 	struct StrCircle {
@@ -2084,7 +2125,7 @@ namespace trng {
 	struct StrBaseCircle {
 		WORD TotCircles;
 		StrCircle VetCircle[MAX_CIRCLES];
-		short VetIdCircle[MAX_CIRCLES*10];
+		short VetIdCircle[MAX_CIRCLES * 10];
 	};
 
 	struct StrScriptLaraStartPos {
@@ -2170,7 +2211,7 @@ namespace trng {
 	// dati per gestione di standby
 	struct StrBaseStandBy {
 		int TotStandBY;
-		short VetID[MAX_STANDBY*10];
+		short VetID[MAX_STANDBY * 10];
 		StrScriptStandBy VetStandBy[MAX_STANDBY];
 		int IndiceSetCamera;
 		WORD IdNow;
@@ -2236,7 +2277,7 @@ namespace trng {
 	};
 
 	struct StrRecordFlip {
-		WORD  Numero;  // numero del flipeffect
+		WORD Numero;  // numero del flipeffect
 		WORD Timer; // valore argomento timer
 		WORD Flags; // dati peridentificare in modo univoco questo trigger  SCANF_... scanf flags
 
@@ -2289,7 +2330,6 @@ namespace trng {
 		StrBloccoNumVar NumWar;
 		// variabili di testo
 		StrText80 VetTextVar[4];
-
 
 		// variabili store per savegame
 		union {
@@ -2355,7 +2395,7 @@ namespace trng {
 	struct StrBaseWindowsFonts {
 		int TotFonts;
 		StrWindowsFont VetFonts[MAX_FONTS];
-		short VetID[MAX_FONTS*10];
+		short VetID[MAX_FONTS * 10];
 		bool TestUsaWindowsFont;
 		StrWindowsFont DefWindowsFont; // this is the windowsfont for all prints
 		WORD FlagDWF;
@@ -2419,7 +2459,7 @@ namespace trng {
 	struct StrBaseSwitch {
 		WORD TotSwitch;
 		StrRecordSwitch VetSwitch[MAX_SWITCH];
-		short VetID[MAX_SWITCH*10];
+		short VetID[MAX_SWITCH * 10];
 	};
 
 	struct StrPanelloSavegame {
@@ -2519,7 +2559,7 @@ namespace trng {
 		RectFloat Inc;
 		int TotFrames;
 		bool TestAttivo;
-		StrRecordImage  EffectImage;
+		StrRecordImage EffectImage;
 	};
 
 	struct StrShowImage {
@@ -2571,16 +2611,16 @@ namespace trng {
 	struct StrParamPrintText {
 		StrPrintString Formatting;
 		short IdPrint;
-		short  DurateTime;
-		short  OrgX;
-		short  OrgY;
+		short DurateTime;
+		short OrgX;
+		short OrgY;
 		WORD Dynamic;
 	};
 
 	struct StrBasePrintText {
 		int TotPrintText;
 		StrParamPrintText VetPrint[MAX_PARAM_PRINT_TEXT];
-		short VetID[MAX_PARAM_PRINT_TEXT*10];
+		short VetID[MAX_PARAM_PRINT_TEXT * 10];
 	};
 
 	struct StrBoxCollisione {
@@ -2611,14 +2651,14 @@ namespace trng {
 		short IdTestPosition;
 		WORD Flags;   // TPOS_ flags
 		WORD Slot;    // slot of item to detect or index
-		StrTestPosition  DatiPosition;
+		StrTestPosition DatiPosition;
 		WORD Dynamic;
 	};
 
 	struct StrBaseTestPosition {
 		int TotTestPositions;
 		StrTestPositionCmd VetTestPosition[MAX_TEST_POSITION];
-		short VetId[MAX_TEST_POSITION*10];
+		short VetId[MAX_TEST_POSITION * 10];
 	};
 
 	struct StrScriptImage {
@@ -2633,13 +2673,13 @@ namespace trng {
 	struct StrBaseScriptImages {
 		int TotScriptImages;
 		StrScriptImage VetImages[MAX_IMAGES];
-		short VetID[MAX_IMAGES*10];
+		short VetID[MAX_IMAGES * 10];
 	};
 
 	struct StrBaseSetCamera {
 		int TotSetCamera;
 		StrSetCamera VetSetCamera[MAX_SET_CAMERA];
-		short VetID[MAX_SET_CAMERA*10];
+		short VetID[MAX_SET_CAMERA * 10];
 	};
 
 	struct StrPreloadImage {
@@ -2705,7 +2745,7 @@ namespace trng {
 	struct StrBaseTriggerGroups {
 		int TotTriggerGroups;
 		StrTriggerGroup VetTriggerGroups[MAX_TRIGGER_GROUPS];
-		short VetID[MAX_TRIGGER_GROUPS*10];
+		short VetID[MAX_TRIGGER_GROUPS * 10];
 	};
 
 	struct StrItemGroup {
@@ -2718,7 +2758,7 @@ namespace trng {
 		int TotGroups;
 		StrItemGroup VetItemGroup[MAX_ITEM_GROUPS];
 		short VetRemapFlipActions[256];
-		short VetID[MAX_ITEM_GROUPS*10];
+		short VetID[MAX_ITEM_GROUPS * 10];
 	};
 
 	struct StrColoraItem {
@@ -2734,12 +2774,12 @@ namespace trng {
 	struct StrBaseColoraItem {
 		int TotColoraItem;
 		StrColoraItem VetColoraItem[MAX_COLORA_ITEM];
-		short VetID[MAX_COLORA_ITEM*10];
+		short VetID[MAX_COLORA_ITEM * 10];
 	};
 
 	struct StrLastPosAlign {
 		DWORD CordX;
-		int  CordY;
+		int CordY;
 		DWORD CordZ;
 		short HOrient;
 		short VOrient;
@@ -2822,7 +2862,7 @@ namespace trng {
 	struct StrBaseMove {
 		int TotMove;
 		StrMoveParameters VetMove[MAX_MOVE_PARAM];
-		short VetID[MAX_MOVE_PARAM*10];
+		short VetID[MAX_MOVE_PARAM * 10];
 	};
 
 	struct StrParBar {
@@ -2837,10 +2877,10 @@ namespace trng {
 	// struttura mesh info che in pratica e'
 	// struttura per oggetti statici
 	struct StrMeshInfo {
-		DWORD  x;			// 0
-		int    y;			// 4
-		DWORD  z;			// 8
-		WORD  Orient;		// C
+		DWORD x;			// 0
+		int y;			// 4
+		DWORD z;			// 8
+		WORD Orient;		// C
 		WORD Color;	// E
 		WORD OCB;	// 10 OCB
 		WORD SlotId;		// 12
@@ -2912,7 +2952,7 @@ namespace trng {
 	struct StrBaseRotate {
 		int TotRotate;
 		StrRotateItem VetRotate[MAX_ROTATE_PARAM];
-		short VetID[MAX_ROTATE_PARAM*10];
+		short VetID[MAX_ROTATE_PARAM * 10];
 	};
 
 	struct StrIndiciFont {
@@ -3008,7 +3048,7 @@ namespace trng {
 	struct StrBaseColorRGB {
 		int TotColori;
 		StrColorRGB  VetColori[MAX_COLORI_RGB];
-		short VetID[MAX_COLORI_RGB*10];
+		short VetID[MAX_COLORI_RGB * 10];
 	};
 
 	struct StrImportFile {
@@ -3022,7 +3062,7 @@ namespace trng {
 	struct StrBaseImportFile {
 		int TotFiles;
 		StrImportFile VetFiles[MAX_IMPORT_FILES];
-		short VetID[MAX_IMPORT_FILES*10];
+		short VetID[MAX_IMPORT_FILES * 10];
 	};
 
 	struct StrEnemiesNotAimable {
@@ -3059,20 +3099,20 @@ namespace trng {
 	struct StrProcBassDll {
 		TYPE_BASS_Init BASS_Init;
 		TYPE_BASS_Free BASS_Free;
-		TYPE_BASS_ChannelSlideAttribute  BASS_ChannelSlideAttribute;
+		TYPE_BASS_ChannelSlideAttribute BASS_ChannelSlideAttribute;
 		TYPE_BASS_ChannelSetAttribute BASS_ChannelSetAttribute;
 		TYPE_BASS_StreamCreateFile BASS_StreamCreateFile;
 		TYPE_BASS_ChannelPlay BASS_ChannelPlay;
-		TYPE_BASS_ErrorGetCode 	BASS_ErrorGetCode;
+		TYPE_BASS_ErrorGetCode BASS_ErrorGetCode;
 		TYPE_BASS_Pause BASS_Pause;
 		TYPE_BASS_Start BASS_Start;
 		TYPE_BASS_ChannelFlags BASS_ChannelFlags;
 		TYPE_BASS_ChannelStop BASS_ChannelStop;
 		TYPE_BASS_Stop BASS_Stop;
 		TYPE_BASS_ChannelSetPosition BASS_ChannelSetPosition;
-		TYPE_BASS_ChannelIsActive  BASS_ChannelIsActive;
+		TYPE_BASS_ChannelIsActive BASS_ChannelIsActive;
 		TYPE_BASS_ChannelGetPosition BASS_ChannelGetPosition;
-		TYPE_BASS_StreamGetFilePosition  BASS_StreamGetFilePosition;
+		TYPE_BASS_StreamGetFilePosition BASS_StreamGetFilePosition;
 	};
 
 	struct StrBassHandles {
@@ -3084,7 +3124,7 @@ namespace trng {
 		float VolumeMusica;
 		short OldCdLoop; // Last cd audio track on 0 channel
 		bool TestPresente;
-		HINSTANCE  HandleDll;
+		HINSTANCE HandleDll;
 		StrProcBassDll Proc;
 	};
 
@@ -3125,7 +3165,7 @@ namespace trng {
 	struct StrBaseMovAdvance {
 		int TotMoveAdvance;
 		StrMoveAdvance VetMove[MAX_MOVE_ADVANCE];
-		short VetID[MAX_MOVE_ADVANCE*10];
+		short VetID[MAX_MOVE_ADVANCE * 10];
 	};
 
 	// struttura per salvari tutti i mesh swap effettuati
@@ -3200,8 +3240,8 @@ namespace trng {
 		BYTE FramesRicarica;
 		BYTE SizeShell;
 		WORD DistanceAiming;
-		BYTE  FrameToTakeWeapon;
-		BYTE  FrameToLetWeapon;
+		BYTE FrameToTakeWeapon;
+		BYTE FrameToLetWeapon;
 		WORD Dispersion;
 		short Extra;
 		short VPositionOfWeapon;
@@ -3248,7 +3288,7 @@ namespace trng {
 			StrTwoBytes Bytes;
 		};
 		union {
-			int  VetArg[6];  // 6 numbers of int type (32 signed bits)
+			int VetArg[6];  // 6 numbers of int type (32 signed bits)
 			float VetArgFloat[6];
 			WORD VetArgWord[12];
 			short VetArgShort[12];
@@ -3508,7 +3548,7 @@ namespace trng {
 		WORD Id;
 		WORD Flags;
 		WORD Parameter;
-		int  TotCoppie;
+		int TotCoppie;
 		StrCoppiaPerform VetCoppie[MAX_ORGANIZE_COPPIE];
 	};
 
@@ -3524,7 +3564,7 @@ namespace trng {
 		DWORD CounterGame;  // tempo assoluto di gioco in frame
 		StrScriptOrganizer VetOrganizer[MAX_ORGANIZERS];
 		StrStatusOrganizer VetStatusOrganizer[MAX_ORGANIZERS]; // da salvare in savegame
-		short VetID[MAX_ORGANIZERS*10];
+		short VetID[MAX_ORGANIZERS * 10];
 	};
 
 	struct StrDoppiaWord {
@@ -3548,7 +3588,7 @@ namespace trng {
 	struct StrBaseGlobalTriggers {
 		int TotTriggers;
 		StrGlobalTrigger VetTriggers[MAX_GLOBAL_TRIGGERS];
-		short VetID[MAX_GLOBAL_TRIGGERS*10];
+		short VetID[MAX_GLOBAL_TRIGGERS * 10];
 		bool TestPresoLittleMedipack;
 		bool TestPresoBigMedipack;
 		bool TestSalvatoSavegame;
@@ -3578,19 +3618,19 @@ namespace trng {
 
 	struct StrBaseRemapTailInfo {
 		WORD TotTails;
-		StrRemapTailInfo VetRemapTail[MAX_TAIL_INFOS*2];
+		StrRemapTailInfo VetRemapTail[MAX_TAIL_INFOS * 2];
 	};
 
 	// dati per animare texture in tomb4
 
 	struct StrAnimUVRotate {
 		float VetOrgY[MAX_TEX_PER_FRAME]; // posizione OrgY originale di texture in pagine 256x256
-		WORD  VetTailIndex[MAX_TEX_PER_FRAME]; // indice tail da modificare
+		WORD VetTailIndex[MAX_TEX_PER_FRAME]; // indice tail da modificare
 
 		int TotTextures;
 		float Height;  // altezza texture (sara' la meta' di originale)
 		int UvRotate; // valore da aggiungere a ScrollPos per movimento
-		int   Maschera; // maschera per valore massimo di posy (0x1f, 0x3f o 0x7f)
+		int Maschera; // maschera per valore massimo di posy (0x1f, 0x3f o 0x7f)
 		DWORD LastTime; // tickcount di ultima esecuzione
 		DWORD DelayTime;  // numero di tick oltre il quale si deve eseguire un altro
 						  // scroll se 0, eseguire sempre
@@ -3617,12 +3657,12 @@ namespace trng {
 		DWORD LastTime;
 		DWORD DelayTime;
 		bool TestStop;
-		int  TotTextures;
+		int TotTextures;
 		WORD TipoAnim;
 		WORD VetTailIndex[MAX_TEX_PER_FRAME];  // indici originali
 		WORD VetChangedPos[MAX_TEX_PER_FRAME]; // indici d'ordine dopo modifiche
 		StrTexInfoTr4 VetTexInfoRecords[MAX_TEX_PER_FRAME]; // valori originali dei tex info
-		int  FrameToSet;  // usato solo per p-frame animazione
+		int FrameToSet;  // usato solo per p-frame animazione
 		int IndiceToSet;  // indice (da 0..) della texture da sostituire.
 						  // se -1 farlo con tutte le texture.
 		int IndiceScrollRiver;
@@ -3652,7 +3692,7 @@ namespace trng {
 	struct StrBaseScriptEnvCondition {
 		int TotScriptEnvCondition;
 		StrScriptEnvMultCondition VetScriptEndCondition[MAX_ENV_SCRIPT_CONDITIONS];
-		short VetID[MAX_ENV_SCRIPT_CONDITIONS*10];
+		short VetID[MAX_ENV_SCRIPT_CONDITIONS * 10];
 	};
 
 	struct StrTexSequence {
@@ -3667,7 +3707,7 @@ namespace trng {
 	struct StrBaseTexSequence {
 		int TotSequenze;
 		StrTexSequence VetSequenze[MAX_TEX_SEQUENCE];
-		short VetID[MAX_TEX_SEQUENCE*10];
+		short VetID[MAX_TEX_SEQUENCE * 10];
 	};
 
 	struct StrEquipItem {
@@ -3733,11 +3773,11 @@ namespace trng {
 		Tipo_CollGridTr4 *pCollsionSectors; // 08
 		StrLigthTr4 *pLights;           // 0c
 		StrMeshInfo *Ptr_StaticMesh;  // 10
-		int  OriginX;                 // 14
-		int  OrgYMistery;           // 18 roba per superfice acqua
-		int  OriginZ;                 // 1C
-		int  OrigYBottom;           // 20
-		int  OrigYTop;              // 24
+		int OriginX;                 // 14
+		int OrgYMistery;           // 18 roba per superfice acqua
+		int OriginZ;                 // 1C
+		int OrigYBottom;           // 20
+		int OrigYTop;              // 24
 		WORD Z_SizeSectors;         // 28
 		WORD X_SizeSectors;         // 2A
 		DWORD ColorIntensityLight;  // 2C
@@ -3747,21 +3787,21 @@ namespace trng {
 		char FlipMapIndex;    // 35
 		char IndexTabWater;			// 36
 		BYTE TestFlagsBound;        // 37
-		short  SizeXScreenOther;           // 38
+		short SizeXScreenOther;           // 38
 		short rm_Mistery3A;			// 3A
-		short  SizeYScreenOther;		    // 3C
+		short SizeYScreenOther;		    // 3C
 		short rm_Mistery3E;			// 3E
-		short  rm_Mistery40;			// 40
+		short rm_Mistery40;			// 40
 		short SizeXScreen;			// 42
-		short  rm_Mistery44; 			// 44
-		short  SizeYScreen;		// 46
+		short rm_Mistery44; 			// 44
+		short SizeYScreen;		// 46
 		short FirstItemIndex;		// 48
 		short FirstEffect;		// 4A
-		short  AlternateRoom;		// 4C  -1 se non c'e' o e' stanza flippata?
-		WORD  FlagsRoom;		    // 4E
-		int  VerticesAmount;			// 50
-		int  VerticesWaterAmount;				// 54  solo centrali e mobili
-		int  VerticesDryAmount;				// 58  numero dei vertici non acqua
+		short AlternateRoom;		// 4C  -1 se non c'e' o e' stanza flippata?
+		WORD FlagsRoom;		    // 4E
+		int VerticesAmount;			// 50
+		int VerticesWaterAmount;				// 54  solo centrali e mobili
+		int VerticesDryAmount;				// 58  numero dei vertici non acqua
 		void* pDirect3dVertexBuffer; // 5C  vertici passati per creare la stanza
 		void* pRectangles;			// 60
 		float floatOrigX;			// 64
@@ -3771,10 +3811,10 @@ namespace trng {
 		void *pTriAndQuads;		// 74
 		void *pQuadVertices;  //78
 		void *pTriVertices;  // 7C
-		int  rm_Mistero80; 			// 80
+		int rm_Mistero80; 			// 80
 		Tipo_VerticeRoom *pVetVerticiFloat;    // 84
-		int  TrianglesAmount; 			// 88
-		int  RectanglesAmount;			// 8C
+		int TrianglesAmount; 			// 88
+		int RectanglesAmount;			// 8C
 		void *pLightObjects;		// 90  directx object created with light data
 	};
 
@@ -3830,27 +3870,27 @@ namespace trng {
 	};
 
 	struct StrSlot {
-		WORD  TotMesh;		// 0
-		WORD  IndexFirstMesh;	// 2
-		int   IndexFirstTree;	// 4
-		int   IndexFirstFrame;  // 8
+		WORD TotMesh;		// 0
+		WORD IndexFirstMesh;	// 2
+		int IndexFirstTree;	// 4
+		int IndexFirstFrame;  // 8
 		void *pProcInitialise;	// 0C
 		void *pProcControl;		// 10
 		void *pProcFloor;		// 14
 		void *pProcCeiling;		// 18
 		void *pProcDraw;		// 1C
 		void *pProcCollision;   // 20
-		WORD  DistanceForMIP;      // 24
-		WORD  IndexFirstAnim;   // 26
+		WORD DistanceForMIP;      // 24
+		WORD IndexFirstAnim;   // 26
 		short Vitality;			// 28
 		WORD DistanceDetectLara;		// 2A
 		WORD ss_Unknown3;		// 2C
 		WORD FootStep;			// 2E
-		WORD  TestGuard;		// 30
+		WORD TestGuard;		// 30
 		WORD Flags;				// 32  (FSLOT_ flags)
 		void *pProcDrawExtras;	// 34
-		int  ShatterableMeshes;		// 38
-		int  ss_Unknown5;		// 3C
+		int ShatterableMeshes;		// 38
+		int ss_Unknown5;		// 3C
 	};
 
 	struct StrBaseHandle {
@@ -3861,21 +3901,21 @@ namespace trng {
 	// struttura singolo record animation
 	struct StrAnimationTr4 {
 		DWORD FrameOffset;		// 0x00
-		BYTE  FrameRate;		// 0x04
-		BYTE  FrameSize;		// 0x05
-		WORD  StateId;			// 0x06
-		int   Speed;			// 0x08  (speed multiplied by 65536)
-		int   Accel;			// 0x0C  (accel multiplied by 65536)
-		int   SpeedSide;		// 0x10  (speed multiplied by 65536)
-		int   AccelSide;		// 0x14  (accel multiplied by 65536)
-		WORD  FrameStart;		// 0x18
-		WORD  FrameEnd;			// 0x1A
-		WORD  NextAnimation;	// 0x1C
-		WORD  NextFrame;		// 0x1E
-		WORD  NumStateChanges;	// 0x20
-		WORD  StateChangeOffset; // 0x22
-		WORD  NunAnimCommands;	// 0x24
-		WORD  AnimCommand;		// 0x26
+		BYTE FrameRate;		// 0x04
+		BYTE FrameSize;		// 0x05
+		WORD StateId;			// 0x06
+		int Speed;			// 0x08  (speed multiplied by 65536)
+		int Accel;			// 0x0C  (accel multiplied by 65536)
+		int SpeedSide;		// 0x10  (speed multiplied by 65536)
+		int AccelSide;		// 0x14  (accel multiplied by 65536)
+		WORD FrameStart;		// 0x18
+		WORD FrameEnd;			// 0x1A
+		WORD NextAnimation;	// 0x1C
+		WORD NextFrame;		// 0x1E
+		WORD NumStateChanges;	// 0x20
+		WORD StateChangeOffset; // 0x22
+		WORD NunAnimCommands;	// 0x24
+		WORD AnimCommand;		// 0x26
 	};
 
 	// size = 0x1c
@@ -3894,7 +3934,7 @@ namespace trng {
 
 	// super mega struttura per dati collisione
 	struct StrCollisionLara {
-		StrDatiCollSettore  VetInfoSettori[6];  // 0x000
+		StrDatiCollSettore VetInfoSettori[6];  // 0x000
 		int LaraSizeX;		// 0x048
 		int LaraBottomY;		// 0x04C
 		int LaraTopY;			// 0x050
@@ -3935,7 +3975,7 @@ namespace trng {
 		WORD SlotAI;  // valore di slot id
 		WORD RoomIndex;
 		DWORD CordX;
-		int  CordY;
+		int CordY;
 		DWORD CordZ;
 		WORD Ocb;
 		WORD Buttons;
@@ -3944,7 +3984,7 @@ namespace trng {
 
 	struct StrCameraTr4 {
 		DWORD CordX;		// 0X00
-		int  CordY;			// 0X04
+		int CordY;			// 0X04
 		DWORD CordZ;		// 0X08
 		WORD Room;			// 0X0c
 		WORD Flags;			// 0X0e
@@ -4006,7 +4046,7 @@ namespace trng {
 		WORD OrientZ;      // 0x0A
 		WORD Flags;    	// 0x0C
 		WORD IndiceStringa;    // 0x0E
-		int  Mistero;    // 0x10 passato a drawinventoryitemme
+		int Mistero;    // 0x10 passato a drawinventoryitemme
 	};
 
 	// record di 7FE890h    ;Ptr_VetBoxInfos
@@ -4022,7 +4062,7 @@ namespace trng {
 	// struttura per record pesci (e simile a quella di scarabei
 	struct StrFish {
 		int CordX;		// 00
-		int   CordY;		// 04
+		int CordY;		// 04
 		int CordZ;		// 08
 		short OrientV;		// 0C
 		short OrientH;		// 0E
@@ -4045,15 +4085,15 @@ namespace trng {
 
 	// structure inside tomb raider about sfx infos
 	struct StrZonaSound {
-		DWORD  Volume;
-		DWORD  FrequenzaHigh;    // <= 32767
-		DWORD  CameraAngle;      // (horient?)
-		DWORD  FrequenzaLow;     // >6000
-		int    IndiceRel;      // (restituito da VetSoundIndices[SfxIndex] )
-		DWORD  CameraAngle2;      // (sembra uguale a cameraAngle)
-		DWORD  CordX;
-		int    CordY;
-		DWORD  CordZ;
+		DWORD Volume;
+		DWORD FrequenzaHigh;    // <= 32767
+		DWORD CameraAngle;      // (horient?)
+		DWORD FrequenzaLow;     // >6000
+		int IndiceRel;      // (restituito da VetSoundIndices[SfxIndex] )
+		DWORD CameraAngle2;      // (sembra uguale a cameraAngle)
+		DWORD CordX;
+		int CordY;
+		DWORD CordZ;
 	};
 
 	// contiene alcuni valori globali di tomb4 che vengono usati spesso
@@ -4103,7 +4143,7 @@ namespace trng {
 		short *pSizeScreenY;
 		short *pRowCharHeight;
 		int *pEarthQuake;
-		HWND  *pWindowHandle;
+		HWND *pWindowHandle;
 		BYTE *pLevelNow;
 		WORD *pScriptLevelFlags;
 		BYTE *pScriptMainFlags;
@@ -4209,16 +4249,16 @@ namespace trng {
 		DWORD RecSizeStruct;
 		DWORD VetOffset[MAX_OFFSET_HARD_BREAK];
 		DWORD VetCount[MAX_OFFSET_HARD_BREAK];
-		int  VetLastValue[MAX_OFFSET_HARD_BREAK];
+		int VetLastValue[MAX_OFFSET_HARD_BREAK];
 		int TotOffset;
 	};
 
 	struct StrTexParziali {
-		WORD  IndiceRange; // indice range
-		WORD  IndiceFull; // indice della texture full di cui fa parte questo frammento
+		WORD IndiceRange; // indice range
+		WORD IndiceFull; // indice della texture full di cui fa parte questo frammento
 		WORD IndiceFrammento;
-		WORD  OffX;
-		WORD  OffY;
+		WORD OffX;
+		WORD OffY;
 	};
 
 	struct StrBaseParziali {
@@ -4231,7 +4271,7 @@ namespace trng {
 	struct StrTargetDetector {
 		short Fase;  // FTR_ 0= nascita / 1 = lampeggio fisso / -1 non attivo
 		short DifY;  // distanza da floor sotto lara
-		WORD  Orient; // orient rispetto a lara nord
+		WORD Orient; // orient rispetto a lara nord
 		short DifX;   // distanza su cord x in metri da lara
 		short DifZ;   // distanza su cordz
 		int Distanza3d; // distanza 3d in metri (valore assoluto)
@@ -4292,14 +4332,14 @@ namespace trng {
 		short DispZ;
 		WORD DurateEmit;
 		WORD DuratePause;
-		int  TotExtra;
+		int TotExtra;
 		WORD VetExtra[MAX_EXTRA_EFFECT];
 		WORD Dynamic;
 	};
 
 	struct StrBaseEffects {
 		int TotEffects;
-		short VetID[MAX_ADD_EFFECTS*10];
+		short VetID[MAX_ADD_EFFECTS * 10];
 		StrAddEffect VetEffects[MAX_ADD_EFFECTS];
 	};
 
@@ -4358,9 +4398,9 @@ namespace trng {
 		WORD OrientingV;
 		WORD FlagInvisibile;
 		DWORD CordX;
-		int   CordY;
+		int CordY;
 		DWORD CordZ;
-		WORD  Room;
+		WORD Room;
 	};
 
 	struct StrBaseSalvaCords {
@@ -4370,7 +4410,7 @@ namespace trng {
 	};
 
 	struct StrDatiXRain {
-		int  LastRoomCamera;
+		int LastRoomCamera;
 		float Rain_Float_1;
 		float Rain_Float_2;
 		float Rain_Float_4;
@@ -4381,7 +4421,7 @@ namespace trng {
 		WORD Min_Rain;
 		WORD Flags; // FR_ ...
 		short SoundSFX;
-		int  LastIntensita;
+		int LastIntensita;
 		DWORD SplashRain;
 	};
 
@@ -4393,8 +4433,8 @@ namespace trng {
 	};
 
 	struct StrExtraInfoRoom {
-		BYTE  WaterIntensity; // usato per pioggia e neve
-		BYTE  Reserved[7]; // altri 8 byte da usare in futuro
+		BYTE WaterIntensity; // usato per pioggia e neve
+		BYTE Reserved[7]; // altri 8 byte da usare in futuro
 	};
 
 	struct StrExtraLangugage {
@@ -4418,7 +4458,7 @@ namespace trng {
 
 	struct StrScriptLevel {
 		WORD LevelFlags; // valori fngl_
-		StrIndiciAssign  AssignSlot;
+		StrIndiciAssign AssignSlot;
 	};
 
 	struct StrRecordPoint {
@@ -4432,11 +4472,11 @@ namespace trng {
 
 	struct StrRecordDGN {
 		void *pIndirizzo;  //
-		int  OldValue; // per confronto con precedente scansione
+		int OldValue; // per confronto con precedente scansione
 		int CodiceCostante; // se e' una variabile mnemonica qui c'e' OFF_...
 		WORD FlagsType;  // (mascherato a byte, word, long o struct)
 		DWORD StructOffset;  // offset da inizio struttura
-		int  Indice; // indice di vettore (usati solo se pointer)
+		int Indice; // indice di vettore (usati solo se pointer)
 		WORD MaxIndice;  // (se si  deve stampare la serie di un vettore)
 		WORD SizeStruct;  // (se e' un vettore di strutture questa e' la dmensione)
 		bool TestPoint;  // se true allora e' una POINT
@@ -4475,9 +4515,9 @@ namespace trng {
 		int TotCicli;  // numero di cicli scanditi
 		WORD FlagsDgx; // DGX_.. cosa mostrare e cosa no
 		WORD DgxExtra; // eventuale parametro extra
-		StrRecordDGN  VetWatch[MAX_WATCH];
-		StrLogItem  LogItem;
-		StrDgxInfoSlot  InfoSlot;
+		StrRecordDGN VetWatch[MAX_WATCH];
+		StrLogItem LogItem;
+		StrDgxInfoSlot InfoSlot;
 		short LivelloExtractSFX; // estrarre sfx di livello
 		int TotTiming;
 		DWORD LastTiming;
@@ -4506,8 +4546,8 @@ namespace trng {
 	// nel corso del gioco
 	// 32 word + 32 dword
 	struct StrDatiVariabili {
-		WORD  ValoreCold;
-		WORD  FlagProgressoCold;
+		WORD ValoreCold;
+		WORD FlagProgressoCold;
 		WORD ValoreDamage;
 		WORD FlagProgressoDamage;
 		int KeysToStop;
@@ -4528,7 +4568,7 @@ namespace trng {
 		short CdSingleMain;
 		DWORD Canale1StartPos;
 		float FloatFogStart;
-		BOOL  NonUsato;
+		BOOL NonUsato;
 		DWORD Unused;
 		short IndicePushSpinto;
 		WORD ParBarGiri;
@@ -4556,14 +4596,14 @@ namespace trng {
 	};
 
 	struct StrRecordEnemyScript {
-		WORD  SlotId;
-		WORD  FlagsNEF;  // NEF_...
-		WORD  Health;
-		short  Damage;  // danno arrecato a lara
-		WORD  TombFlags;  //TCF_ in campo flags di slot
+		WORD SlotId;
+		WORD FlagsNEF;  // NEF_...
+		WORD Health;
+		short Damage;  // danno arrecato a lara
+		WORD TombFlags;  //TCF_ in campo flags di slot
 		short Extra; // word extra per setting particolari
-		int  TotDamage; // numero di argomenti extra
-		short  VetDamage[6];  // eventuali valori extra damage o segnali particolari
+		int TotDamage; // numero di argomenti extra
+		short VetDamage[6];  // eventuali valori extra damage o segnali particolari
 	};
 
 	struct StrBaseEnemyScript {
@@ -4573,13 +4613,13 @@ namespace trng {
 
 	struct StrAnimScript {
 		short AnimIndex;
-		WORD  Key1;
-		WORD  Key2;
-		WORD  Flags;  // FAN_ flags
-		WORD  Environment;  // ENV_ costanti
+		WORD Key1;
+		WORD Key2;
+		WORD Flags;  // FAN_ flags
+		WORD Environment;  // ENV_ costanti
 		short DistanceEnv; // distanza per environment
-		WORD  Extra;
-		int  TotStateId;
+		WORD Extra;
+		int TotStateId;
 		short VetStateId[32];
 	};
 
@@ -4607,7 +4647,7 @@ namespace trng {
 		WORD TotMirror;
 		RecordMirror VetMirror[MAX_MIRRORS];
 		WORD MirrorType;
-		int  CordMirror;
+		int CordMirror;
 		int MinCordMirror;
 		int MaxCordMirror;
 		int IndiceNow;
@@ -4651,7 +4691,7 @@ namespace trng {
 
 	struct StrScriptElevator {
 		WORD IndiceElevatore;
-		int  FirstFloorY;   // cordy originale di ascensore e primo piano.
+		int FirstFloorY;   // cordy originale di ascensore e primo piano.
 		WORD ClickDistance;
 		WORD TotFloors;
 		WORD Flags;  // EF_... flags
@@ -4676,7 +4716,7 @@ namespace trng {
 
 	// struttura con dati dinamici di ascensore da salvare in savegame
 	struct StrElevator {
-		int  IncY;  // praticamente velocita', positiva o negativa
+		int IncY;  // praticamente velocita', positiva o negativa
 		int OrgYTarget; // coordinata y da raggiungere
 		BYTE Status;  // EST_ .. in attesa, in movimento, in pausa, in partenza
 		BYTE FloorNow; // 0 = primo piano
@@ -4709,7 +4749,7 @@ namespace trng {
 
 	struct StrKeyPad {
 		bool TestAttivo;
-		int  Fase;  // FKP  valori
+		int Fase;  // FKP  valori
 		int IndiceTasto;
 		int IndiceTastoOld;
 		WORD Slot;
@@ -4785,7 +4825,7 @@ namespace trng {
 	struct StrBaseLightning {
 		int TotParamLgtn;
 		StrRecordParamLgtn VetRecordLgtn[MAX_PARAM_LIGHTNING];
-		short VetId[MAX_PARAM_LIGHTNING*10];
+		short VetId[MAX_PARAM_LIGHTNING * 10];
 	};
 
 	struct StrBaseImgMonoScreen {
@@ -4827,7 +4867,7 @@ namespace trng {
 	struct StrBaseParamWText {
 		int TotParamWText;
 		StrParamWText VetParamWText[MAX_PARAM_WTEXT];
-		short VetIds[MAX_PARAM_WTEXT*10];
+		short VetIds[MAX_PARAM_WTEXT * 10];
 	};
 
 	struct StrRecNewError {
@@ -4861,7 +4901,7 @@ namespace trng {
 	struct StrBaseMyRect {
 		int TotMyRect;
 		StrMyRect VetMyRect[MAX_MY_RECT];
-		short VetId[MAX_MY_RECT*10];
+		short VetId[MAX_MY_RECT * 10];
 	};
 
 	struct StrMyInputBox {
@@ -4875,8 +4915,8 @@ namespace trng {
 	};
 
 	struct StrExtraCode {
-		BYTE  VetScanCodes[3];
-		BYTE  ValAscii;
+		BYTE VetScanCodes[3];
+		BYTE ValAscii;
 		WORD TotScanCodes;
 	};
 
@@ -4886,7 +4926,7 @@ namespace trng {
 		StrMyInputBox *pInputBoxNow; // pointer to current Input Box
 		int TotExtraCodes;
 		StrExtraCode VetExtraCodes[MAX_EXTRA_SCAN_CODES];
-		short VetId[MAX_INPUT_BOX*10];
+		short VetId[MAX_INPUT_BOX * 10];
 	};
 
 	struct StrTiming {
@@ -4934,9 +4974,9 @@ namespace trng {
 		BYTE IdSprite1;				// 2e
 		BYTE IdSprite2;				// 2f
 		WORD Trasparency;			// 30
-		DWORD  CordX;					// 40
-		int  CordY;					// 44
-		DWORD  CordZ;					// 48
+		DWORD CordX;					// 40
+		int CordY;					// 44
+		DWORD CordZ;					// 48
 		short OrientationV;  // 4c
 		short OrientationH;  // 4e
 		short OrientationT;		// 50
@@ -5086,7 +5126,7 @@ namespace trng {
 	struct StrBaseSwapAnim {
 		int TotSwapAnim;
 		StrSwapAnim VetSwapAnim[MAX_SWAP_ANIM];
-		short VetId[MAX_SWAP_ANIM*10];
+		short VetId[MAX_SWAP_ANIM * 10];
 	};
 
 	struct StrMemSwapAnim {
@@ -5145,15 +5185,15 @@ namespace trng {
 		int SpeechTotSyll; // totale syllable, movimento da apri e chiudi o viceversa
 		DWORD FrameEndSpeech; // frame when complete current speech command
 
-		int  OrientHTurnNow;
-		int	 OrientHTurnInc;
-		int  OrientHTurnEnd;
+		int OrientHTurnNow;
+		int OrientHTurnInc;
+		int OrientHTurnEnd;
 		int OrientHLastCommand;
 		int OrientHTimes;
 		DWORD FrameEndHTurn;  // frame when complete current horizontal turn head (shake)
 
-		int  OrientVTurnNow;
-		int  OrientVTurnInc;
+		int OrientVTurnNow;
+		int OrientVTurnInc;
 		int OrientVTurnEnd;
 		int OrientVLastCommand;
 		int OrientVTimes;
@@ -5164,7 +5204,7 @@ namespace trng {
 	struct StrBaseSpeechActor {
 		int TotSpeechActor;
 		StrSpeechActor VetSpeechActor[MAX_SPEECH_PARAM];
-		short VetId[MAX_SPEECH_PARAM*10];
+		short VetId[MAX_SPEECH_PARAM * 10];
 		StrPlaySpeech VetPlay[MAX_ACTOR_SPEECHING];
 	};
 
@@ -5281,7 +5321,7 @@ namespace trng {
 		bool TestObjectIsNotLara; // usato in TestTriggers per attiva con oggetti trigger normale
 		StrBaseFloodRooms BaseFloodRooms;
 		StrBaseFreeze BaseFreeze;
-		WORD  HangForbidden;  // 0 se e' permesso, altrimnti bit NO_HANG_....
+		WORD HangForbidden;  // 0 se e' permesso, altrimnti bit NO_HANG_....
 		WORD HangCounter; // se 0 azzera a inizio ciclo, altrimenti decremnta
 		int DebugModeCounter; // se > 0 mostra debug
 		int TotBigNumbers;
@@ -5292,7 +5332,7 @@ namespace trng {
 		StrRecordFlip VetScanFlipEffects[64];
 		StrBaseVarAll *pBaseVariableTRNG;
 		StrBaseEventiNow BaseEventiNow;
-		WORD  TotItemNoCollisions;
+		WORD TotItemNoCollisions;
 		short VetItemNoCollisions[MAX_COLL_DISABLED];
 		StrSuoni Suoni;
 		bool TestFogRange; // c'era un comando fogrange in lviello
@@ -5369,7 +5409,7 @@ namespace trng {
 		StrFontBaseSetting BaseFontBinary;
 		StrBasePushables BasePushables;
 		StrBaseColorRGB BaseColoriRGB;
-		StrCercaStatic VetRemapStatics[6000+1];
+		StrCercaStatic VetRemapStatics[6001];
 		int TotScanFlipEffects;
 		StrBaseImportFile BaseImportedFiles;
 		StrEnemiesNotAimable BaseEnemiesNotAimable;
@@ -5401,11 +5441,10 @@ namespace trng {
 		DWORD StatusNG;  // flags SNG_...
 		StrBaseGlobalTriggers *pBaseGlobalTriggers;
 
-
 		int TestNoDamageRollingBallIndex; // disattiva danni a lara con rolling ball
 										  // di valore indice
-		StrBaseSalvaCollisioni  BaseSalvaCollisioni;
-		StrBaseSalvaCollisioni  BaseSalvaOldCollisioni;
+		StrBaseSalvaCollisioni BaseSalvaCollisioni;
+		StrBaseSalvaCollisioni BaseSalvaOldCollisioni;
 		bool TestDiagnosticaNow;  // attivato quando in watch.txt c'e'
 								  // when = ON_FLAG_ATTIVO
 		void *pAdrDiagnostica; // punta a memoria da controllare
@@ -5419,7 +5458,7 @@ namespace trng {
 		int OperazioneCount; // numero di tick prima di eseguire operazione
 		StrBaseRemapTailInfo BaseRemapTail;
 		StrBaseAnimTr4 BaseAnimTr4;
-		StrBaseScriptEnvCondition  *pBaseEnvConditions;
+		StrBaseScriptEnvCondition *pBaseEnvConditions;
 		WORD TotPedane;
 		StrBaseTexSequence BaseTexSequence;
 		StrItemTr4 *VetPlatforms[1024];
@@ -5532,7 +5571,7 @@ namespace trng {
 		short *pVehicleIndex;
 		DWORD CordX;
 		char *pMascheraSavegame;
-		int  CordY;
+		int CordY;
 		bool TestSuspendObjectShowing;
 		WORD SlotSwitchKeyPad;
 		DWORD CordZ;
@@ -5547,8 +5586,8 @@ namespace trng {
 		StrBaseImgBackGround BaseImgBinocular;
 		StrBaseImgBackGround BaseImgLaserSight;
 		COLORREF VetTextColors[9];  // colors used for print string with windowsfont (index to FC_ color constants)
-		short  ColorWhiteStep;  // signed incrfement to change color FC_BIANCO_MOD (1), from white and black slowly
-		short  ColorGradientNow; // from 0 to 255 to use for any gradient of pulsing white
+		short ColorWhiteStep;  // signed incrfement to change color FC_BIANCO_MOD (1), from white and black slowly
+		short ColorGradientNow; // from 0 to 255 to use for any gradient of pulsing white
 		StrOffsetRanges VetStringOffsets[POFF_COUNTER]; // ranges of origin code for system strings
 		int TotStringOffset;  // number of ranges of above vector
 		StrBaseParamWText BaseParamWText;
@@ -5657,9 +5696,9 @@ namespace trng {
 
 	struct StrSalvaVettoriRemap {
 		short VetObjRemap[6000];
-		int  TotRooms;
+		int TotRooms;
 		short VetRoomRemap[400];
-		bool  TestAttivo;
+		bool TestAttivo;
 		char NomeFileTom[256];
 	};
 
@@ -5715,7 +5754,7 @@ namespace trng {
 		WORD *pData;
 		DWORD SizeData;
 		DWORD StartDataIndex;
-		WORD  Type;
+		WORD Type;
 	};
 
 	struct StrLastScriptDat {

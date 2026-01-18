@@ -55,6 +55,7 @@ namespace trng {
 	extern short (&VetDetectorLittle)[6];
 	extern TYPE_IsComandoPremuto &IsComandoPremuto;
 	extern TYPE_StopAllSounds &StopAllSounds;
+	extern HDC &GlobHdcTomb;
 
 	void ImpostaEnemyDamage(void);
 	bool Inizializza(void);
@@ -196,12 +197,29 @@ namespace trng {
 	void ImpostaComandoSpeech(StrPlaySpeech *pPlay);
 	void PreparaSequenzaSpeech(StrPlaySpeech *pPlay, int Inizio, int Fine, int FrameSet, int TotSyll);
 	void ControllaAnchoredBoat(int IndiceVeicolo);
+	bool AllocaHdcTomb(StrShowImage *pBase, bool TestHdcTemp, bool TestWriteHdc);
+	void LiberaHdcTomb(StrShowImage *pBase, bool TestMantieniTemp);
+	void RilasciaTomb4Hdc(void);
+	HDC GetHdcTomb(void);
+	bool AllocaImmagine(int NImage, StrRecordImage *pRecord, int ForceSizeX, int ForceSizeY);
 	bool AnalisiPatchPushAway(void);
 	void AvviaDiario(void);
+	StrBaseDiario* GetDiarioConID(WORD Id);
+	void LiberaWindowsFont(StrWindowsFont *pFont);
+	DWORD TrovaPosizioneSuono(StrCanaleBass *pCanale);
+	void SospendiThreadNotifica(void);
+	char *FormattaTimer(int Valore);
+	void SalvaShotTomb4(char *NomeFile, bool TestFullScreen);
+	void AttendiFineEscape(void);
+	void RiprendiThreadNotifica(void);
 	void ResetScanActions(void);
 	void ResetScanFlipEffects(void);
 	void GestioneRaisePushables(void);
+	bool IsSopraPedana(StrItemTr4 *pOggetto, int *pCordY);
+	int TrovaCordYRais(StrItemTr4 *pRaise, int PushY);
 	void GestioneItemsSuElevatore(void);
+	void AggiornaPosizioneItem(short ItemIndex, DWORD CordX, int CordY, DWORD CordZ, int ExtraY);
+	bool IsDoor(WORD Slot);
 	void InizializzaCondizioniGlobali(void);
 	void InizializzaCollisioniLara(void);
 	void ImpostaStatusRoom(void);

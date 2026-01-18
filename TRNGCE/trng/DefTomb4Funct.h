@@ -68,4 +68,31 @@ namespace trng {
 	// same callback procedure to handle both types of all triggers callbacks
 	// return TRET_ mask values
 	typedef int (__cdecl *CALL_ACTION) (WORD ActionIndex, int ItemIndex, WORD Extra, WORD ActivationMode, WORD CBType);
+
+	// prototype for CB_WINDOWS_TEXT_PRINT callback
+	// received in input:
+	// pRect : pointer to RECT structure with coordinate of box where to print the text
+	// pFont : pointer to StrWindowsFont structure with many settings (about font) specified in script.dat
+	// hDC : handle of Device Context where to print text (usually tomb raider hdc or a memory DC)
+	// pText: pointer to text to print
+	// pTestError: pointer to bool variable to set "true" if it happned an error, otherwise set to "false"
+	// TestDummyPrint: it required to do not print really the text but perform only a computation about size
+	//              of printed text (use DT_CALCRECT flag in DrawText() function)
+	// WTF_Flags : one or more enumWTF_ flags
+	// returns the size of printed text or 0 if callback wants letting to original code the target to print this text
+	// note: the font has already been selected in hDC
+	typedef int (__cdecl *CALL_WINDOWS_TEXT_PRINT)(RECT *pRect, StrWindowsFont *pFont, HDC hDC, char *pText, bool *pTestError, bool TestDummyPrint, DWORD WTF_Flags);
+
+	// prototype for CB_WINDOWS_UNICODE_CONVERT callback
+	// received in input:
+	// pFont : pointer to StrWindowsFont structure with many settings (about font) specified in script.dat
+	//         you should use these infos only on-read, to understand better the kind of characters you are
+	//         going to convert but don't change data of StrWindowsFont structure
+	// pText : pointer to byte based string of text to convert. You should read with debugger the format
+	//         of this text to understand better further bugs to fix and then convert it in unicode format
+	//         returning the pointer to wchar_t buffer with converted text to unicode
+	// note: the pointer you returns has to be in persistent memory of course, (no local stack memory of your
+	//       function
+	// note:  if you return NULL it means you want letting to original code the conversion
+	typedef wchar_t* (__cdecl * CALL_WINDOWS_UNICODE_CONVERT) (StrWindowsFont *pFont, char *pText);
 }

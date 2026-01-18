@@ -207,6 +207,9 @@
     <ClInclude Include="tomb4\specific\specificfx.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\time.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -385,6 +388,9 @@
       <Filter>trng</Filter>
     </ClCompile>
     <ClCompile Include="tomb4\specific\specificfx.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\time.cpp">
       <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>

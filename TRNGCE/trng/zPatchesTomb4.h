@@ -47,6 +47,8 @@ namespace trng {
 	void AllocaTitleImage(void);
 	void AllocaBinocularImage(void);
 	void AllocaLaserSightImage(void);
+	void SalvaScreenShotTr4(void);
+	void TrovaNuovoNomeShot(char *pNuovoNome);
 	bool IsLaraPiediInPalude(void);
 }
 

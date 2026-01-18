@@ -63,6 +63,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
+      <AdditionalDependencies>msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -86,6 +87,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
+      <AdditionalDependencies>msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -142,6 +144,7 @@
     <ClInclude Include="tomb4\specific\output.h" />
     <ClInclude Include="tomb4\specific\polyinsert.h" />
     <ClInclude Include="tomb4\specific\specificfx.h" />
+    <ClInclude Include="tomb4\specific\time.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
     <ClInclude Include="tomb4\types.h" />
     <ClInclude Include="tomb4\math_tbls.h" />
@@ -212,6 +215,7 @@
     <ClCompile Include="tomb4\specific\output.cpp" />
     <ClCompile Include="tomb4\specific\polyinsert.cpp" />
     <ClCompile Include="tomb4\specific\specificfx.cpp" />
+    <ClCompile Include="tomb4\specific\time.cpp" />
     <ClCompile Include="tomb4\specific\winmain.cpp" />
     <ClCompile Include="trng\ListTr4Patch.cpp" />
     <ClCompile Include="trng\Oggetti.cpp" />

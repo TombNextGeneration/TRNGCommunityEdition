@@ -3,6 +3,8 @@
 #include "../tomb4/types.h"
 
 namespace trng {
+	extern char (&ZonaReplace)[32000];
+
 	void ProcMyBridgeFloor(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);
 	void ProcMyBridgeCeiling(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);
 	void TightRopeCollision(short item_num, tomb4::ITEM_INFO *l, tomb4::COLL_INFO *coll);
@@ -25,6 +27,32 @@ namespace trng {
 	HFONT CreaWindowsFont(StrWindowsFont *pFont, bool TestNoResize);
 	int LeggiVariabile(WORD CodiceVariabile);
 	const char *GetNomeVariabile(WORD Codice);
+	void MostraDiario(StrBaseDiario *pDiario);
+	void AllocaDiario(StrBaseDiario *pDiario);
+	void LiberaDiario(StrBaseDiario *pDiario);
+	void LiberaPaginaDiario(StrBaseDiario *pDiario);
+	bool ScopriSospendiAudioDiario(StrBaseDiario *pDiario);
+	void SospendiAudio(int NuovoCd, int NuovoTestLoop);
+	bool AllocaPaginaDiario(StrBaseDiario *pDiario, int IndicePagina);
+	RECT *EstraeDatiFrame(char *pSorgente, const char *pTag, bool* pTestErrore);
+	void ConvertiRectMicroUnits(RECT *pRect);
+	void SuonaAudioPagina(StrBaseDiario *pDiario, int IndicePagina);
+	int ShowImageProp(HDC HdcOut, RECT *pMioRect);
+	void StampaTestoPaginaNow(HDC MioHdc, StrBaseDiario *pDiario);
+	void ImpostaWindowsFont(StrWindowsFont *pFont, HDC MioHdc, bool TestNonCancellare, bool TestNonResize);
+	int StampaTestoWindowsForCB(RECT *pRect, StrWindowsFont *pFont, HDC MioHdc, char *pTesto, bool *pTestErrore, bool TestSoloProva, DWORD WTF_Flags);
+	int StampaTestoWindows(RECT *pRect, StrWindowsFont *pFont, HDC MioHdc, char *pTesto, bool *pTestErrore, bool TestSoloProva, DWORD WTF_Flags);
+	char *ConvertiStringaBinaria(char *pTesto, DWORD *pSize);
+	DWORD CreaFlagDT(StrWindowsFont *pFont);
+	wchar_t * ReplaceVarPlaceFoldersW(wchar_t *pTesto);
+	wchar_t * Char2Unicode(char *pTesto);
+	char *LeggiVariabileTesto(WORD CodiceVariabile);
+	char *ReplaceVarPlaceFolders(char *pTesto);
+	char *TrovaDivisioneTesto(RECT *pRect, StrWindowsFont *pFont, HDC MioHdc, char *pTesto);
+	void ZoomImageDiario(RECT *pFine, HDC HdcSource, int SrcSizeX, int SrcSizeY, bool TestTransparent);
+	void BeginCicloDraw(void);
+	void EndCicloDraw(void);
+	void RiprendiAudio(void);
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace);

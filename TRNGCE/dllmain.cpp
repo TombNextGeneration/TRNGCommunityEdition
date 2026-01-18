@@ -47,6 +47,9 @@
 #include "trng/trng_flipeffects.h"
 #include "tomb4/specific/audio.h"
 #include "tomb4/specific/specificfx.h"
+#include "tomb4/specific/time.h"
+#include "tomb4/game/traps.h"
+#include "tomb4/game/sphere.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -155,6 +158,9 @@ static void Inject(bool replace) {
 	Inject_Effects(replace);
 	Inject_Audio(replace);
 	Inject_Specificfx(replace);
+	Inject_Time(replace);
+	Inject_Traps(replace);
+	Inject_Sphere(replace);
 }
 
 static LPSTR __stdcall CallInject() {
