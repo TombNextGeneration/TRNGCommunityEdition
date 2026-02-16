@@ -1,6 +1,5 @@
 #include "3dmath.h"
 #include "../../inject.h"
-#include "../math_tbls.h"
 
 namespace tomb4
 {
@@ -9,6 +8,8 @@ namespace tomb4
 	long &phd_winheight = *reinterpret_cast<decltype(&phd_winheight)>(0x753BB0);
 	float &FogStart = *reinterpret_cast<decltype(&FogStart)>(0x4B2498);
 	short &phd_winxmax = *reinterpret_cast<decltype(&phd_winxmax)>(0x753BEC);
+	float &FogEnd = *reinterpret_cast<decltype(&FogEnd)>(0x4B249C);
+	short (&rcossin_tbl)[8192] = *reinterpret_cast<decltype(&rcossin_tbl)>(0x4B34D0);
 
 	ulong phd_sqrt(ulong num)
 	{

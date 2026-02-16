@@ -8,6 +8,7 @@ namespace tomb4
 	extern short &FlashFadeB;
 	extern short &FlashFader;
 	extern short &ScreenFading;
+	extern short &ScreenFadedOut;
 
 	void TriggerBlood(long x, long y, long z, long angle, long num);
 	void ClearFires();

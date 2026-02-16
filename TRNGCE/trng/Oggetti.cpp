@@ -8,6 +8,9 @@
 #include "../tomb4/game/sound.h"
 #include "../tomb4/specific/output.h"
 #include "../tomb4/specific/time.h"
+#include "../tomb4/specific/winmain.h"
+#include "../tomb4/specific/cmdline.h"
+#include "../tomb4/game/tomb4fx.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
@@ -1627,7 +1630,7 @@ namespace trng {
 
 		strcpy_s(VetHex, "0123456789ABCDEF");
 		TotSource = strlen(pTesto);
-		pOut = (char *) malloc(TotSource);
+		pOut = (char *) malloc(TotSource + 2);
 		if (pOut == NULL)
 			return NULL;
 		TotDest = 0;
@@ -2151,6 +2154,153 @@ namespace trng {
 		if (pSospeso->CountSuspend == 0)
 			RiprendiThreadNotifica();
 	}
+
+	// viene chiamato quando si trova trigger fmv
+	// in NumeroFmv c'e' il numero
+	// imposta in variabile globale GlobTomb4.BaseFMV.IndiceFmvAttivato
+	void ElaboraTriggerFMV(int NumeroFmv)
+	{
+		int i;
+		BYTE *pFlagWindow;
+
+		pFlagWindow = (BYTE*) &tomb4::App.dx.Flags;
+		if (NumeroFmv >= 128 || GlobTomb4.BaseFMV.VetFmvEseguiti[NumeroFmv])
+			return;
+
+		for (i = 0; i < GlobTomb4.BaseFMV.TotFmv; i++) {
+			if ((GlobTomb4.BaseFMV.VetFmv[i] & 0x7f) == NumeroFmv) {
+
+				PreparaLancioFilmato(GlobTomb4.BaseFMV.VetFmv[i]);
+
+				GlobTomb4.BaseFMV.VetFmvEseguiti[NumeroFmv] = 1;
+
+				return;
+			}
+		}
+		GlobTomb4.BaseFMV.VetFmvEseguiti[NumeroFmv] = 1;
+
+		sprintf_s(BufferLog, "ERROR: Not found in script.dat FMV with number %d", NumeroFmv);
+		InviaLog(BufferLog);
+	}
+
+	// eseguire le seguenti operazioni:
+	// 1) Azionare fade in
+	// 2) Lanciare azione per azionare filmato quando fade in e' terminato
+	// 3) Disabilitare tutti i suoni
+	// 4) Disabilitare critical section
+
+	void PreparaLancioFilmato(int NumeroFMV)
+	{
+		StrProgressiveAction *pAzione;
+		int IndiceAzione;
+		char Buffer[256];
+		int *pTestOggettoSoundAttivo;
+		BYTE *pSettingNoFMV;
+		short *pTestAttivoFade;
+		short *pSchermoBuio;
+		StrFMV *pFmv;
+		bool TestFade;
+
+		pTestOggettoSoundAttivo = (int*) &tomb4::sound_active;
+		pSettingNoFMV = (BYTE*) &tomb4::fmvs_disabled;
+		pTestAttivoFade = &tomb4::ScreenFading;
+		pSchermoBuio = &tomb4::ScreenFadedOut;
+
+		if (*pSettingNoFMV) {
+
+			InviaLog("Ignore current FMV: It's present setting: no animated sequences (FMVs).");
+			return;
+		}
+
+		if (TrovaFileFMV(Buffer, NumeroFMV & 0x7f) == false)
+			return;
+
+		pFmv = &GlobTomb4.BaseFMV;
+		TestFade = false;
+		if (GlobTomb4.pBaseCustomize->FlagsFMV & FMV_FADE_OUT)
+			TestFade = true;
+
+		IndiceAzione = CreaNuovaAzioneProgressiva();
+		pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+		pAzione->ActionType = AZ_PREPARA_FILMATO;
+		pAzione->ItemIndex = NumeroFMV;
+		// se lo shcermo e' gia' hide non fare il fade out
+		if (GlobTomb4.TestNoUpdate)
+			TestFade = false;
+
+		if (TestFade == false) {
+			pAzione->Arg1 = 2;
+
+			GlobTomb4.TestNoUpdate = true;
+
+		} else {
+			pAzione->Arg1 = 30;
+		}
+
+		pFmv->SalvaBloccatiFMV = GlobTomb4.KeysToStop;
+		GlobTomb4.KeysToStop = -1;
+
+		SospendiSuoniPerFMV();
+
+		pFmv->TestFattoFadeOut = false;
+
+		if (TestFade) {
+
+			tomb4::SetScreenFadeOut(30, 0);
+			pFmv->TestFattoFadeOut = true;
+		}
+	}
+
+	// verifica se esiste un file fmv con estensione dello script in cartelle "fmvs" / "store" o in cartella "trle"
+	bool TrovaFileFMV(char NomeFmv[], int Indice)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// chiamata all'avvio di filmato, salva i dati relativi
+	// a suoni cd e li chiude
+	void SospendiSuoniPerFMV(void)
+	{
+		StrCanaleBass *pCanale;
+		StrBassHandles *pBass;
+		int i;
+		StrFMV *pFmv;
+
+		// agigungere info sui cd in azione
+
+		pBass = &GlobTomb4.BaseBassHandles;
+		pFmv = &GlobTomb4.BaseFMV;
+
+		pFmv->LastCdSound = -1;
+		pFmv->LastCdLoop = false;
+		if (pBass->TestPresente) {
+
+			pBass = &GlobTomb4.BaseBassHandles;
+			for (i = 0; i < 2; i++) {
+				pCanale = &pBass->VetCanali[i];
+
+				if (pCanale->Canale != NULL && pBass->Proc.BASS_ChannelIsActive(pCanale->Canale) != 0) {
+					// canale attivo
+					pFmv->LastCdSound = pCanale->NumeroCd;
+					if (pCanale->Loop)
+						pFmv->LastCdLoop = true;
+
+					// salvare posizione di suono
+					pFmv->LastCdPosizione = (DWORD) pBass->Proc.BASS_ChannelGetPosition(pCanale->Canale, BASS_POS_BYTE);
+					break;
+				}
+
+			}
+			StopBassSuoni(-1);
+
+		} else {
+			// non c'e' bass, usare vecchio metodo perconoscere il cd attivo
+			// e se ha il loop o meno
+			pFmv->LastCdSound = *GlobTomb4.pAdr->pAudioTrackLoop;
+			pFmv->LastCdLoop = *GlobTomb4.pAdr->pTestAudioTrackLoop;
+			tomb4::S_CDStop();
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace)
@@ -2203,4 +2353,8 @@ void LoadTombNextGenerationInject_Oggetti(bool replace)
 	ProcessInject(0x1002255A, (unsigned int)trng::BeginCicloDraw, replace);
 	ProcessInject(0x10022562, (unsigned int)trng::EndCicloDraw, replace);
 	ProcessInject(0x10022470, (unsigned int)trng::RiprendiAudio, replace);
+	ProcessInject(0x10025F13, (unsigned int)trng::ElaboraTriggerFMV, replace);
+	ProcessInject(0x10025D9D, (unsigned int)trng::PreparaLancioFilmato, replace);
+	ProcessInject(0x10026030, (unsigned int)trng::TrovaFileFMV, false);
+	ProcessInject(0x10025CA9, (unsigned int)trng::SospendiSuoniPerFMV, replace);
 }

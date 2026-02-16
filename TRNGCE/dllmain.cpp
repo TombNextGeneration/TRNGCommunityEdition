@@ -50,6 +50,13 @@
 #include "tomb4/specific/time.h"
 #include "tomb4/game/traps.h"
 #include "tomb4/game/sphere.h"
+#include "tomb4/game/delstuff.h"
+#include "tomb4/game/bike.h"
+#include "tomb4/game/lara1gun.h"
+#include "trng/trng_keypad.h"
+#include "tomb4/specific/gamemain.h"
+#include "tomb4/game/camera.h"
+#include "tomb4/specific/LoadSave.h"
 
 #pragma pack(push, 1)
 struct Jump {
@@ -114,6 +121,7 @@ static void LoadTombNextGenerationInject(bool replace) {
 	LoadTombNextGenerationInject_Oggetti(replace);
 	LoadTombNextGenerationInject_TrngElevator(replace);
 	LoadTombNextGenerationInject_TrngFlipeffects(replace);
+	LoadTombNextGenerationInject_TrngKeypad(replace);
 }
 
 static void __stdcall LoadInject(ULONG NotificationReason, LDR_DLL_NOTIFICATION_DATA *NotificationData, PVOID Context) {
@@ -161,6 +169,12 @@ static void Inject(bool replace) {
 	Inject_Time(replace);
 	Inject_Traps(replace);
 	Inject_Sphere(replace);
+	Inject_Delstuff(replace);
+	Inject_Bike(replace);
+	Inject_Lara1Gun(replace);
+	Inject_Gamemain(replace);
+	Inject_Camera(replace);
+	Inject_Loadsave(replace);
 }
 
 static LPSTR __stdcall CallInject() {

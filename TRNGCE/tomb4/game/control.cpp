@@ -31,6 +31,7 @@
 #include "health.h"
 #include "savegame.h"
 #include "../../trng/Tomb_NextGeneration.h"
+#include "../../trng/zPatchesTomb4.h"
 
 namespace tomb4
 {
@@ -73,6 +74,29 @@ namespace tomb4
 	short &ZSoff2 = *reinterpret_cast<decltype(&ZSoff2)>(0x753C18);
 	char &PoisonFlag = *reinterpret_cast<decltype(&PoisonFlag)>(0x7FD0F4);
 	short* &trigger_index = *reinterpret_cast<decltype(&trigger_index)>(0x7FE128);
+	short &FXType = *reinterpret_cast<decltype(&FXType)>(0x7FE6C0);
+
+	// consentire uso di mirino laser per arpione sott'acqua
+	// chiamata con jmp
+	static bool LaserSightHarpoon()
+	{
+		// vedere se ci sono le consizioni per fare controllo di patch arpione
+		if (!trng::BaseCustomize.BaseHarpoon.TestArpione || trng::BaseCustomize.BaseHarpoon.ArpioneFlags & trng::HRP_DISABLE_LASER_SIGHT)
+			return false;
+
+		// lara underwater ?
+		if (lara_item->current_anim_state != AS_TREAD)
+			return false;
+
+		// ora verificare anche che ci sia balestra in mano
+		trng::TestEsitoBow = trng::IsLaraHolding(trng::HOLD_CROSSBOW);
+
+		if (!trng::TestEsitoBow)
+			return false;
+
+		// ok e' tutto a posto
+		return true;
+	}
 
 	long ControlPhase(long nframes, long demo_mode)
 	{
@@ -80,7 +104,14 @@ namespace tomb4
 		FX_INFO* fx;
 		FLOOR_INFO* floor;
 		MESH_INFO* mesh;
+		void (*control)(short item_number);
+		trng::CALL_INVENTORY_MAIN inventory_call;
+		trng::CALL_PAUSE_MANAGER pause_call;
+		trng::CALL_SLOT_MANY slot_call;
+		trng::CALL_LARA_CTRL lara_call;
+		long ret;
 		short item_num, nex, fx_num;
+		bool skip;
 
 		RegeneratePickups();
 
@@ -124,8 +155,56 @@ namespace tomb4
 
 			if (gfCurrentLevel && (dbinput & IN_OPTION || GLOBAL_enterinventory != -1) && !cutseq_trig && lara_item->hit_points > 0)
 			{
-				if (S_CallInventory2())
-					return 2;
+				// se e' stato appena chiusa schermata di binocolo NON entrare in inventario
+				if (GnFrameCounter - trng::GlobTomb4.LastTimeBinoculars <= 12)
+				{
+					// inibire inventario
+					dbinput = 0;
+					linput = 0;
+					input = 0;
+				}
+				else
+				{
+					trng::GlobTomb4.LastTimeBinoculars = 0;
+					trng::SalvaMiniShot();
+					trng::TestLoadedGame = 0;
+					skip = false;
+
+					// controlla callback first
+					if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetDirectCB[trng::CB_INVENTORY_MAIN] & trng::CBT_FIRST)
+					{
+						// c'e' una callback first
+						// argomenti per eseguicb:
+						if (trng::EseguiCallBackDirects(trng::CB_INVENTORY_MAIN, trng::CBT_FIRST, NULL, 0, false, false, NULL) & trng::IRET_SKIP_ORIGINAL)
+							skip = true;
+					}
+
+					if (!skip)
+					{
+						// controllo per CBT_REPLACE
+						inventory_call = (trng::CALL_INVENTORY_MAIN)trng::MyGlobPrivate.BaseVetCbReplace.VetDirectCB[trng::CB_INVENTORY_MAIN];
+
+						if (inventory_call)
+						{
+							// eseguire replace
+							if (inventory_call(trng::CBT_REPLACE, false, -1) & trng::IRET_LOADED_GAME)
+								trng::TestLoadedGame = 1;
+						}
+						else
+							trng::TestLoadedGame = S_CallInventory2();
+					}
+
+					// verifica callback after
+					if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetDirectCB[trng::CB_INVENTORY_MAIN] & trng::CBT_AFTER)
+					{
+						// eseguire callback after
+						if (trng::EseguiCallBackDirects(trng::CB_INVENTORY_MAIN, trng::CBT_AFTER, NULL, 0, trng::TestLoadedGame, false, NULL) & trng::IRET_LOADED_GAME)
+							trng::TestLoadedGame = 1;
+					}
+
+					if (trng::TestLoadedGame)
+						return 2;
+				}
 			}
 
 			if (gfLevelComplete)
@@ -149,7 +228,11 @@ namespace tomb4
 			if (!FadeScreenHeight)
 			{
 				if (input & IN_SAVE)
+				{
+					// chiamata prima di visuaizzare panello per mostrare save savegame list
+					trng::SalvaMiniShot();
 					S_LoadSave(IN_SAVE, 0);
+				}
 				else if (input & IN_LOAD)
 				{
 					if (S_LoadSave(IN_LOAD, 0) >= 0)
@@ -158,15 +241,36 @@ namespace tomb4
 
 				if (input & IN_PAUSE && !gfGameMode)
 				{
-					if (S_PauseMenu() == 8)
-						return 1;
+					ret = trng::PRET_EXECUTE_ORIGINAL;
+
+					// patch per callback CB_PAUSE_MANAGER
+					// nota: se restituisce c=1 allora si torna a title
+
+					// vedere se c'e' callback CB_PAUSE_MANAGER replace
+					pause_call = (trng::CALL_PAUSE_MANAGER)trng::MyGlobPrivate.BaseVetCbReplace.VetDirectCB[trng::CB_PAUSE_MANAGER];
+					if (pause_call)
+					{
+						// si, eseguire replace
+						// typedef int (__cdecl *CALL_PAUSE_MANAGER) (void);
+						ret = pause_call();
+
+						if (ret == trng::PRET_GO_TO_TITLE)
+							return 1;
+					}
+
+					// qui se e' l'ultimo valore possibile: PRET_EXECUTE_ORIGINAL, esegui procedura originale..
+					if (ret == trng::PRET_EXECUTE_ORIGINAL)
+					{
+						if (S_PauseMenu() == 8)
+							return 1;
+					}
 				}
 			}
 
 			if (MainThread.ended)
 				return 4;
 
-			if (input & IN_LOOK && (lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH ||
+			if (input & IN_LOOK && (LaserSightHarpoon() || lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH ||
 				(lara.IsDucked && !(input & IN_DUCK) && lara_item->anim_number == ANIM_DUCKBREATHE && lara_item->goal_anim_state == AS_DUCK)))
 			{
 				if (!BinocularRange)
@@ -223,8 +327,64 @@ namespace tomb4
 
 				if (item->after_death < 128)
 				{
+					trng::ExitMyFunction = 0;
+					trng::SalvaSlot = item->object_number;
+					trng::SalvaIndexItem = item_num;
+					trng::SalvaStrItem = (int)item;
+
+					// trova indirizzo di control procedure
 					if (objects[item->object_number].control)
-						objects[item->object_number].control(item_num);
+					{
+						trng::SalvaCall = (int)objects[item->object_number].control;
+
+						// verificare se c'e' una call back first per control slot
+						if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetSlotControl[trng::SalvaSlot] & trng::CBT_FIRST)
+						{
+							// eseguire call back first
+							//  EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags,
+							//								StrCollisionLara *pColl)
+							trng::ExitMyFunction = trng::EseguiCB_SlotFirstAfter(trng::CB_SLOT_CONTROL, item_num, (trng::StrItemTr4*)item, trng::CBT_FIRST, NULL);
+						}
+
+						skip = false;
+
+						if (!(trng::ExitMyFunction & trng::SRET_SKIP_TRNG_CODE))
+						{
+							// gestione trng di proccontrol
+							// salvare attuale record item
+							trng::MyOutResult = trng::GestioneControlObject((trng::StrItemTr4*)item, item_num);
+
+							if (!trng::MyOutResult)
+								skip = true;
+						}
+
+						if (!skip && !(trng::ExitMyFunction & trng::SRET_SKIP_ORIGINAL))
+						{
+							// controllare callback CBT_REPLACE
+							slot_call = (trng::CALL_SLOT_MANY)trng::MyGlobPrivate.BaseVetCbReplace.VetSlotControl[trng::SalvaSlot];
+
+							if (slot_call)
+							{
+								// eseguire call back
+								// (short IndexItem, StrItemTr4 *pItem, WORD CBT_Flags);
+								slot_call(trng::SalvaIndexItem, (trng::StrItemTr4*)item, trng::CBT_REPLACE);
+							}
+							else
+							{
+								// chiamare sub proc
+								control = (void(*)(short))trng::SalvaCall;
+								control(item_num);
+							}
+						}
+
+						// controllare call back CBT_AFTER
+						if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetSlotControl[trng::SalvaSlot] & trng::CBT_AFTER)
+						{
+							//  EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags,
+							//								StrCollisionLara *pColl)
+							trng::EseguiCB_SlotFirstAfter(trng::CB_SLOT_CONTROL, trng::SalvaIndexItem, (trng::StrItemTr4*)trng::SalvaStrItem, trng::CBT_AFTER, NULL);
+						}
+					}
 				}
 				else
 					KillItem(item_num);
@@ -299,7 +459,39 @@ namespace tomb4
 			InItemControlLoop = 1;
 
 			if (!GLOBAL_playing_cutseq && !gfGameMode)
-				LaraControl(0);
+			{
+				skip = false;
+
+				// int EseguiCallBackDirects(WORD CB_Type, WORD CBT_Flags, StrItemTr4 *pItem, short IndiceItem,
+				//						  bool Test1, bool Test2, void *pVertici)
+				// verifica callback CBT_AFTER
+				if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetDirectCB[trng::CB_LARA_CONTROL] & trng::CBT_FIRST)
+				{
+					// cercare callback
+					if (trng::EseguiCallBackDirects(trng::CB_LARA_CONTROL, trng::CBT_FIRST, NULL, 0, false, false, NULL) & trng::SRET_SKIP_ORIGINAL)
+						skip = true;
+				}
+
+				if (!skip)
+				{
+					lara_call = (trng::CALL_LARA_CTRL)trng::MyGlobPrivate.BaseVetCbReplace.VetDirectCB[trng::CB_LARA_CONTROL];
+
+					if (lara_call)
+					{
+						// passare anche struttura lara
+						lara_call(trng::CBT_REPLACE, (trng::StrItemTr4*)lara_item);
+					}
+					else
+						LaraControl(0);
+				}
+
+				// vedere se c'e' CBT_AFTER
+				if (trng::MyGlobPrivate.BaseVetCbFirstAfter.VetDirectCB[trng::CB_LARA_CONTROL] & trng::CBT_AFTER)
+				{
+					// eseguire CBT_AFTER
+					trng::EseguiCallBackDirects(trng::CB_LARA_CONTROL, trng::CBT_AFTER, NULL, 0, false, false, NULL);
+				}
+			}
 
 			InItemControlLoop = 0;
 
@@ -314,6 +506,12 @@ namespace tomb4
 				SmashedMesh[SmashedMeshCount] = 0;
 			}
 
+			if (trng::GlobTomb4.FlagsLevelTr4 & trng::FLT_NEW_TRIGGERS)
+			{
+				trng::EsecuzioniFlipEffects();
+				trng::ElaboraScanAzioni();
+			}
+
 			KillMoveItems();
 
 			if (GLOBAL_inventoryitemchosen != -1)
@@ -326,7 +524,7 @@ namespace tomb4
 			{
 				HairControl(0, 0, 0);
 
-				if (gfLevelFlags & GF_YOUNGLARA)
+				if (trng::NuovoFlagCapelli & GF_YOUNGLARA)
 					HairControl(0, 1, 0);
 			}
 
@@ -345,6 +543,7 @@ namespace tomb4
 
 			CamRot.y = (mGetAngle(camera.pos.z, camera.pos.x, camera.target.z, camera.target.x) >> 4) & 0xFFF;
 			wibble = (wibble + 4) & 0xFC;
+			trng::LaraBreath(lara_item);
 			TriggerLaraDrips();
 			UpdateSparks();
 			UpdateFireSparks();
@@ -355,13 +554,19 @@ namespace tomb4
 			UpdateBlood();
 			UpdateDrips();
 			UpdateGunShells();
-			UpdateScarabs();
 			UpdateLocusts();
+			UpdateScarabs();
 			UpdateShockwaves();
 			UpdateLightning();
 			AnimateWaterfalls();
 			UpdatePulseColour();
 			SoundEffects();
+			trng::EsecuzioneAzioniProgressive();
+			trng::ReturnValue = trng::FineCiclo();
+
+			if (trng::ReturnValue & 0x80)
+				return trng::ReturnValue & 0xF;
+
 			health_bar_timer--;
 
 			if (!gfGameMode)
@@ -415,6 +620,21 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long GetCeiling(FLOOR_INFO* floor, long x, long y, long z)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	long GetWaterHeight(long x, long y, long z, short room_number)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void FlipMap(long FlipNumber)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Control(bool replace)
@@ -427,4 +647,7 @@ void Inject_Control(bool replace)
 	ProcessInject(0x449BD0, (unsigned int)tomb4::GetHeight, false);
 	ProcessInject(0x44A1F0, (unsigned int)tomb4::TestTriggers, false);
 	ProcessInject(0x44A0C0, (unsigned int)tomb4::RefreshCamera, false);
+	ProcessInject(0x44AD20, (unsigned int)tomb4::GetCeiling, false);
+	ProcessInject(0x449A50, (unsigned int)tomb4::GetWaterHeight, false);
+	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
 }

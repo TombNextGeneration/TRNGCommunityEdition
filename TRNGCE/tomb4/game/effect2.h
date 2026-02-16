@@ -12,6 +12,7 @@ namespace tomb4
 	void KillEverything();
 	void UpdateSparks();
 	void UpdateSplashes();
+	void TriggerExplosionSparks(long x, long y, long z, long extras, long dynamic, long uw, short room_number);
 }
 
 void Inject_Effect2(bool replace);

@@ -7,6 +7,8 @@ namespace tomb4
 	extern FX_INFO* &effects;
 
 	void SoundEffects();
+	void KillActiveBaddies(ITEM_INFO* item);
+	void ExplosionFX(ITEM_INFO* item);
 }
 
 void Inject_Effects(bool replace);

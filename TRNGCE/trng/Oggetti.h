@@ -53,6 +53,10 @@ namespace trng {
 	void BeginCicloDraw(void);
 	void EndCicloDraw(void);
 	void RiprendiAudio(void);
+	void ElaboraTriggerFMV(int NumeroFmv);
+	void PreparaLancioFilmato(int NumeroFMV);
+	bool TrovaFileFMV(char NomeFmv[], int Indice);
+	void SospendiSuoniPerFMV(void);
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace);

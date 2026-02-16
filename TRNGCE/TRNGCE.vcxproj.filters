@@ -123,9 +123,6 @@
     <ClInclude Include="flep\types.h">
       <Filter>flep</Filter>
     </ClInclude>
-    <ClInclude Include="tomb4\math_tbls.h">
-      <Filter>tomb4</Filter>
-    </ClInclude>
     <ClInclude Include="trng\ListTr4Patch.h">
       <Filter>trng</Filter>
     </ClInclude>
@@ -209,6 +206,21 @@
     </ClInclude>
     <ClInclude Include="tomb4\specific\time.h">
       <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\delstuff.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\bike.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\cmdline.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\lara1gun.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="trng\trng_keypad.h">
+      <Filter>trng</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -392,6 +404,21 @@
     </ClCompile>
     <ClCompile Include="tomb4\specific\time.cpp">
       <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\delstuff.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\bike.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\cmdline.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\lara1gun.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="trng\trng_keypad.cpp">
+      <Filter>trng</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

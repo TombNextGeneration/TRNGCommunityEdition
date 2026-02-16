@@ -14,6 +14,7 @@ namespace trng {
 	StrExtractNG &LastNGHeader = *reinterpret_cast<decltype(&LastNGHeader)>(0x106A3AA0);
 	StrSalvaVettoriRemap &SalvaVettoriRemap = *reinterpret_cast<decltype(&SalvaVettoriRemap)>(0x106A0790);
 	StrNGConstants &MainBaseCostanti = *reinterpret_cast<decltype(&MainBaseCostanti)>(0x106CF2D0);
+	DWORD &RetValue = *reinterpret_cast<decltype(&RetValue)>(0x106A3BB4);
 
 	char *TrovaDirectoryCorrente(void)
 	{

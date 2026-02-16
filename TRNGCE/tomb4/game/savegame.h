@@ -10,6 +10,7 @@ namespace tomb4
 	void ReadSG(void* pointer, long size);
 	void sgInitialiseHub(long dont_save_lara);
 	void sgSaveLevel();
+	void sgSaveGame();
 }
 
 void Inject_Savegame(bool replace);

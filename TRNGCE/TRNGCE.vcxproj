@@ -98,11 +98,13 @@
     <ClInclude Include="flep\patches\vehicles\quadbike.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tomb4\game\bike.h" />
     <ClInclude Include="tomb4\game\box.h" />
     <ClInclude Include="tomb4\game\camera.h" />
     <ClInclude Include="tomb4\game\collide.h" />
     <ClInclude Include="tomb4\game\control.h" />
     <ClInclude Include="tomb4\game\debris.h" />
+    <ClInclude Include="tomb4\game\delstuff.h" />
     <ClInclude Include="tomb4\game\deltapak.h" />
     <ClInclude Include="tomb4\game\effect2.h" />
     <ClInclude Include="tomb4\game\effects.h" />
@@ -110,6 +112,7 @@
     <ClInclude Include="tomb4\game\hair.h" />
     <ClInclude Include="tomb4\game\health.h" />
     <ClInclude Include="tomb4\game\items.h" />
+    <ClInclude Include="tomb4\game\lara1gun.h" />
     <ClInclude Include="tomb4\game\lara2gun.h" />
     <ClInclude Include="tomb4\game\laramisc.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
@@ -129,6 +132,7 @@
     <ClInclude Include="tomb4\game\voncroy.h" />
     <ClInclude Include="tomb4\specific\3dmath.h" />
     <ClInclude Include="tomb4\specific\audio.h" />
+    <ClInclude Include="tomb4\specific\cmdline.h" />
     <ClInclude Include="tomb4\specific\drawroom.h" />
     <ClInclude Include="tomb4\specific\dxshell.h" />
     <ClInclude Include="tomb4\specific\file.h" />
@@ -147,7 +151,6 @@
     <ClInclude Include="tomb4\specific\time.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
     <ClInclude Include="tomb4\types.h" />
-    <ClInclude Include="tomb4\math_tbls.h" />
     <ClInclude Include="trng\bass.h" />
     <ClInclude Include="trng\DefTomb4Funct.h" />
     <ClInclude Include="trng\ListTr4Patch.h" />
@@ -160,6 +163,7 @@
     <ClInclude Include="trng\Tomb_NextGeneration.h" />
     <ClInclude Include="trng\trng_elevator.h" />
     <ClInclude Include="trng\trng_flipeffects.h" />
+    <ClInclude Include="trng\trng_keypad.h" />
     <ClInclude Include="trng\trng_weather.h" />
     <ClInclude Include="trng\zPatchesTomb4.h" />
     <ClInclude Include="trng\zRoomEditor.h" />
@@ -169,11 +173,13 @@
     <ClCompile Include="flep\patches\vehicles\main.cpp" />
     <ClCompile Include="flep\patches\vehicles\minecart.cpp" />
     <ClCompile Include="flep\patches\vehicles\quadbike.cpp" />
+    <ClCompile Include="tomb4\game\bike.cpp" />
     <ClCompile Include="tomb4\game\box.cpp" />
     <ClCompile Include="tomb4\game\camera.cpp" />
     <ClCompile Include="tomb4\game\collide.cpp" />
     <ClCompile Include="tomb4\game\control.cpp" />
     <ClCompile Include="tomb4\game\debris.cpp" />
+    <ClCompile Include="tomb4\game\delstuff.cpp" />
     <ClCompile Include="tomb4\game\deltapak.cpp" />
     <ClCompile Include="tomb4\game\effect2.cpp" />
     <ClCompile Include="tomb4\game\effects.cpp" />
@@ -181,6 +187,7 @@
     <ClCompile Include="tomb4\game\hair.cpp" />
     <ClCompile Include="tomb4\game\health.cpp" />
     <ClCompile Include="tomb4\game\items.cpp" />
+    <ClCompile Include="tomb4\game\lara1gun.cpp" />
     <ClCompile Include="tomb4\game\lara2gun.cpp" />
     <ClCompile Include="tomb4\game\laramisc.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
@@ -200,6 +207,7 @@
     <ClCompile Include="tomb4\game\voncroy.cpp" />
     <ClCompile Include="tomb4\specific\3dmath.cpp" />
     <ClCompile Include="tomb4\specific\audio.cpp" />
+    <ClCompile Include="tomb4\specific\cmdline.cpp" />
     <ClCompile Include="tomb4\specific\drawroom.cpp" />
     <ClCompile Include="tomb4\specific\dxshell.cpp" />
     <ClCompile Include="tomb4\specific\file.cpp" />
@@ -223,6 +231,7 @@
     <ClCompile Include="trng\Tomb_NextGeneration.cpp" />
     <ClCompile Include="trng\trng_elevator.cpp" />
     <ClCompile Include="trng\trng_flipeffects.cpp" />
+    <ClCompile Include="trng\trng_keypad.cpp" />
     <ClCompile Include="trng\trng_weather.cpp" />
     <ClCompile Include="trng\zPatchesTomb4.cpp" />
     <ClCompile Include="trng\zRoomEditor.cpp" />

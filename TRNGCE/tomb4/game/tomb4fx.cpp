@@ -9,6 +9,7 @@ namespace tomb4
 	short &FlashFadeB = *reinterpret_cast<decltype(&FlashFadeB)>(0x4BF262);
 	short &FlashFader = *reinterpret_cast<decltype(&FlashFader)>(0x4BF264);
 	short &ScreenFading = *reinterpret_cast<decltype(&ScreenFading)>(0x4BF254);
+	short &ScreenFadedOut = *reinterpret_cast<decltype(&ScreenFadedOut)>(0x4BF252);
 
 	void TriggerBlood(long x, long y, long z, long angle, long num)
 	{

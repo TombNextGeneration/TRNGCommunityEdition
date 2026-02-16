@@ -106,6 +106,7 @@ namespace trng {
 	inline constexpr int MAX_EXTRA_EFFECT = 20;
 	inline constexpr int MAX_STATIC_MIP = 160;
 	inline constexpr int MAX_SALVA_CORD = 1024;
+	inline constexpr int MAX_TARA_ITEMS = 14;
 
 	// index to access to GlobTomb4.VetStringOffsets[]
 	// Print OFFset
@@ -1761,6 +1762,392 @@ namespace trng {
 	inline constexpr int JOINT_RIGHT_SHOULDER = 12;
 	inline constexpr int JOINT_RIGHT_ELBOW = 13;
 	inline constexpr int JOINT_RIGHT_WRIST = 14;
+
+	// returned value for CB_INVENTORY_MAIN callbacks
+	inline constexpr int IRET_OK = 0x0000;  // all fine, go on with common callback managemnt
+	inline constexpr int IRET_SKIP_ORIGINAL = 0x0001;   // skip original management, valid only for CBT_FIRST callback
+	inline constexpr int IRET_LOADED_GAME = 0x0002;   // valid only for CBT_REPLACE or CBT_AFTER callbacks.
+											          // It means that it has been loaded a savegame, in callback code.
+
+	// return value from callbacks for all slot procredures: Initialise, Control, Collision, Draw, Floor
+	// note: you can return two or more of following contant in some case, using or | operator:
+	// example: return SRET_SKIP_ORIGINAL | SRET_SKIP_TRNG_CODE;
+	inline constexpr int SRET_OK = 0x0000;  // all fine: go on with common callback mangement
+	inline constexpr int SRET_SKIP_ORIGINAL = 0x0001;  // valid only on CBT_FIRST call backs: the callback requires to skip the execution of tomb4 original code (becoming from CBT_FIRST to CBT_REPLACE)
+	inline constexpr int SRET_SKIP_TRNG_CODE = 0x0002; // valid only with CBT_FIRST call back on codes already managed by trng code (example: control object)
+
+	// return values for CB_PAUSE_MANAGER (pause manu) callback
+	inline constexpr int PRET_OK = 0;  // come back to game phase, the pause menu has been handled by this callback
+	inline constexpr int PRET_GO_TO_TITLE = 1;  // player selected "exit to title"
+	inline constexpr int PRET_EXECUTE_ORIGINAL = 2; // perform original pause management
+
+	// flagsper harpoon
+	inline constexpr int HRP_NO_SWIM_UNDERWATER = 0x0001;
+	inline constexpr int HRP_SINGLE_AMMO = 0x0002;
+	inline constexpr int HRP_DOUBLE_AMMO = 0x0004;
+	inline constexpr int HRP_DISABLE_LASER_SIGHT = 0x0008;
+
+	// costanti usate per trigger condition e per gobal trigger
+	inline constexpr int HOLD_PISTOLS = 1;
+	inline constexpr int HOLD_REVOLVER = 2;
+	inline constexpr int HOLD_UZI = 3;
+	inline constexpr int HOLD_SHOTGUN = 4;
+	inline constexpr int HOLD_GRENADEGUN = 5;
+	inline constexpr int HOLD_CROSSBOW = 6;
+	inline constexpr int HOLD_FLARE = 7;
+	inline constexpr int HOLD_OUT_TORCH = 8;
+	inline constexpr int HOLD_FIRED_TORCH = 9;
+	inline constexpr int HOLD_JEEP = 10;
+	inline constexpr int HOLD_SIDECAR = 11;
+	inline constexpr int HOLD_RUBBER_BOAT = 12;
+	inline constexpr int HOLD_MOTOR_BOAT = 13;
+	inline constexpr int HOLD_ROPE = 14;
+	inline constexpr int HOLD_POLE = 15;
+	inline constexpr int HOLD_ANY_TORCH = 16;
+	inline constexpr int HOLD_KAYAK = 17;
+
+	// costante a volte restituita da funzione GetHeight
+	// che vuol dire che nel settore analizzato c'e' un muro
+	inline constexpr int WALL_FLOOR = -32512;
+
+	// ---- flag per level_tr4
+	inline constexpr int FLT_NONE = 0;
+	inline constexpr int FLT_NEW_TRIGGERS = 0x0001;
+	inline constexpr int FLT_EXTRA_SOUND_TABLE = 0x0002;
+
+	// valori global triggers
+	inline constexpr int GT_USED_INVENTORY_ITEM = 1;  // proc separata
+	inline constexpr int GT_SCREEN_TIMER_REACHED = 2;
+	inline constexpr int GT_ENEMY_KILLED = 3;
+	inline constexpr int GT_LARA_HP_LESS_THAN = 4;
+	inline constexpr int GT_LARA_HP_HIGHER_THAN = 5;
+	inline constexpr int GT_USED_BIG_MEDIPACK = 6;
+	inline constexpr int GT_USED_LITTLE_MEDIPACK = 7;
+	inline constexpr int GT_USING_BINOCULAR = 8;
+	inline constexpr int GT_DAMAGE_BAR_LESS_THAN = 9;
+	inline constexpr int GT_LARA_POISONED = 10;
+	inline constexpr int GT_CONDITION_GROUP = 11;
+	inline constexpr int GT_DISTANCE_FROM_ITEM = 12;
+	inline constexpr int GT_COLLIDE_ITEM = 13;
+	inline constexpr int GT_COLLIDE_SLOT = 14;
+	inline constexpr int GT_COLLIDE_CREATURE = 15;
+	inline constexpr int GT_LOADED_SAVEGAME = 16;
+	inline constexpr int GT_SAVED_SAVEGAME = 17;
+	inline constexpr int GT_COLLIDE_STATIC_SLOT = 18;
+	inline constexpr int GT_DISTANCE_FROM_STATIC = 19;
+	inline constexpr int GT_LARA_HOLDS_ITEM = 20;
+	inline constexpr int GT_VSCROLL_COMPLETE = 21;
+	inline constexpr int GT_VSCROLL_LAST_VISIBLE = 22;
+	inline constexpr int GT_GAME_KEY1_COMMAND = 23;
+	inline constexpr int GT_GAME_KEY2_COMMAND = 24;
+	inline constexpr int GT_KEYBOARD_CODE = 25;
+	inline constexpr int GT_FMV_COMPLETED = 26;
+	inline constexpr int GT_TITLE_SCREEN = 27;
+	inline constexpr int GT_ELEVATOR_STOPS_AT_FLOOR = 28;
+	inline constexpr int GT_ELEVATOR_STARTS_FROM_FLOOR = 29;
+	inline constexpr int GT_BEFORE_SAVING_VARIABLES = 30;
+	inline constexpr int GT_AFTER_RELOADING_VARIABLES = 31;
+	inline constexpr int GT_ALWAYS = 32;
+	inline constexpr int GT_TRNG_G_TIMER_EQUALS = 33;
+	inline constexpr int GT_TRNG_L_TIMER_EQUALS = 34;
+	inline constexpr int GT_KEYPAD_SHOWED = 35;
+	inline constexpr int GT_KEYPAD_REMOVED = 36;
+	inline constexpr int GT_NO_ACTION_ON_ITEM = 37;
+	inline constexpr int GT_COMPLETED_SCALING_ON_ITEM = 38;
+	inline constexpr int GT_SELECTED_INVENTORY_ITEM = 39;
+	inline constexpr int GT_CREATED_NEW_ITEM = 40;
+
+	// flags per global triggers
+	inline constexpr int FGT_SINGLE_SHOT = 0x0001;
+	inline constexpr int FGT_NOT_TRUE = 0x0002;
+	inline constexpr int FGT_PUSHING_COLLISION = 0x0004;
+	inline constexpr int FGT_DISABLED = 0x0008;
+	inline constexpr int FGT_REMOVE_INPUT = 0x0010;
+	inline constexpr int FGT_SINGLE_SHOT_RESUMED = 0x0020;
+	inline constexpr int FGT_REPLACE_MANAGEMENT = 0x0040;
+	inline constexpr int FGT_HIDE_IN_DEBUG = 0x2000; // per escluderlo da log
+	inline constexpr int FGT_PAUSE_ONE_SHOT = 0x4000;  // interno
+
+	inline constexpr int BREAK_CONDTION_TRIGGER = 0;
+	inline constexpr int BREAK_GLOBAL_TRIGGER = 1;
+
+	inline constexpr int FRB_SWINGING_NORMAL = 0;
+	inline constexpr int FRB_SWINGING_LOW = 0x0001;
+	inline constexpr int FRB_SWINGING_HIGH = 0x0002;
+	inline constexpr int FRB_PITCHING_NORMAL = 0;
+	inline constexpr int FRB_PITCHING_LOW = 0x0004;
+	inline constexpr int FRB_PITCHING_HIGH = 0x0008;
+	inline constexpr int FRB_ALLOW_DRIFT = 0x0010;
+
+	// flags per standby
+
+	inline constexpr int FSB_DISABLE_ON_CRAMPED_SPACE = 0x0001;
+	inline constexpr int FSB_DISABLE_ON_COMBAT = 0x0002;
+	inline constexpr int FSB_EXIT_ON_ATTACK = 0x0004;
+	inline constexpr int FSB_FLIP_DISTANCE = 0x0008;
+	inline constexpr int FSB_FLIP_V_ANGLE = 0x0010;
+	inline constexpr int FSB_FLIP_H_ORIENT = 0x0020;
+	inline constexpr int FSB_FLIP_SPEED = 0x0040;
+	inline constexpr int FSB_FREEZE_ENEMIES = 0x0080;
+	inline constexpr int FSB_FREEZE_LARA = 0x0100;
+	inline constexpr int FSB_OVERLAP_AUDIO = 0x0200;
+	inline constexpr int FSB_IMMEDIATE = 0x0400;
+
+	// tipo di effetto per stand-by
+	inline constexpr int TSB_NO_CHANGE_CAMERA = 0;
+	inline constexpr int TSB_MATRIX = 1;
+	inline constexpr int TSB_PORTRAIT = 2;
+	inline constexpr int TSB_PANORAMA = 3;
+
+	// mnemonic constant for FlagsMain of StrItemTr4 structure
+	inline constexpr int FITEM_NONE = 0x0000; // used only to clear flags
+	inline constexpr int FITEM_ACTIVE = 0x0001; // item is active (it will move) flag set after calling AddActiveItem()
+	inline constexpr int FITEM_CREATURE = 0x0002; // Creatures are invisible until they have not been triggered
+	inline constexpr int FITEM_NOT_VISIBLE = 0x0004; // the item was not visible at start
+	inline constexpr int FITEM_GRAVITY_AFFECTED = 0x0008; // the item is falling down (or jumping up) and it's subject to gravity simulation, currently
+	inline constexpr int FITEM_FLAG_10 = 0x0010;  // (let for backward compatibility but now it is sure its meaning:
+								                  //  see the FITEM_ITEM_HAS_BEEN_HIT flag)
+	inline constexpr int FITEM_ITEM_HAS_BEEN_HIT = 0x0010; // the item has been hit: with weapons (but not grenade)
+	inline constexpr int FITEM_NOT_YET_ENABLED = 0x0020;  // the item has not yet been enabled (triggered)
+	inline constexpr int FITEM_KILLED_WITH_EXPLOSION = 0x0040; // trng flag, added to remember that this enemy has been killed with an explosion
+	inline constexpr int FITEM_POISONED = 0x0100; // enemy (or lara?) has been poisoned
+	inline constexpr int FITEM_AI_GUARD = 0x0200; // enemy was over a AI_GUARD item
+	inline constexpr int FITEM_AI_AMBUSH = 0x0400; // emeny was over a AI_AMBUSH item
+	inline constexpr int FITEM_AI_PATROL1 = 0x0800; // enemy was over a AI_PATROL1 (and perhaps AI_PATROL2)
+	inline constexpr int FITEM_AI_MODIFY = 0x1000; // enemy was over a AI_MODIFY item
+	inline constexpr int FITEM_AI_FOLLOW = 0x2000;  // enemy was over a AI_FOLLOW item
+	inline constexpr int FITEM_THROWN_AMMO = 0x4000; // (not sure) it used with visible ammo like greande or arrows of crossbow
+
+	// returned value for reply of cbGlobalTrigger call back
+	inline constexpr int RGT_TRUE = 0x01;   // condition is true
+	inline constexpr int RGT_FALSE = 0x00;   // condition is false
+	inline constexpr int RGT_IGNORE = 0x80;   // the callback doesn't handle this kind of GT_ value
+
+	inline constexpr int GTD_IGNORE_HEIGHT = 0x40000000;
+
+	// flags StatusNG  (SNG_...) per salvare test di qualche tipo in savegame
+	inline constexpr int SNG_NONE = 0;
+	inline constexpr int SNG_INFINITE_AIR = 0x00000001;  // anche patch trlm
+	inline constexpr int SNG_DISABLE_WEAPONS = 0x00000002;
+	inline constexpr int SNG_HIDE_HOLSTERS = 0x00000004;
+	inline constexpr int SNG_IMMORTAL_LARA = 0x00000008;  // usata solo come patch trlm 2009
+	inline constexpr int SNG_OPEN_ALL_DOORS = 0x00000010; // usata per patch trlm 2009
+	inline constexpr int SNG_KILL_ALL_ENEMIES = 0x00000020; // usata per trlm 2009
+	inline constexpr int SNG_REMOVE_IMMORTAL_LARA = 0x00000040; // usata da trlm 2009
+	inline constexpr int SNG_PATCH_LARA_STAR = 0x0000080; // usata trlm 2009
+	inline constexpr int SNG_UPDATE_LARA_POS = 0x0000100; // usata trlm 2009 dopo un move lara
+	inline constexpr int SNG_SUPER_BINOCULARS = 0x0000200; // usata per binocolo potenziato
+
+	// valori ocb per static
+	inline constexpr int OCBS_ATTIVO = 0x0001;
+	inline constexpr int OCBS_SALVARE = 0x002;
+	inline constexpr int OCBS_NO_COLLISIONI = 0x0004;
+	inline constexpr int OCBS_TRASPARENZA_GLASS = 0x0008;
+	inline constexpr int OCBS_TRASPARENZA_ICE = 0x0010;
+	inline constexpr int OCBS_DAMAGE_LARA = 0x0020;
+	inline constexpr int OCBS_BURN_LARA = 0x0040;
+	inline constexpr int OCBS_EXPLODE = 0x0080;
+	inline constexpr int OCBS_POISON = 0x0100;
+	inline constexpr int OCBS_HUGE_COLLISION = 0x0200;
+	inline constexpr int OCBS_HARD_SHATTER = 0x0400;
+	inline constexpr int OCBS_HEAVY_TRIGGER = 0x0800;
+	inline constexpr int OCBS_SCALABLE = 0x1000;
+	inline constexpr int OCBS_SHATTER_SPECIFIC = 0x2000;
+
+	// valore per TipoVar usata in adaptive far view
+	inline constexpr int TV_MIGLIORATO = 1;
+	inline constexpr int TV_UGUALE = 2;
+	inline constexpr int TV_PEGGIORATO = 3;
+
+	// flag FAN_ ossia flag per comando Animation=
+	inline constexpr int FAN_SET_FREE_HANDS = 0x0001;
+	inline constexpr int FAN_START_FROM_EXTRA_FRAME = 0x0002;
+	inline constexpr int FAN_SET_NEUTRAL_STATE_ID = 0x0004;
+	inline constexpr int FAN_KEYS_AS_SCANCODE = 0x0008;
+	inline constexpr int FAN_DISABLE_PUSH_AWAY = 0x0010;
+	inline constexpr int FAN_KEEP_NEXT_STATEID = 0x0020;
+	inline constexpr int FAN_ENABLE_GRAVITY = 0x0040;
+	inline constexpr int FAN_DISABLE_GRAVITY = 0x0080;
+	inline constexpr int FAN_PERFORM_TRIGGER_GROUP = 0x0100;
+	inline constexpr int FAN_SET_FREE_HANDS_TEMP = 0x0200;
+	inline constexpr int FAN_SET_BUSY_HANDS = 0x0400;
+	inline constexpr int FAN_ALIGN_TO_ENV_POS = 0x0800;
+	inline constexpr int FAN_SET_ADDEFFECT = 0x1000;
+	inline constexpr int FAN_RANDOM = 0x2000;
+	inline constexpr int FAN_SET_LARA_PLACE = 0x4000;
+
+	// comando key1
+	inline constexpr int KEY1_RELEASED = 0x8000;
+
+	// valori costanti per campo Environment di comando animation
+	inline constexpr int ENV_NO_BLOCK_IN_FRONT = 1;
+	inline constexpr int ENV_HANG_WITH_FEET = 2;
+	inline constexpr int ENV_HOLE_FLOOR_IN_FRONT = 3;
+	inline constexpr int ENV_MONKEY_CEILING = 4;
+	inline constexpr int ENV_CLIMB_WALL_IN_FRONT = 5;
+	inline constexpr int ENV_CLIMB_WALL_AT_RIGHT = 6;
+	inline constexpr int ENV_CLIMB_WALL_AT_LEFT = 7;
+	inline constexpr int ENV_HOLE_IN_FRONT_CEILING_CLIMB = 8;
+	inline constexpr int ENV_HOLE_BACK_CEILING_CLIMB = 9;
+	inline constexpr int ENV_NO_BLOCK_AT_RIGHT = 10;
+	inline constexpr int ENV_NO_BLOCK_AT_LEFT = 11;
+	inline constexpr int ENV_HOLE_FLOOR_AT_RIGHT = 12;
+	inline constexpr int ENV_HOLE_FLOOR_AT_LEFT = 13;
+	inline constexpr int ENV_HOLE_FLOOR_BACK = 14;
+	inline constexpr int ENV_NO_BLOCK_BACK = 15;
+	inline constexpr int ENV_CLIMB_WALL_BACK = 16;
+	inline constexpr int ENV_SUPPORT_IN_FRONT_WALL = 17;
+	inline constexpr int ENV_SUPPORT_IN_RIGHT_WALL = 18;
+	inline constexpr int ENV_SUPPORT_IN_LEFT_WALL = 19;
+	inline constexpr int ENV_SUPPORT_IN_BACK_WALL = 20;
+	inline constexpr int ENV_ITEM_EXTRA_IN_FRONT = 21;
+	inline constexpr int ENV_ITEM_EXTRA_OVER = 22;
+	inline constexpr int ENV_ITEM_EXTRA_UNDER = 23;
+	inline constexpr int ENV_MULT_CONDITION = 24;
+	inline constexpr int ENV_HANG_LEFT_IN_CORNER = 25;
+	inline constexpr int ENV_HANG_LEFT_OUT_CORNER = 26;
+	inline constexpr int ENV_HANG_RIGHT_IN_CORNER = 27;
+	inline constexpr int ENV_HANG_RIGHT_OUT_CORNER = 28;
+	inline constexpr int ENV_HANG_LEFT_SPACE = 29;
+	inline constexpr int ENV_HANG_RIGHT_SPACE = 30;
+	inline constexpr int ENV_DISTANCE_CEILING = 31;
+	inline constexpr int ENV_CLIMB_LEFT_IN_CORNER = 32;
+	inline constexpr int ENV_CLIMB_LEFT_OUT_CORNER = 33;
+	inline constexpr int ENV_CLIMB_RIGHT_IN_CORNER = 34;
+	inline constexpr int ENV_CLIMB_RIGHT_OUT_CORNER = 35;
+	inline constexpr int ENV_CLIMB_LEFT_SPACE = 36;
+	inline constexpr int ENV_CLIMB_RIGHT_SPACE = 37;
+	inline constexpr int ENV_MULT_OR_CONDITION = 38;
+	inline constexpr int ENV_DISTANCE_FLOOR = 39;
+	inline constexpr int ENV_FRAME_NUMBER = 40;
+	inline constexpr int ENV_VERTICAL_ORIENT = 41;
+	inline constexpr int ENV_ON_VEHICLE = 42;
+	inline constexpr int ENV_FREE_HANDS = 43;
+	inline constexpr int ENV_UNDERWATER = 44;
+	inline constexpr int ENV_FLOATING = 45;
+	inline constexpr int ENV_ONLAND = 46;
+	inline constexpr int ENV_IS_STILL = 47;
+	inline constexpr int ENV_ANIM_COMPLETE = 48;
+	inline constexpr int ENV_FLYING_UP = 49;
+	inline constexpr int ENV_FLYING_DOWN = 50;
+	inline constexpr int ENV_WALL_HOLE_IN_FRONT = 51;
+	inline constexpr int ENV_IN_LEFT_SIDE_SECTOR = 52;
+	inline constexpr int ENV_IN_RIGHT_SIDE_SECTOR = 53;
+	inline constexpr int ENV_ITEM_EXTRA_AT_LEFT = 54;
+	inline constexpr int ENV_ITEM_EXTRA_AT_RIGHT = 55;
+	inline constexpr int ENV_ITEM_TEST_POSITION = 56;
+	inline constexpr int ENV_HOLD_EXTRA_ITEM_IN_HANDS = 57;
+	inline constexpr int ENV_CONDITION_TRIGGER_GROUP = 58;
+	inline constexpr int ENV_ROOM_IS = 59;
+	inline constexpr int ENV_PLAYER_IS_SLEEPING = 60;
+	inline constexpr int ENV_PLAYER_WOKE_UP = 61;
+	inline constexpr int ENV_DISTANCE_NORTH_WALL = 62;
+	inline constexpr int ENV_DISTANCE_SOUTH_WALL = 63;
+	inline constexpr int ENV_DISTANCE_EAST_WALL = 64;
+	inline constexpr int ENV_DISTANCE_WEST_WALL = 65;
+	inline constexpr int ENV_LARA_IN_MICRO_STRIP = 66;
+	// usati da nemici:
+	inline constexpr int ENV_NO_BOX_IN_FRONT = 67;
+	inline constexpr int ENV_NO_BOX_AT_LEFT = 68;
+	inline constexpr int ENV_NO_BOX_AT_RIGHT = 69;
+	inline constexpr int ENV_NO_BOX_BACK = 70;
+	inline constexpr int ENV_ENEMY_SEE_LARA = 71;
+	inline constexpr int ENV_FRAME_RANGE = 72;
+
+	// quelli di byte alto considerarli numberi e non flag, usare maschera, eccetto ENV_NON_TRUE che puo' essere usato
+	// con altri
+	inline constexpr int ENV_NON_TRUE = 0x0080;
+
+	inline constexpr int ENV_POS_LEFT_CORNER = 0x0100;
+	inline constexpr int ENV_POS_RIGHT_CORNER = 0x0200;
+	inline constexpr int ENV_POS_CENTRAL = 0x0400;
+	inline constexpr int ENV_POS_HORTOGONAL = 0x0800;
+	inline constexpr int ENV_POS_IN_THE_MIDDLE = 0x1000;
+	inline constexpr int ENV_POS_STRIP_3 = 0x2000;
+	inline constexpr int ENV_POS_STRIP_2 = 0x4000;
+	inline constexpr int ENV_POS_STRIP_1 = 0x8000;
+
+	// maschere per ottenere flag o condizioni
+	inline constexpr int ENV_MASK_CONDITION = 0x7f;
+	inline constexpr int ENV_MASK_FLAGS = 0xFF80;
+
+	// usati per flag di testposition script command
+	inline constexpr int TPOS_DOUBLE_HORIENT = 0x0001;
+	inline constexpr int TPOS_FOUR_HORIENT = 0x0002;
+	inline constexpr int TPOS_TEST_ITEM_INDEX = 0x0004;
+	inline constexpr int TPOS_FAST_ALIGNMENT = 0x0008;
+	inline constexpr int TPOS_OPPOSITE_FACING = 0x0010;
+	inline constexpr int TPOS_ROUND_HORIENT = 0x0020;
+	inline constexpr int TPOS_TURN_FACING_90 = 0x0040;
+	inline constexpr int TPOS_TURN_FACING_180 = 0x0080;
+	inline constexpr int TPOS_SELF_FIXING = 0x0100;
+
+	// flag aggiunti a indici di animating di mirror per attuare aggiustamenti
+	inline constexpr int FMIR_MASK_INDEX = 0xFFF;
+	inline constexpr int FMIR_MASK_FLAGS = 0x7000;
+	inline constexpr int FMIR_ALTERNATE_REFLEX = 0x1000;
+	inline constexpr int FMIR_ADJUST_X = 0x2000;
+	inline constexpr int FMIR_ADJUST_Z = 0x4000;
+
+	inline constexpr int MIR_WEST_WALL = 0;
+	inline constexpr int MIR_FLOOR = 1;
+	inline constexpr int MIR_CEILING = 2;
+	inline constexpr int MIR_INVERSE_WEST = 3;
+	inline constexpr int MIR_EAST_WALL = 4;
+	inline constexpr int MIR_SOUTH_WALL = 5;
+	inline constexpr int MIR_NORTH_WALL = 6;
+
+	// comandi tastiera da bloccare o inviare
+	inline constexpr int CMD_ALL = 0xffffffff;    // 0 All keyboard commands
+	inline constexpr int CMD_UP = 0x00000001;			//  1: Up
+	inline constexpr int CMD_DOWN = 0x00000002;			// 2: Down
+	inline constexpr int CMD_LEFT = 0x00000004;			// 3: Left
+	inline constexpr int CMD_RIGHT = 0x00000008;		// 4: Right
+	inline constexpr int CMD_DUCK = 0x20000000;		// 5: Duck
+	inline constexpr int CMD_DASH = 0x40000000;		// 6: Dash
+	inline constexpr int CMD_WALK = 0x00000080;		// 7: Walk
+	inline constexpr int CMD_JUMP = 0x00000010;		// 8: Jump
+	inline constexpr int CMD_ACTION = 0x00000040;		// 9: Action
+	inline constexpr int CMD_DRAW_WEAPON = 0x00000020;  // 10: Draw Weapon
+	inline constexpr int CMD_USE_FLARE = 0x00080000;   // 11: Use Flare
+	inline constexpr int CMD_LOOK = 0x00000200;	// 12: Look
+	inline constexpr int CMD_ROLL = 0x00001000;	//  13: Roll
+	inline constexpr int CMD_INVENTORY = 0x00200100;  //  14: Inventory
+	inline constexpr int CMD_STEP_LEFT = 0x00000480;  // 15: Step Left
+	inline constexpr int CMD_STEP_RIGHT = 0x00000880; // 16: Step Right
+	inline constexpr int CMD_PAUSE = 0x00002000;    //  17: Pause
+	inline constexpr int CMD_SAVE_GAME = 0x00400000;    // 18: Save the game (special)
+	inline constexpr int CMD_LOAD_GAME = 0x00800000;    // 19: Load the game (special)
+	inline constexpr int CMD_WEAPON_KEYS = 0x10000000;		//  20: Select weapon keys
+	inline constexpr int CMD_ENTER = 0x00100000;     // 21: Enter
+
+	// valori FKP  per keypad
+	inline constexpr int FKP_ATTESA = 0;
+	inline constexpr int FKP_ATTENDI_FINE_ESCAPE = 1;
+	inline constexpr int FKP_ANIMAZIONE_TASTO = 2;
+	inline constexpr int FKP_RIMUOVI = 3;
+	inline constexpr int FKP_WAIT_ANIMATION = 4;
+	inline constexpr int FKP_WAIT_END_ANIMATION = 5;
+
+	// flags TKP  Tipo Key Pad da passare a GestioneKeyPad
+	inline constexpr int TKP_ELEVATOR = 1;
+	inline constexpr int TKP_SWITCH = 2;
+
+	// valore di fase per target FTR_
+	// FTR_ 0= nascita / 1 = lampeggio fisso / -1 non attivo
+	inline constexpr int FTR_NASCITA = 0;
+	inline constexpr int FTR_LAMPEGGIO = 1;
+	inline constexpr int FTR_INATTIVO = -1;
+
+	// durata in frame delle diverse fasi
+	inline constexpr int DTAR_NASCITA = (FRAME_SECONDO / 4);
+	inline constexpr int DTAR_LAMPEGGIO_TONDO = (FRAME_SECONDO / 8);
+	inline constexpr int DTAR_LAMPEGGIO_TRIANGOLO = (FRAME_SECONDO / 2);
+	inline constexpr int DTAR_DURATA_TARGET = (FRAME_SECONDO * 7);
+
+	inline constexpr int PTR_BASE_LARA = 0;
+	inline constexpr int PTR_SOPRA_LARA = 1;
+	inline constexpr int PTR_SOTTO_LARA = -1;
 
 	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
 
@@ -5785,6 +6172,17 @@ namespace trng {
 
 	struct StrListaWav {
 		char Testo[64];
+	};
+
+	struct StrSalvaOldDebug {
+		WORD OldFlagsDgx;
+		WORD OldCounter;
+	};
+
+	struct StrOrient {
+		short OrientV;
+		short OrientH;
+		short OrientR;
 	};
 #pragma pack(pop)
 }

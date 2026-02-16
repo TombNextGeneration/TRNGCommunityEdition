@@ -9,9 +9,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void LaraBurn()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Traps(bool replace)
 {
 	ProcessInject(0x415A10, (unsigned int)tomb4::OnTwoBlockPlatform, false);
+	ProcessInject(0x414D90, (unsigned int)tomb4::LaraBurn, false);
 }

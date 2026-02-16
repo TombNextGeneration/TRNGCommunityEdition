@@ -42,6 +42,7 @@ namespace tomb4
 	extern short &ZSoff2;
 	extern char &PoisonFlag;
 	extern short* &trigger_index;
+	extern short &FXType;
 
 	long ControlPhase(long nframes, long demo_mode);
 	void UpdateSky();
@@ -51,6 +52,9 @@ namespace tomb4
 	long GetHeight(FLOOR_INFO* floor, long x, long y, long z);
 	void TestTriggers(short* data, long heavy, long HeavyFlags);
 	void RefreshCamera(short type, short* data);
+	long GetCeiling(FLOOR_INFO* floor, long x, long y, long z);
+	long GetWaterHeight(long x, long y, long z, short room_number);
+	void FlipMap(long FlipNumber);
 }
 
 void Inject_Control(bool replace);

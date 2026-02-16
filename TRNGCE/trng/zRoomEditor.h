@@ -10,6 +10,7 @@ namespace trng {
 	extern StrExtractNG &LastNGHeader;
 	extern StrSalvaVettoriRemap &SalvaVettoriRemap;
 	extern StrNGConstants &MainBaseCostanti;
+	extern DWORD &RetValue;
 
 	char *TrovaDirectoryCorrente(void);
 	char ** Split(char *pStringa, char Separatore, int* pTotPezzi, char *pBufferHost, char **pVetPtr, bool TestSoloPrimo);

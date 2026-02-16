@@ -31,12 +31,28 @@
 #include "zRoomEditor.h"
 #include "../tomb4/game/laraskin.h"
 #include "../tomb4/game/sphere.h"
+#include "../tomb4/game/box.h"
+#include "../tomb4/game/delstuff.h"
+#include "../tomb4/specific/function_stubs.h"
+#include "../tomb4/game/bike.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
 	StrBaseMemAllocata &BaseAlloc = *reinterpret_cast<decltype(&BaseAlloc)>(0x10658848);
 	int &LivelloOldNumber = *reinterpret_cast<decltype(&LivelloOldNumber)>(0x10679F50); // usato per passarlo a callback cbInitLevel
 	int &GlobIndiceCombine = *reinterpret_cast<decltype(&GlobIndiceCombine)>(0x10679E68);
+	// chiamata quando si entra in inventario
+	int &TestLoadedGame = *reinterpret_cast<decltype(&TestLoadedGame)>(0x10657B68);
+	WORD &RetSlotAss = *reinterpret_cast<decltype(&RetSlotAss)>(0x10657B6A);
+	int &SlotSceltoInventario = *reinterpret_cast<decltype(&SlotSceltoInventario)>(0x10657F7C);
+	int &TestEsitoBow = *reinterpret_cast<decltype(&TestEsitoBow)>(0x10679E3C);
+	int &ExitMyFunction = *reinterpret_cast<decltype(&ExitMyFunction)>(0x10679F60);
+	int &SalvaSlot = *reinterpret_cast<decltype(&SalvaSlot)>(0x10679F70);
+	int &SalvaIndexItem = *reinterpret_cast<decltype(&SalvaIndexItem)>(0x10679F68);
+	int &SalvaStrItem = *reinterpret_cast<decltype(&SalvaStrItem)>(0x10679F74);
+	int &SalvaCall = *reinterpret_cast<decltype(&SalvaCall)>(0x10679F6C);
+	DWORD &MyOutResult = *reinterpret_cast<decltype(&MyOutResult)>(0x10679F2C);
+	StrSalvaOldDebug (&VetSalvaOldDebug)[30] = *reinterpret_cast<decltype(&VetSalvaOldDebug)>(0x106699EC);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -2077,19 +2093,7 @@ namespace trng {
 
 	void TrovaNuovoNomeShot(char *pNuovoNome)
 	{
-#if 0
-		int i;
-
-		// ora trovare un nome shot?.bmp ancora libero
-		for (i = 0; i < 1000; i++) {
-			sprintf(pNuovoNome, "shot%03d.bmp", i);
-			if (EsisteFile(pNuovoNome) == false)
-				return;
-		}
-		return;
-#else
 		__try { throw __func__; } __finally {}
-#endif
 	}
 
 	// restituisce true se i piedi di lara sono in palude
@@ -2112,6 +2116,809 @@ namespace trng {
 		if (GlobTomb4.pAdr->pVetRooms[Room].FlagsRoom & 0x4)
 			return true;
 		return false;
+	}
+
+	// chiamata prima di entrare in inventario o in pannello di salvataggio
+	// savegame
+	// cattura lo schermo in anticipo in modo da poter eventualmwente
+	// salvarne l'immagine in savegame
+	void SalvaMiniShot(void)
+	{
+		if (GlobTomb4.ScreenShot.TestSalvaMiniShot == false)
+			return;
+
+		// provare a salvarlo direttamente in memoria
+		SalvaShotTomb4("ShotGame.bmp", false);
+	}
+
+	// gestisce TUTTE (non proprio tutte in realta') le callback directCB con flags ma senza argomenti
+
+	int EseguiCallBackDirects(WORD CB_Type, WORD CBT_Flags, StrItemTr4 *pItem, short IndiceItem, bool Test1, bool Test2, void *pVertici)
+	{
+		DWORD i;
+		StrMyDatabase *pDB;
+		StrPluginRec *pRec;
+		StrRecordCallBack *pCall;
+		int j;
+		int RetValue;
+		int Temp;
+		CALL_LARA_CTRL CallLaraCtrl;
+		CALL_LARA_DRAW CallLaraDraw;
+		CALL_HAIR_DRAW CallHairDraw;
+		CALL_HAIR_CONTROL CallHairControl;
+		CALL_INVENTORY_MAIN CallInventory;
+		CALL_INVENTORY_BACKGROUND CallBackGroundInvent;
+		CALL_ANIMATE_LARA CallAnimateLara;
+		CALL_OPTIONS_MANAGER CallOptions;
+
+		RetValue = SRET_OK;
+
+		pDB = &MyGlobPrivate.DataBase;
+
+		pRec = &pDB->pVetPlugins[1];
+
+		for (i = 1; i < pDB->TotPlugins; i++) {
+			if (pRec->VetDirectCB[CB_Type]) {
+
+				// c'e' una callback del tipo cercato
+				pCall = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCall->CB_Tipo == CB_Type && (pCall->Flags & CBT_Flags) != 0) {
+						// trovata, ora eseguirla in modo diverso a seconda del tipo
+						switch (CB_Type) {
+						case CB_OPTIONS_MANAGER:
+							CallOptions = (CALL_OPTIONS_MANAGER) pCall->pCall;
+							// (bool TestTitle, bool TestCommands, int SelectedRow);
+							Temp = CallOptions(Test1, Test2, IndiceItem);
+							RetValue |= Temp;
+							break;
+
+						case CB_LARA_CONTROL:
+							CallLaraCtrl = (CALL_LARA_CTRL) pCall->pCall;
+							pItem = GlobTomb4.pAdr->pLara;
+							Temp = CallLaraCtrl(CBT_Flags, pItem);
+							RetValue |= Temp;
+							break;
+						case CB_LARA_DRAW:
+							//  (WORD CBT_Flags, StrItemTr4 * pLara, bool TestNoUpdateLight, bool TestMirror);
+							CallLaraDraw = (CALL_LARA_DRAW) pCall->pCall;
+							Temp = CallLaraDraw(CBT_Flags, pItem, Test1, Test2);
+							RetValue |= Temp;
+							break;
+						case CB_LARA_HAIR_DRAW:
+							// (WINAPI *CALL_HAIR_DRAW) (WORD CBT_Flags);
+							CallHairDraw = (CALL_HAIR_DRAW) pCall->pCall;
+							Temp = CallHairDraw(CBT_Flags);
+							RetValue |= Temp;
+							break;
+						case CB_LARA_HAIR_CONTROL:
+							// CALL_HAIR_CONTROL) (WORD CBT_Flags, bool TestKeepDownHair, bool TestSecondTail, void *pData);
+							CallHairControl = (CALL_HAIR_CONTROL) pCall->pCall;
+							Temp = CallHairControl(CBT_Flags, Test2, Test1, pVertici);
+							RetValue |= Temp;
+							break;
+						case CB_INVENTORY_MAIN:
+							CallInventory = (CALL_INVENTORY_MAIN) pCall->pCall;
+							// (WORD CBT_Flags, bool TestLoadedGame, int SelectedItem);
+							Temp = CallInventory(CBT_Flags, Test1, SlotSceltoInventario);
+							RetValue |= Temp;
+							break;
+						case CB_INVENT_BACKGROUND_CREATE:
+						case CB_INVENT_BACKGROUND_DRAW:
+						case CB_INVENT_BACKGROUND_QUIT:
+							CallBackGroundInvent = (CALL_INVENTORY_BACKGROUND) pCall->pCall;
+							// (WORD CB_Type, WORD CBT_Flags, WORD PHASE_Type);
+
+							Temp = CallBackGroundInvent(CB_Type, CBT_Flags, IndiceItem);
+							RetValue |= Temp;
+							break;
+						case CB_ANIMATE_LARA:
+							CallAnimateLara = (CALL_ANIMATE_LARA) pCall->pCall;
+							// (WORD CBT_Flags, StrItemTr4 *pLara);
+							Temp = CallAnimateLara(CBT_Flags, pItem);
+							RetValue |= Temp;
+							break;
+						}
+					}
+
+					pCall++;
+				}
+			}
+
+			pRec++;
+		}
+
+		return RetValue;
+	}
+
+	int EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags, StrCollisionLara *pColl)
+	{
+		// eseguire tutte le patch del tipo di input nella sequenza dei plugin
+		// funziona per: CB_SLOT_INITIALISE ; CB_SLOT_CONTROL e CB_SLOT_COLLISION e CB_SLOT_DRAW
+		DWORD i;
+		StrMyDatabase *pDB;
+		StrPluginRec *pRec;
+		StrRecordCallBack *pCall;
+		int j;
+		int SlotNow;
+		int RetValue;
+		CALL_SLOT_MANY MyCall;
+		CALL_SLOT_CB_COLLISION MyCallCollision;
+		int Temp;
+
+		RetValue = SRET_OK;
+
+		SlotNow = pItem->SlotID;
+		pDB = &MyGlobPrivate.DataBase;
+
+		pRec = &pDB->pVetPlugins[1];
+
+		for (i = 1; i < pDB->TotPlugins; i++) {
+			pCall = &pRec->VetRequiredCB[0];
+			for (j = 0; j < pRec->TotRequiredCB; j++) {
+				if (pCall->CB_Tipo == CB_Value && (pCall->Flags & CB_Flags) != 0 && pCall->Numero == SlotNow) {
+
+					// trovata call back di stesso tipo e numero: eseguirla
+					switch (CB_Value) {
+					case CB_SLOT_INITIALISE:
+					case CB_SLOT_CONTROL:
+					case CB_SLOT_DRAW:
+					case CB_SLOT_DRAW_EXTRA:
+
+						MyCall = (CALL_SLOT_MANY) pCall->pCall;
+						Temp = MyCall(ItemIndex, pItem, CB_Flags);
+						break;
+					case CB_SLOT_COLLISION:
+						MyCallCollision = (CALL_SLOT_CB_COLLISION) pCall->pCall;
+						//(short IndexItem, StrItemTr4 *pItem, WORD CBT_Flags, StrCollisionLara * pCollision);
+						Temp = MyCallCollision(ItemIndex, pItem, CB_Flags,  pColl);
+						break;
+					}
+
+					if (Temp != SRET_OK) {
+						RetValue |= Temp;
+					}
+				}
+
+				pCall++;
+
+			}
+			pRec++;
+		}
+
+		return RetValue;
+	}
+
+	// viene chiamata PRIMA di eseguire sub CONTROL di oggetto
+	// restituisce true per far eseguire la funzione control
+	// restituisce false se si deve saltare l'esecuzione della sub control
+	bool GestioneControlObject(StrItemTr4 *pItem, int ItemIndex)
+	{
+		int i;
+		StrRecordEnemyScript *pEnemy;
+		short *pFloorDataNow;
+		int TotEnemy;
+		WORD Slot;
+		bool TestGiaEseguitoHeavy;
+		void *pFloor;
+		short Room;
+		StrBaseCutscene *pCut;
+		StrRecordFreeze *pFreeze;
+		int n;
+
+		TestGiaEseguitoHeavy = false;
+		// impostare indice
+		GlobTomb4.ItemIndexLastMoved = ItemIndex;
+
+		// verificare se fa parte di moveable che richiedono controllo  basic collision
+		pCut = GlobTomb4.pBaseCutscene;
+		for (i = 0; i < pCut->TotBasicCollision; i++) {
+			if (pCut->VetBasicCollisionIndices[i] == ItemIndex) {
+				GestioneBasicCollision(pItem, ItemIndex);
+			}
+		}
+
+		if (pItem->Health <= 0 && pItem->Health != (short) 0xc000) {
+			// sta morendo
+			// vedere  se e' una di quelli da far esplodere
+			TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
+			for (i = 0; i < TotEnemy; i++) {
+				pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
+				if (pItem->SlotID == pEnemy->SlotId && (pEnemy->FlagsNEF & NEF_EXPLODE) != 0) {
+					// attivare esplosione
+					tomb4::CreatureDie(ItemIndex, true);
+					tomb4::SoundEffect(0x69, 0, 0);
+					tomb4::SoundEffect(0x6A, 0, 0);
+					break;
+				}
+			}
+		}
+
+		// vedere se vanno bloccati tutti gli enemyes
+		if (GlobTomb4.TestFreezeAll == true) {
+			//  bloccare ma evitando gl iemitter
+			Slot = pItem->SlotID;
+			switch (Slot) {
+			case 142:
+			case 143:
+			case 144:
+			case 145:
+			case 146:
+			case 147:
+			case 148:
+
+			case 380:
+			case 381:
+			case 382:
+				// questi eseguirli
+				break;
+			default:
+				return false;
+			}
+		}
+
+		// vedere se questo indice e' uno di quelli da ignorare
+		pFreeze = &GlobTomb4.BaseFreeze.VetFreeze[0];
+
+		n = GlobTomb4.BaseFreeze.TotFreeze;
+
+		for (i = 0; i < n; i++) {
+			if (ItemIndex == pFreeze->ItemIndex)
+				break;
+
+			pFreeze++;
+		}
+
+		if (i < n) {
+			// trovato
+
+			if (pFreeze->Tempo != 0xFFFF)
+				pFreeze->Tempo--;
+			if (pFreeze->Tempo > 0)
+				return false;
+
+			// finito il tempo
+			// disattivare questo record
+			if (n > 1) {
+				*pFreeze = GlobTomb4.BaseFreeze.VetFreeze[n - 1];
+			}
+			GlobTomb4.BaseFreeze.TotFreeze--;
+		}
+
+		Slot = pItem->SlotID;
+
+		TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
+		for (i = 0; i < TotEnemy; i++) {
+			pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
+			if (pEnemy->SlotId == Slot && (pEnemy->FlagsNEF & NEF_EASY_HEAVY_ENABLING) != 0) {
+				// attivare heavy trigger in questa posizione
+				Room = pItem->Room;
+
+				pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+				tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+				pFloorDataNow = tomb4::trigger_index;
+
+				GlobTomb4.ItemIndexEnabledTrigger = ItemIndex;
+
+				tomb4::TestTriggers(pFloorDataNow, 1, 0);
+				TestGiaEseguitoHeavy = true;
+			}
+
+		}
+
+		// se non e' bloccoato, ed e' leading actor, allora eseguire tirgger heavy immediati
+		if (TestGiaEseguitoHeavy == false && ItemIndex == GlobTomb4.pBaseCutscene->LeadingActorIndex) {
+			Room = pItem->Room;
+			pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+			tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+			pFloorDataNow = tomb4::trigger_index;
+
+			tomb4::TestTriggers(pFloorDataNow, 1, 0);
+		}
+		return true;
+	}
+
+	// Moveable su cui effettuare controllo per basic collision
+	// solo relativo a floor e gavita'
+	void GestioneBasicCollision(StrItemTr4 *pItem, int ItemIndex)
+	{
+		void *pFloor;
+		short Room;
+		int Altezza;
+		int IndiceSlot;
+		bool TestMod;
+		StrBoxCollisione *pBox;
+		int TopY, BottomY;
+		DWORD DistanzaAvanti;
+		int IncX, IncZ;
+		int MaxY;
+		int StopAnim;
+		int Distanza;
+
+		TestMod = false;
+		IndiceSlot = pItem->SlotID;
+		pBox = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItem);
+
+		if (pItem->SpeedV != 0) {
+			pItem->CordY += pItem->SpeedV;
+			pItem->SpeedV += 5;
+			if (pItem->SpeedV > 128)
+				pItem->SpeedV = 128;
+			TestMod = true;
+		}
+
+		TopY = pItem->CordY + pBox->MinY;
+		MaxY = pBox->MaxY;
+		// considerare posizione bottom y solo per rollingball, tutti gli altri sono al pavimento
+		if (pItem->SlotID != 130) {
+			// e' diverso da rollingball: ignorare bottomy
+			MaxY = 0;
+		}
+
+		BottomY = pItem->CordY + MaxY;
+		DistanzaAvanti = pBox->MaxZ;
+
+		// scoprire se sta per sbattere addosso a un muro
+		CalcolaIncremento(pItem->OrientationH, &IncX, &IncZ, DistanzaAvanti);
+		Room = pItem->Room;
+		pFloor = tomb4::GetFloor(pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, &Room);
+
+		Altezza = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ);
+
+		if (Altezza == WALL_FLOOR) {
+
+			if (pItem->SpeedH) {
+				// spostarloindietro rispetto al senso di marcia della velocita' di speed ma in direzione opposta
+				// e poi cambiare animazione
+				Distanza = (pItem->SpeedH << 1) + pItem->SpeedH;
+
+				CalcolaIncremento(pItem->OrientationH - 0x7fff, &IncX, &IncZ, Distanza);
+				AggiornaPosizioneItem(ItemIndex, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, 0);
+			}
+
+			// impostare animzione per blocco
+			StopAnim = TrovaAnimazioneStop(pItem);
+			EsecuzioneActionTrigger(0, 15 | (StopAnim << 8), ItemIndex, SCANF_DIRECT_CALL);
+			pItem->StateIdNext = pItem->StateIdCurrent;
+			pItem->SpeedH = 0;
+			return;
+		}
+
+		// ora fare analisi floor
+
+		Room = pItem->Room;
+		pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+
+		Altezza = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+
+		pItem->HeightFloor = Altezza;
+
+		if (BottomY > Altezza) {
+			pItem->SpeedV = 0;
+			pItem->CordY = Altezza - MaxY;
+			TestMod = true;
+		}
+
+		if (BottomY == Altezza) {
+			pItem->SpeedV = 0;
+		}
+
+		if (BottomY < Altezza && pItem->SpeedV == 0)
+			pItem->SpeedV = 30;
+
+		// ora analisi per soffitto
+		Altezza = tomb4::GetCeiling((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+
+		if (TopY < Altezza) {
+			// stiamo sforando soffitto
+			pItem->CordY = Altezza - pBox->MinY;
+			TestMod = true;
+		}
+
+		// se e' stato modificata posizione item fare aggiornamento
+		if (TestMod) {
+					// aggiornare numero stanza
+			AggiornaPosizioneItem(ItemIndex, pItem->CordX, pItem->CordY, pItem->CordZ, 0);
+		}
+	}
+
+	// trova animazione (numero relativo da zero) di moveable pItem che NON abbia velocita' orizzontale
+	// cerca solo nelle prime 32 animazioni (da 0 a 31)
+	int TrovaAnimazioneStop(StrItemTr4 *pItem)
+	{
+		StrSlot *pSlot;
+		int i;
+		StrAnimationTr4 *pAnim;
+
+		pSlot = &GlobTomb4.pAdr->pVetSlot[pItem->SlotID];
+
+		i = 0;
+
+		while (i < 32) {
+			pAnim = &GlobTomb4.pAdr->pVetAnimations[pSlot->IndexFirstAnim + i];
+			if (pAnim->Speed == 0 && pAnim->Accel == 0)
+				return i;
+
+			i++;
+		}
+
+		// non trovata, restituire la prima
+		return 0;
+	}
+
+	void LaraBreath(tomb4::ITEM_INFO *item)
+	{
+		tomb4::PHD_VECTOR p;
+		tomb4::PHD_VECTOR v;
+
+		// lara e 'sott'acqua
+		if (tomb4::lara.water_status == tomb4::LW_UNDERWATER)
+			return;
+
+		// calcolare cosa  bisogna fare sulla base di contatore
+		if (!ContatoreFiato)
+			ContatoreFiato = 60;
+		ContatoreFiato--;
+		if (ContatoreFiato > 15)
+			return;
+
+		// se e' morta niente fiato
+		if (tomb4::lara_item->hit_points <= 0)
+			return;
+
+		// controllare se siamo in stanza cold
+		if ((tomb4::room[tomb4::lara_item->room_number].flags & tomb4::ROOM_COLD) == 0)
+			return;
+
+		p.x = 0;
+		p.y = -4;
+		p.z = 96;
+		tomb4::GetLaraJointPos(&p, 8);
+
+		v.x = (tomb4::GetRandomControl() & 7) - 4;
+		v.y = (tomb4::GetRandomControl() & 7) - 8;
+		v.z = (tomb4::GetRandomControl() & 0x7F) + 64;
+		tomb4::GetLaraJointPos(&v, 8);
+
+		tomb4::BikeTriggerExhaustSmoke(p.x, p.y, p.z, (short) (v.x - p.x), v.y - p.y, v.z - p.z);
+	}
+
+	// verifica se c'e' l'esecuzione del singolo globaltrigger
+	// col dato parametro
+	bool VerificaSingleGlobalTrigger(short GlobalTrigger, short Parametro, bool TestIgnoraParametro)
+	{
+		int i;
+		StrGlobalTrigger *pRec;
+		int Tot;
+		bool TestEsegui;
+		bool TestTrovato;
+		bool TestAlmenoUno;
+		bool TestEsito;
+
+		Tot = GlobTomb4.pBaseGlobalTriggers->TotTriggers;
+		pRec = &GlobTomb4.pBaseGlobalTriggers->VetTriggers[0];
+
+		TestAlmenoUno = false;
+
+		for (i = 0; i < Tot; i++) {
+			TestEsegui = false;
+			TestTrovato = false;
+
+			if ((pRec->Flags & FGT_DISABLED) == 0) {
+
+				// vedere se va disattivato il log per queso global trigger
+				if (pRec->Flags & FGT_HIDE_IN_DEBUG) {
+					SospendiLogScript(BREAK_GLOBAL_TRIGGER);
+				}
+				if (pRec->GlobalTrigger == GlobalTrigger) {
+
+					TestTrovato = true;
+					if (TestIgnoraParametro) {
+						TestEsegui = true;
+					} else {
+
+						if (Parametro == pRec->Parameter)
+							TestEsegui = true;
+					}
+
+					if (pRec->Flags & FGT_NOT_TRUE)
+						TestEsegui ^= 1;
+				}
+
+
+				if (TestTrovato) {
+					TestEsito = GestioneGlobaleOk(pRec, TestEsegui);
+					if (TestEsito) {
+						if ((pRec->Flags & FGT_REPLACE_MANAGEMENT) != 0 || pRec->GlobalTrigger != GT_SELECTED_INVENTORY_ITEM)
+							TestAlmenoUno = true;
+					}
+				}
+
+				if (pRec->Flags & FGT_HIDE_IN_DEBUG) {
+					RiprendiLogScript(BREAK_GLOBAL_TRIGGER);
+				}
+			}
+			pRec++;
+		}
+
+		return TestAlmenoUno;
+	}
+
+	// sospende temporaneamente logscript
+	// questo non riguarda la sospensione col tasto f9
+	// ma una sospensione per eliminare solo qualche procedura dal log
+	// WORD OldFlagsDgx;
+	// int OldDebugCounter;
+	// i valori attuali vengono salvati in  VetOldDebug[] record
+
+	void SospendiLogScript(int IndiceSave)
+	{
+		VetSalvaOldDebug[IndiceSave].OldFlagsDgx = GlobTomb4.pDiagnostica->FlagsDgx;
+		VetSalvaOldDebug[IndiceSave].OldCounter = GlobTomb4.DebugModeCounter;
+
+		GlobTomb4.DebugModeCounter = 0;
+		GlobTomb4.pDiagnostica->FlagsDgx &= ~DGX_LOG_SCRIPT_COMMANDS;
+	}
+
+	void RiprendiLogScript(int IndiceSave)
+	{
+		GlobTomb4.pDiagnostica->FlagsDgx = VetSalvaOldDebug[IndiceSave].OldFlagsDgx;
+		GlobTomb4.DebugModeCounter = VetSalvaOldDebug[IndiceSave].OldCounter;
+	}
+
+	void OpenAllDoors(void)
+	{
+		int i;
+		WORD Slot;
+
+		for (i = 0; i < GlobTomb4.pAdr->TotItemsMax; i++) {
+			Slot = GlobTomb4.pAdr->pVetItems[i].SlotID;
+
+			if ((Slot >= 122 && Slot <= 129) || (Slot >= 322 && Slot <= 334)) {
+
+				// ok provare eseguendo l'action per chiudere porta
+				// azione per aprire porta
+				// azione 26 (0x14) per Aprire (0x100) porta con indice (i)
+				EsecuzioneActionTrigger(0, 0x11A, i, SCANF_DIRECT_CALL);
+			}
+
+		}
+	}
+
+	// calcola variazione coordinate pPos sulla base di record mirror attuale
+	// salvato in GlobTomb4.BaseMirror.pRecNow
+	// salva  lle coordinate cosi' ottenute
+	// in GlobTomb4.BaseMirror.CordX/Y/Z
+
+	void CalcolaCordMirror(StrPosizione *pPos)
+	{
+		BaseMirrors *pMirror;
+		RecordMirror *pRecNow;
+
+		pMirror = &GlobTomb4.BaseMirror;
+		pRecNow = pMirror->pRecNow;
+
+		pMirror->CordX = pPos->OrgX;
+		pMirror->CordY = pPos->OrgY;
+		pMirror->CordZ = pPos->OrgZ;
+
+		switch (pRecNow->MirrorType) {
+		case MIR_WEST_WALL:
+		case MIR_INVERSE_WEST:
+		case MIR_EAST_WALL:
+
+			if (pRecNow->MirrorType == MIR_INVERSE_WEST) {
+
+				pMirror->CordX = pRecNow->MaxCordMirror - pMirror->CordX;
+				pMirror->CordX += pRecNow->MinCordMirror;
+			}
+
+			pMirror->CordZ = pRecNow->CordMirror - pMirror->CordZ;
+			break;
+		case MIR_SOUTH_WALL:
+		case MIR_NORTH_WALL:
+			pMirror->CordX = pRecNow->CordMirror - pMirror->CordX;
+			break;
+		case MIR_FLOOR:
+		case MIR_CEILING:
+			pMirror->CordY = pRecNow->CordMirror - pMirror->CordY;
+			break;
+		}
+	}
+
+	// calcola variazione orientamenti sulla base di record mirror
+	// salvato in GlobTomb4.BaseMirror.pRecNow
+	// e salva gli orientamenti ottenuti in GlobTomb4.BaseMirror.OrientV/H/R
+	// nota: se testaltrnate = true cerca un modo alternativo di effettuare la rotazione
+	void CalcolaOrientMirror(StrOrient *pOrient, bool TestLara, bool TestAlternate)
+	{
+		BaseMirrors *pMirror;
+		RecordMirror *pRecNow;
+
+		pMirror = &GlobTomb4.BaseMirror;
+		pRecNow = pMirror->pRecNow;
+
+		if (TestLara) {
+
+			switch (pRecNow->MirrorType) {
+			case MIR_WEST_WALL:
+			case MIR_EAST_WALL:
+
+				pMirror->OrientV = -pOrient->OrientV;
+				pMirror->OrientH = -pOrient->OrientH;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			case MIR_INVERSE_WEST:
+				pMirror->OrientV = pOrient->OrientV;
+				pMirror->OrientH = pOrient->OrientH + 0x8000;
+				pMirror->OrientR = pOrient->OrientR;
+				break;
+			case MIR_SOUTH_WALL:
+			case MIR_NORTH_WALL:
+				pMirror->OrientV = -pOrient->OrientV;
+				pMirror->OrientH = -pOrient->OrientH;
+				pMirror->OrientH += -32768;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			case MIR_FLOOR:
+			case MIR_CEILING:
+
+				pMirror->OrientV = pOrient->OrientV + 32768;
+				pMirror->OrientH = pOrient->OrientH;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			}
+		}
+
+		if (TestLara == false) {
+			// in questi calcoli omettere la rotazione relativa
+			// va usato per altri oggetti tipo flare e capelli
+			pMirror->OrientR = pOrient->OrientR;
+
+			switch (pRecNow->MirrorType) {
+			case MIR_WEST_WALL:
+			case MIR_EAST_WALL:
+				if (TestAlternate == false) {
+					pMirror->OrientV = pOrient->OrientV;
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+				} else {
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+					pMirror->OrientR = 0x8000 - pOrient->OrientR;
+					pMirror->OrientV = 0x8000 - pOrient->OrientV;
+				}
+
+				break;
+			case MIR_SOUTH_WALL:
+			case MIR_NORTH_WALL:
+				if (TestAlternate == false) {
+					pMirror->OrientV = pOrient->OrientV;
+					pMirror->OrientH = -pOrient->OrientH;
+				} else {
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+					pMirror->OrientR = -pOrient->OrientR;
+					pMirror->OrientV = -pOrient->OrientV;
+				}
+				break;
+
+			case MIR_INVERSE_WEST:
+				// questo e'sempre giusto: niente testalternate
+				pMirror->OrientV = pOrient->OrientV;
+				pMirror->OrientH = pOrient->OrientH + 0x8000;
+
+				break;
+
+			case MIR_FLOOR:
+			case MIR_CEILING:
+				if (TestAlternate == false) {
+					pMirror->OrientV = 0x8000 - pOrient->OrientV;
+					pMirror->OrientH = pOrient->OrientH;
+				} else {
+					pMirror->OrientR = pOrient->OrientR + 0x8000;
+					pMirror->OrientH = pOrient->OrientH;
+					pMirror->OrientV = pOrient->OrientV;
+				}
+				break;
+			}
+		}
+	}
+
+	// verifica che gli item della lista siano ancora presenti.
+	// quelli che non sono presenti vengono eliminati
+	// se alla fine non ne rimane uno disabilita il detector
+	void VerificaTargetDetector(void)
+	{
+		StrDetector *pDetector;
+		int i;
+		int j;
+
+		j = 0;
+		pDetector = &GlobTomb4.BaseDetector;
+
+		for (i = 0; i < pDetector->TotIndici; i++) {
+			if ((GlobTomb4.pAdr->pVetItems[pDetector->VetIndici[i]].Objectbuttons & 0x8000) == 0) {
+				// target ancora presnte
+				if (j != i) {
+					pDetector->VetIndici[j] = pDetector->VetIndici[i];
+					// copiare anche targert item se e' di tipo radar
+					if (pDetector->Flags & DTF_RADAR_MODE) {
+						memcpy(&pDetector->VetTargets[j], &pDetector->VetTargets[i], sizeof(StrTargetDetector));
+					}
+				}
+
+				j++;
+			}
+		}
+
+		pDetector->TotIndici = j;
+		if (j == 0) {
+			pDetector->TestAttivo = false;
+			pDetector->TestMostra = false;
+		}
+
+		pDetector->Indice = pDetector->VetIndici[0];
+	}
+
+	// ok, viene chiamato subito dopo aver incrementato un frame
+	// adesso inserire in puntatore attuale e poi incrementare
+	// puntatore e calcolare anche fps
+	// nota: se bisogna recuperare frame restituisce false
+	// se tutto e' ok restituisce true
+	bool CalcolaFPS(DWORD FrameNow)
+	{
+		StrBaseFPS *pFps;
+		int i;
+		DWORD TempoNow;
+		DWORD DifNow;
+		DWORD DifFrame;
+		int j;
+		float Totale, Divisore;
+
+		TempoNow = (DWORD) GetTickCount64();
+		pFps = &GlobTomb4.BaseFPS;
+		i = pFps->IndiceNow;
+
+		pFps->VetTempi[i] = TempoNow;
+		pFps->VetFrameCount[i] = FrameNow;
+		if (pFps->TotCicli < MAX_TEMPI_FPS)
+			pFps->TotCicli++;
+		pFps->LastIndice = i;
+		pFps->IndiceNow++;
+		if (pFps->IndiceNow >= MAX_TEMPI_FPS)
+			pFps->IndiceNow = 0;
+		// ora fare calcolo di fps, a patto di avere gia' salvato
+		// tutti i valori
+		if (pFps->TotCicli == MAX_TEMPI_FPS) {
+			// calcolo fps
+			// indietreggiare fino a trovare una distanza di almeno un secondo
+
+			i = pFps->LastIndice;
+			for (j = 0; j < MAX_TEMPI_FPS; j++) {
+				DifNow = TempoNow - pFps->VetTempi[i];
+				if (DifNow >= 950) {
+					// ok trovato ora fare il calcolo dei frame
+					DifFrame = FrameNow - pFps->VetFrameCount[i];
+					DifFrame *= 1000;
+					// adesso fare calcolo in floating point
+					Totale = (float) DifFrame;
+					Divisore = (float) DifNow;
+
+					pFps->FPS = Totale / Divisore;
+					pFps->LastFps = (int) pFps->FPS;
+
+					if (pFps->FPS < 29.0)
+						return false;
+					return true;
+				}
+				i--;
+				if (i < 0)
+					i = MAX_TEMPI_FPS - 1;
+
+			}
+		}
+
+		pFps->FPS = -1;
+		pFps->LastFps = -1;
+		return true;
 	}
 }
 
@@ -2160,4 +2967,19 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100CD777, (unsigned int)trng::SalvaScreenShotTr4, replace);
 	ProcessInject(0x100CD726, (unsigned int)trng::TrovaNuovoNomeShot, false);
 	ProcessInject(0x100CC782, (unsigned int)trng::IsLaraPiediInPalude, replace);
+	ProcessInject(0x100CD82E, (unsigned int)trng::SalvaMiniShot, replace);
+	ProcessInject(0x100BCFCB, (unsigned int)trng::EseguiCallBackDirects, replace);
+	ProcessInject(0x100D1C98, (unsigned int)trng::EseguiCB_SlotFirstAfter, replace);
+	ProcessInject(0x100BFC9C, (unsigned int)trng::GestioneControlObject, replace);
+	ProcessInject(0x100BF97F, (unsigned int)trng::GestioneBasicCollision, replace);
+	ProcessInject(0x100BF90E, (unsigned int)trng::TrovaAnimazioneStop, replace);
+	ProcessInject(0x100D3678, (unsigned int)trng::LaraBreath, replace);
+	ProcessInject(0x100CB839, (unsigned int)trng::VerificaSingleGlobalTrigger, replace);
+	ProcessInject(0x100AFE59, (unsigned int)trng::SospendiLogScript, replace);
+	ProcessInject(0x100B00F7, (unsigned int)trng::RiprendiLogScript, replace);
+	ProcessInject(0x100CB71C, (unsigned int)trng::OpenAllDoors, replace);
+	ProcessInject(0x100C36FA, (unsigned int)trng::CalcolaCordMirror, replace);
+	ProcessInject(0x100C3809, (unsigned int)trng::CalcolaOrientMirror, replace);
+	ProcessInject(0x100B7DDA, (unsigned int)trng::VerificaTargetDetector, replace);
+	ProcessInject(0x100CC9DD, (unsigned int)trng::CalcolaFPS, replace);
 }

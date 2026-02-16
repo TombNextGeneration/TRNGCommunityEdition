@@ -10,9 +10,21 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void KillActiveBaddies(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void ExplosionFX(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Effects(bool replace)
 {
 	ProcessInject(0x436B30, (unsigned int)tomb4::SoundEffects, false);
+	ProcessInject(0x437380, (unsigned int)tomb4::KillActiveBaddies, false);
+	ProcessInject(0x437270, (unsigned int)tomb4::ExplosionFX, false);
 }
