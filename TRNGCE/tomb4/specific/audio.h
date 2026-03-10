@@ -5,8 +5,7 @@ namespace tomb4
 {
 	extern long &XATrack;
 	extern long &audio_play_mode;
-	inline struct { trng::StrListaWav (*&_)[256] = *reinterpret_cast<decltype(&_)>(0x46C8AD); decltype(*_) operator()() { return *_; } } TrackFileNames;
-#define TrackFileNames TrackFileNames()
+	extern trng::StrListaWav (&TrackFileNames)[256];
 	extern HANDLE &NotificationThreadHandle;
 
 	void S_CDStop();

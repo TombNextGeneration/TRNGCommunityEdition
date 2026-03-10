@@ -11,6 +11,8 @@ namespace trng {
 	void DeleteColorRgb(int IdColorRgb, bool TestSempre);
 	void DeleteTriggerGroup(int IdTriggerGroup, bool TestSempre);
 	void DeleteAddEffect(int IdEffect, bool TestSempre);
+	int WINAPI Servo(DWORD ID_Plugin, DWORD SRV_Value, va_list pArgs);
+	int Service(DWORD SRV_Type, ...);
 }
 
 void LoadTombNextGenerationInject_Plugin(bool replace);

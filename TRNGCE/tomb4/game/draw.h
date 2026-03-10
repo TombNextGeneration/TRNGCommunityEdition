@@ -3,8 +3,7 @@
 
 namespace tomb4
 {
-	inline struct { STATIC_INFO (*&_)[NUMBER_STATIC_OBJECTS] = *reinterpret_cast<decltype(&_)>(0x4730B5); decltype(*_) operator()() { return *_; } } static_objects;
-#define static_objects static_objects()
+	extern STATIC_INFO (&static_objects)[NUMBER_STATIC_OBJECTS];
 	extern ushort (&LightningRGB)[3];
 	extern ushort (&LightningRGBs)[3];
 

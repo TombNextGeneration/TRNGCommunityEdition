@@ -39,5 +39,29 @@ namespace flep
 		long pitch;
 		uchar Flags;
 	};
+
+	struct SUBINFO
+	{
+		short joint_rotation[4];
+		long Vel;
+		long Rot;
+		long RotX;
+		short FanRot;
+		char Flags;
+		char WeaponTimer;
+		short EngineVel[2];
+	};
+
+	struct RULE
+	{
+		short condition;
+		char level;
+		bool result;
+		short subject[2];
+		char subject_type;
+		char blend_mode[2];
+		char operation;
+		ulong colour[2];
+	};
 #pragma pack(pop)
 }

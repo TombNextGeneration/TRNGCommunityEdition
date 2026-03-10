@@ -7,6 +7,9 @@
 #include "newinv.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "text.h"
+#include "../../flep/PlugIn_trng.h"
+#include "../../flep/structures_mine.h"
 
 namespace tomb4
 {
@@ -58,6 +61,10 @@ namespace tomb4
 		num_fmvs = 0;
 		fmv_to_play[0] = 0;
 		fmv_to_play[1] = 0;
+
+		if (flep::pPatchMap[flep::PATCH_24_SAVEGAME_SLOTS_BUGFIXED])
+			small_font_scale = 0.5F;
+
 		gfCurrentLevel = Gameflow->TitleEnabled ? 0 : 1;
 		gf = &gfScriptWad[gfScriptOffset[gfCurrentLevel]];
 		trng::LeggiNG_ScriptForLevel();

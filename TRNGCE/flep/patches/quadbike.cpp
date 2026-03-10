@@ -1,5 +1,5 @@
 #include "quadbike.h"
-#include "../../../inject.h"
+#include "../../inject.h"
 
 namespace flep
 {
@@ -13,7 +13,7 @@ namespace flep
 	}
 }
 
-void Inject_VehiclesQuadbike(bool replace)
+void Inject_Quadbike(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C148, (unsigned int)flep::IsQuadBikeAssigned, replace);
 }

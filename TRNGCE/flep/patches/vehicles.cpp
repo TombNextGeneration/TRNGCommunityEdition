@@ -1,9 +1,10 @@
-#include "main.h"
-#include "../../../inject.h"
+#include "vehicles.h"
+#include "../../inject.h"
 #include "minecart.h"
 #include "quadbike.h"
-#include "../../../tomb4/game/savegame.h"
-#include "../../types.h"
+#include "../../tomb4/game/savegame.h"
+#include "types.h"
+#include "sub.h"
 
 namespace flep
 {
@@ -20,12 +21,18 @@ namespace flep
 					tomb4::WriteSG(item->data, sizeof(QUADINFO));
 					break;
 				}
+
+				if (IsSubAssignedToItem(i, item))
+				{
+					tomb4::WriteSG(item->data, sizeof(SUBINFO));
+					break;
+				}
 			}
 		}
 	}
 }
 
-void Inject_VehiclesMain(bool replace)
+void Inject_Vehicles(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C164, (unsigned int)flep::SaveVehicle, replace);
 }

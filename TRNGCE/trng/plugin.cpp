@@ -368,6 +368,24 @@ namespace trng {
 			GlobTomb4.pBaseEffects->TotEffects = Tot;
 		}
 	}
+
+	// esegue servizi richiesi dai plugin (questa e' quella che nel plugin si chiama "Trng.Service"
+	int WINAPI Servo(DWORD ID_Plugin, DWORD SRV_Value, va_list pArgs)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// questa e' una mia funzione interna per accedere ais servizi dei plugin da trng
+	int Service(DWORD SRV_Type, ...)
+	{
+		va_list pArgs;
+		int RetValue;
+
+		va_start(pArgs, SRV_Type);
+		RetValue = Servo(0, SRV_Type, pArgs);
+		va_end(pArgs);
+		return RetValue;
+	}
 }
 
 void LoadTombNextGenerationInject_Plugin(bool replace)
@@ -381,4 +399,6 @@ void LoadTombNextGenerationInject_Plugin(bool replace)
 	ProcessInject(0x100302B9, (unsigned int)trng::DeleteColorRgb, replace);
 	ProcessInject(0x1003021D, (unsigned int)trng::DeleteTriggerGroup, replace);
 	ProcessInject(0x10030509, (unsigned int)trng::DeleteAddEffect, replace);
+	ProcessInject(0x10030989, (unsigned int)trng::Servo, false);
+	ProcessInject(0x10032DDB, (unsigned int)trng::Service, replace);
 }

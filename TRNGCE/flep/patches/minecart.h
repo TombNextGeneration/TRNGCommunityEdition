@@ -9,4 +9,4 @@ namespace flep
 	long IsMineCartAssigned(void);
 }
 
-void Inject_VehiclesMinecart(bool replace);
+void Inject_Minecart(bool replace);

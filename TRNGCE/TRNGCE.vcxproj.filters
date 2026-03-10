@@ -105,23 +105,11 @@
     <ClInclude Include="tomb4\game\rope.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
-    <ClInclude Include="flep\patches\vehicles\main.h">
-      <Filter>flep\patches\vehicles</Filter>
-    </ClInclude>
-    <ClInclude Include="flep\patches\vehicles\quadbike.h">
-      <Filter>flep\patches\vehicles</Filter>
-    </ClInclude>
-    <ClInclude Include="flep\patches\vehicles\minecart.h">
-      <Filter>flep\patches\vehicles</Filter>
-    </ClInclude>
     <ClInclude Include="trng\zRoomEditor.h">
       <Filter>trng</Filter>
     </ClInclude>
     <ClInclude Include="tomb4\types.h">
       <Filter>tomb4</Filter>
-    </ClInclude>
-    <ClInclude Include="flep\types.h">
-      <Filter>flep</Filter>
     </ClInclude>
     <ClInclude Include="trng\ListTr4Patch.h">
       <Filter>trng</Filter>
@@ -222,6 +210,45 @@
     <ClInclude Include="trng\trng_keypad.h">
       <Filter>trng</Filter>
     </ClInclude>
+    <ClInclude Include="flep\patches\types.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\PlugIn_trng.h">
+      <Filter>flep</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\structures_mine.h">
+      <Filter>flep</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\vehicles.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\minecart.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\quadbike.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\sub.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="flep\patches\shader.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\flycheat\PlugIn_trng.h">
+      <Filter>plugin\flycheat</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\flycheat\constants_mine.h">
+      <Filter>plugin\flycheat</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\flycheat\trng.h">
+      <Filter>plugin\flycheat</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\particlesystem\trng\trng.h">
+      <Filter>plugin\particlesystem\trng</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\particlesystem\Plugin_ParticleSystem.h">
+      <Filter>plugin\particlesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -311,15 +338,6 @@
     </ClCompile>
     <ClCompile Include="tomb4\game\rope.cpp">
       <Filter>tomb4\game</Filter>
-    </ClCompile>
-    <ClCompile Include="flep\patches\vehicles\main.cpp">
-      <Filter>flep\patches\vehicles</Filter>
-    </ClCompile>
-    <ClCompile Include="flep\patches\vehicles\quadbike.cpp">
-      <Filter>flep\patches\vehicles</Filter>
-    </ClCompile>
-    <ClCompile Include="flep\patches\vehicles\minecart.cpp">
-      <Filter>flep\patches\vehicles</Filter>
     </ClCompile>
     <ClCompile Include="trng\zRoomEditor.cpp">
       <Filter>trng</Filter>
@@ -420,6 +438,36 @@
     <ClCompile Include="trng\trng_keypad.cpp">
       <Filter>trng</Filter>
     </ClCompile>
+    <ClCompile Include="flep\PlugIn_trng.cpp">
+      <Filter>flep</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\vehicles.cpp">
+      <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\minecart.cpp">
+      <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\quadbike.cpp">
+      <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\sub.cpp">
+      <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\shader.cpp">
+      <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\flycheat\PlugIn_trng.cpp">
+      <Filter>plugin\flycheat</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\flycheat\trng.cpp">
+      <Filter>plugin\flycheat</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\particlesystem\trng\trng.cpp">
+      <Filter>plugin\particlesystem\trng</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\particlesystem\Plugin_ParticleSystem.cpp">
+      <Filter>plugin\particlesystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
@@ -443,8 +491,17 @@
     <Filter Include="flep\patches">
       <UniqueIdentifier>{3582134a-9ba5-446e-838c-69668fc768f7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="flep\patches\vehicles">
-      <UniqueIdentifier>{e41d319e-238d-41ea-b022-fa8fb43a47c8}</UniqueIdentifier>
+    <Filter Include="plugin">
+      <UniqueIdentifier>{4be0c22e-19b3-40b6-9703-be55d74fc3fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin\flycheat">
+      <UniqueIdentifier>{220b5a95-e076-4bd0-9260-1a800ac7849b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin\particlesystem">
+      <UniqueIdentifier>{fb996682-58e0-46e0-aeae-1132a76207de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin\particlesystem\trng">
+      <UniqueIdentifier>{c4b4a360-7e37-4ec2-9276-7474d5aa4806}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

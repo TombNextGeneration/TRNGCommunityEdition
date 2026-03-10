@@ -55,6 +55,7 @@
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -63,7 +64,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -77,6 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -87,16 +89,25 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="flep\types.h" />
-    <ClInclude Include="flep\patches\vehicles\main.h" />
-    <ClInclude Include="flep\patches\vehicles\minecart.h" />
-    <ClInclude Include="flep\patches\vehicles\quadbike.h" />
+    <ClInclude Include="flep\patches\shader.h" />
+    <ClInclude Include="flep\patches\sub.h" />
+    <ClInclude Include="flep\PlugIn_trng.h" />
+    <ClInclude Include="flep\patches\types.h" />
+    <ClInclude Include="flep\patches\vehicles.h" />
+    <ClInclude Include="flep\patches\minecart.h" />
+    <ClInclude Include="flep\patches\quadbike.h" />
+    <ClInclude Include="flep\structures_mine.h" />
     <ClInclude Include="inject.h" />
+    <ClInclude Include="plugin\flycheat\constants_mine.h" />
+    <ClInclude Include="plugin\flycheat\PlugIn_trng.h" />
+    <ClInclude Include="plugin\flycheat\trng.h" />
+    <ClInclude Include="plugin\particlesystem\Plugin_ParticleSystem.h" />
+    <ClInclude Include="plugin\particlesystem\trng\trng.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tomb4\game\bike.h" />
     <ClInclude Include="tomb4\game\box.h" />
@@ -170,9 +181,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="flep\patches\vehicles\main.cpp" />
-    <ClCompile Include="flep\patches\vehicles\minecart.cpp" />
-    <ClCompile Include="flep\patches\vehicles\quadbike.cpp" />
+    <ClCompile Include="flep\patches\shader.cpp" />
+    <ClCompile Include="flep\patches\vehicles.cpp" />
+    <ClCompile Include="flep\patches\minecart.cpp" />
+    <ClCompile Include="flep\patches\quadbike.cpp" />
+    <ClCompile Include="flep\patches\sub.cpp" />
+    <ClCompile Include="flep\PlugIn_trng.cpp" />
+    <ClCompile Include="plugin\flycheat\PlugIn_trng.cpp" />
+    <ClCompile Include="plugin\flycheat\trng.cpp" />
+    <ClCompile Include="plugin\particlesystem\Plugin_ParticleSystem.cpp" />
+    <ClCompile Include="plugin\particlesystem\trng\trng.cpp" />
     <ClCompile Include="tomb4\game\bike.cpp" />
     <ClCompile Include="tomb4\game\box.cpp" />
     <ClCompile Include="tomb4\game\camera.cpp" />

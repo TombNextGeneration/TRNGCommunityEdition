@@ -2149,7 +2149,95 @@ namespace trng {
 	inline constexpr int PTR_SOPRA_LARA = 1;
 	inline constexpr int PTR_SOTTO_LARA = -1;
 
-	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
+	// list of trng services
+	// notes: some of these will be called in implicity way from ther procedures
+	// you can use in more easy way. The following list will be used
+	// only with the native function Service()
+	inline constexpr int SRV_PERFORM_FLIPEFFECT = 0; // you can use the shortcut function: PerformFlipEffect() to use this service
+	inline constexpr int SRV_PERFORM_ACTION = 1; // you can use the shortcut PerformActionTrigger() to use this service
+	inline constexpr int SRV_PERFORM_CONDITION = 2; // you can use the shortcut PerformConditionTrigger() to use this service
+	inline constexpr int SRV_PERFORM_TRIGGERGROUP_ID = 3; // Arg1=IdOfTriggerGroup
+														  // return: -1 = not found Id
+														  // return: 0 = condition is false
+														  // return: 1 = condition is true or it's not a condition trigger group
+	inline constexpr int SRV_PERFORM_EXPORTED_TRIGGER = 4; // you can use shortcut function: PerformExportedTrigger() to use this service
+														   // Arg1= PluginId / Arg2=FirstWord / Arg3=SecondWord / Arg4=ThirdWord
+														   // return 0 = condition is false
+														   // return 1 = condition is true or it's not a conditional trigger
+	inline constexpr int SRV_CREATE_TRIGGERGROUP = 5; // TestDynamic and then a sequence of triple arg, {FirstWord, SecondWord, ThirdWord}
+													  // with END_LIST value at end
+													  // return -1 = error, missing available triggergroups
+													  // return any other value = the id of your triggergroup
+	inline constexpr int SRV_CREATE_ANIMATION = 7; // same fields of Animation command with END_LIST value at end
+												   // AnimIndex, KEY1_ , KEY2_ , FAN_ flags, ENV_ Environment, Distance for Env, Extra, StateId (STATE_...) or (-)AnimationIndex array  (...)
+	inline constexpr int SRV_CREATE_ANIMATIONSLOT = 8; // same field of AnimationSlot command with END_LIST at end
+													   // Slot, ActionType (AXT_...), AnimIndex, Key1, Key2, FAN_ flags, ENV_ Environment, Distance For Env_, Extra, StateId (STATE_...) or (-)AnimationIndex array  (...)
+	inline constexpr int SRV_CREATE_MULTENVCONDITION = 9; // TestDynamic and then same fields of MultEnvCondition= command
+														  // except for Id field that it will be returned from the service and the END_LIST value to type at end of the array
+														  // ENV_ condition, DistanceForEnv, Extra field, array of tripled of {ENV_ Condition, DistanceForEnv, Extra field}
+	inline constexpr int SRV_CREATE_TESTPOSITION = 10; // TestDynamic and then same fields of TestPosition command
+													   // except for Id field that it will be returned from the service
+													   // Flags (TPOS_...), Slot Moveable, XDistanceMin, XDistanceMax, YDistanceMin, YDistanceMax, ZDistanceMin, ZDistanceMax,  HOrientDiffMin, HOrientDiffMax, VOrientDiffMin, VOrientDiffMax, ROrientDiffMin, ROrientDiffMax
+	inline constexpr int SRV_CREATE_ADDEFFECT = 12; // TestDynamic and then same fields of AddEffect command
+													// except for Id field that it will be returned from the service
+													// and the END_LIST value at end
+													// EffectType (ADD_), FlagsEffect (FADD_), JointType (JOINT_), DispX, DispY, DispZ, DurateEmit, DuratePause, Extra param array
+	inline constexpr int SRV_SetReservedDataZone = 13; // You pass the startOffset and number of bytes
+													   // of tomb4 data that you wish set as "used" to other plugin dll
+													   // StartOffset, NBytes
+	inline constexpr int SRV_F_ProporzioneDistanza = 14;  //       (int Incremento, int Distanza);
+	inline constexpr int SRV_F_EseguiTriggerGroup = 15;
+	inline constexpr int SRV_F_DetectedGlobalTriggerEvent = 16;
+	inline constexpr int SRV_F_InviaErroreLog = 17;
+	inline constexpr int SRV_CREATE_PARAM_COMMAND = 18; // creare Parameters=PARAM_.. command of trng owner to have an extra input
+														//for trng triggers requiring parameters from script
+														// Input:  TestDynamic and then the PARAM_ value, then skip the id, and type other arguments
+														// for current parameter. It will return the id of new PARAM command
+														// or -1 if there is an error
+	inline constexpr int SRV_F_TestEnvCondition = 19;
+	inline constexpr int SRV_F_IsBoxSettore = 20;
+	inline constexpr int SRV_F_VerificaTestPosition = 21;
+	inline constexpr int SRV_F_CollideItemConCustom = 22;
+	inline constexpr int SRV_F_IsCollisioneConItems = 23;
+	inline constexpr int SRV_F_InviaLog = 24;
+	inline constexpr int SRV_F_EseguiAnimNemico = 25;
+	inline constexpr int SRV_F_CreateAIRecord = 26;
+	inline constexpr int SRV_F_DeleteAIRecord = 27;
+	inline constexpr int SRV_F_CreateNewMoveable = 28;
+	inline constexpr int SRV_F_DeleteNewMoveable = 29;
+	inline constexpr int SRV_CREATE_COLOR_RGB_COMMAND = 30; // arguments: TestDynamic and then Red, Green, Blue, it will return Id for new colorrgb
+	inline constexpr int SRV_DeleteParamCommand = 31;
+	inline constexpr int SRV_DeleteTriggerGroup = 32;
+	inline constexpr int SRV_DeleteColorRgb = 33;
+	inline constexpr int SRV_DeleteMultEnvCondition = 34;
+	inline constexpr int SRV_DeleteTestPosition = 35;
+	inline constexpr int SRV_DeleteAddEffect = 36;
+	inline constexpr int SRV_F_DisableSaving = 37;
+	inline constexpr int SRV_F_AggiungiItemMosso = 38;
+	inline constexpr int SRV_F_CheckForStartMovePushable = 39;
+	inline constexpr int SRV_F_CheckForEndMovePushable = 40;
+	inline constexpr int SRV_F_ExplosionOnVehicle = 41;
+	inline constexpr int SRV_F_ConvertMicroUnits = 42;
+	inline constexpr int SRV_F_AllocateImage = 43;
+	inline constexpr int SRV_F_FreeImage = 44;
+	inline constexpr int SRV_F_AllocateTombHdc = 45;
+	inline constexpr int SRV_F_FreeTombHdc = 46;
+	inline constexpr int SRV_F_DrawSprite2D = 47;
+	inline constexpr int SRV_F_DrawMesh3D = 48;
+	inline constexpr int SRV_F_DrawObject2D = 49;
+	inline constexpr int SRV_F_PrintText = 50;
+	inline constexpr int SRV_F_ReadDxInput = 51;
+	inline constexpr int SRV_F_SuspendAudioTrack = 52;
+	inline constexpr int SRV_F_ResumeAudioTrack = 53;
+	inline constexpr int SRV_F_CreateWindowsFont = 54;
+	inline constexpr int SRV_F_FreeWindowsFont = 55;
+	inline constexpr int SRV_F_ReadInputBox = 56;
+	inline constexpr int SRV_F_ReadNumVariable = 57;
+	inline constexpr int SRV_F_WriteNumVariable = 58;
+	inline constexpr int SRV_F_ReadTextVariable = 59;
+	inline constexpr int SRV_F_WriteTextVariable = 60;
+	inline constexpr int SRV_F_ReadMemVariable = 61;
+	inline constexpr int SRV_F_WriteMemVariable = 62;
 
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
@@ -6069,6 +6157,8 @@ namespace trng {
 		DWORD SizeNewMemory;
 	};
 
+	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
+
 	struct StrMemAllocata {
 		void *pBaseMem;
 		int ThreadId;
@@ -6183,6 +6273,44 @@ namespace trng {
 		short OrientV;
 		short OrientH;
 		short OrientR;
+	};
+
+	// function protypes used only with trng plugins
+	typedef bool (WINAPI *TYPE_RequireCallBack)(WORD ID_Plugin, int CBValue, int CBType, int Index, void *pProc);
+
+	// data to apply asm patch on tomb4 exe
+	struct StrPatchInfo {
+		DWORD PluginId;
+		DWORD StartOffset;
+		DWORD ProcStart;  // only for relocator patch, it keeps the real start offset of relocated procedure
+		DWORD ProcEnd;  // only for relocator patch, it keeps the ending offset of relocated procedure
+		int TotItems;
+		void *pVetItems;
+		int PatchType;  // TYPP_
+		int ErrorCode;  // APPC_
+		int NewValue;  // per parametric constant e call (nuovo valore assegnato)
+	};
+
+	typedef int (WINAPI *TYPE_SetNewPatch)(StrPatchInfo *pDataPatch, bool TestWarnings);
+
+	typedef int (WINAPI *TYPE_Service)(DWORD ID_Plugin, DWORD SRV_Value, va_list pArgs);
+
+	// received when your plugin registers itself with trng
+	struct StrTrngInfos {
+		int IdMyPlugin;							// 00 (received) id of your plugin to use for each trng service
+		StrGlobaliTomb4 *pGlobTomb4;			// 04 (received) address of StrGlobaliTomb4 in trng
+		TYPE_RequireCallBack RequireCallBack;	// 08 (received) proc to require callback
+		TYPE_SetNewPatch SetNewPatch;			// 0C (received) proc to set patch on tomb4.exe
+		TYPE_Service Service;					// 10 (received) proc to require trng service
+		void *pDirectCallBack;                  // 14 (sent) proc used from trng to call directly plugin code
+		DWORD AdrTomb4Patcher;					// 18 (sent) Tomb4 offset of DWORD where to store che address of dll function MainPatcher
+		void *pAdrDllPatcher;					// 1C (sent) Dll address of your MainPatcher function
+		int TestDebugMode;						// 20 (sent) to set 1 if debug version, 0 if release version
+		DWORD MainPluginFlags;					// 24 (sent) MPS_ values set in Plugin= script command from user
+		int TotPlugins;							// 28 total amout of loaded plugins (enclosed yours and tomb_nextgeneration.dll)
+		char **pVetPluginNames;					// 2C vector with all plugin names (in format Plugin_Name )
+		char *pMyPluginName;					// 30  the name of your plugin, only temporarily, then you find your
+												//		plugin name in global variable TexMyPluginName[]
 	};
 #pragma pack(pop)
 }

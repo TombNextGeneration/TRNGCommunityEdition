@@ -1,6 +1,5 @@
 #include "minecart.h"
-#include "../../../inject.h"
-#include "../../../tomb4/types.h"
+#include "../../inject.h"
 
 namespace flep
 {
@@ -14,7 +13,7 @@ namespace flep
 	}
 }
 
-void Inject_VehiclesMinecart(bool replace)
+void Inject_Minecart(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C0F4, (unsigned int)flep::IsMineCartAssigned, replace);
 }

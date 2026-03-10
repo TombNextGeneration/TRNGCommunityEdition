@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../tomb4/types.h"
+#include "../../tomb4/types.h"
 
 namespace flep
 {
@@ -10,4 +10,4 @@ namespace flep
 	long IsQuadBikeAssigned(long index);
 }
 
-void Inject_VehiclesQuadbike(bool replace);
+void Inject_Quadbike(bool replace);

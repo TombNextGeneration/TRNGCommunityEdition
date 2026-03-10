@@ -2,8 +2,6 @@
 #include "MyConstants.h"
 
 namespace trng {
-	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);
-
 #pragma pack(push, 1)
 	// reocrd per memorizzare callback richieste dai plugin
 	struct StrRecordCallBack {
@@ -281,6 +279,8 @@ namespace trng {
 		void * VetDirectCB[MAX_DIRECT_CB];
 		int VetDirectCB_PluginId[MAX_DIRECT_CB];
 	};
+
+	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);
 
 	struct StrMyGlob {
 		StrRobaTomb3 RobaTomb3;

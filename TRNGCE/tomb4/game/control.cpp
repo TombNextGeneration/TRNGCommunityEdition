@@ -27,11 +27,18 @@
 #include "scarab.h"
 #include "croc.h"
 #include "text.h"
-#include "effects.h"
 #include "health.h"
 #include "savegame.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "../../flep/PlugIn_trng.h"
+#include "../../flep/structures_mine.h"
+#include "../../flep/patches/shader.h"
+#include "../../trng/plugin.h"
+#include "../../plugin/flycheat/PlugIn_trng.h"
+#include "../../plugin/flycheat/trng.h"
+#include "../../plugin/particlesystem/trng/trng.h"
+#include "../../plugin/particlesystem/Plugin_ParticleSystem.h"
 
 namespace tomb4
 {
@@ -41,8 +48,8 @@ namespace tomb4
 	ANIM_STRUCT* &anims = *reinterpret_cast<decltype(&anims)>(0x533938);
 	long* &bones = *reinterpret_cast<decltype(&bones)>(0x533958);
 	ulong &FmvSceneTriggered = *reinterpret_cast<decltype(&FmvSceneTriggered)>(0x7FE0F0);
-//	long (*&flip_stats)[32] = *reinterpret_cast<decltype(&flip_stats)>(0x4598AF);
-//	long (*&flipmap)[32] = *reinterpret_cast<decltype(&flipmap)>(0x4598D8);
+	long (&flip_stats)[32] = *reinterpret_cast<decltype(&flip_stats)>(0x4598AF);
+	long (&flipmap)[32] = *reinterpret_cast<decltype(&flipmap)>(0x4598D8);
 	long &flipeffect = *reinterpret_cast<decltype(&flipeffect)>(0x4ACBFC);
 	long &fliptimer = *reinterpret_cast<decltype(&fliptimer)>(0x4BF2E8);
 	long &flip_status = *reinterpret_cast<decltype(&flip_status)>(0x7FE0F8);
@@ -105,6 +112,7 @@ namespace tomb4
 		FLOOR_INFO* floor;
 		MESH_INFO* mesh;
 		void (*control)(short item_number);
+		flep::RULE* rule;
 		trng::CALL_INVENTORY_MAIN inventory_call;
 		trng::CALL_PAUSE_MANAGER pause_call;
 		trng::CALL_SLOT_MANY slot_call;
@@ -127,12 +135,49 @@ namespace tomb4
 		{
 			GlobalCounter++;
 			trng::InizioCiclo();
+
+			if (flep::pPatchMap[flep::PATCH_VERTEX_SHADER_BASE])
+			{
+				for (int i = 0; i < 64; i++)
+				{
+					rule = &flep::list[i];
+
+					if (!rule->subject_type)
+						continue;
+
+					if (rule->level != -1 && rule->level != gfCurrentLevel)
+					{
+						rule->result = false;
+						continue;
+					}
+
+					if (rule->condition == -1)
+					{
+						rule->result = true;
+						continue;
+					}
+
+					rule->result = trng::Service(trng::SRV_F_EseguiTriggerGroup, rule->condition);
+				}
+			}
+
+			if (flep::pPatchMap[flep::PATCH_HK_GUN])
+			{
+				lara.num_crossbow_ammo2 = lara.num_crossbow_ammo1;
+				lara.num_crossbow_ammo3 = lara.num_crossbow_ammo1;
+			}
+
 			UpdateSky();
 
 			if (cdtrack > 0)
 				S_CDLoop();
 
-			if (S_UpdateInput() == IN_ALL)
+			ret = S_UpdateInput();
+
+			if (plugin::flycheat::Trng.IdMyPlugin != -1 && plugin::flycheat::State[plugin::flycheat::COMMAND_STEP] && !plugin::flycheat::Transition[plugin::flycheat::COMMAND_STEP_NEXT])
+				continue;
+
+			if (ret == IN_ALL)
 				return 0;
 
 			if (bDisableLaraControl)
@@ -554,10 +599,23 @@ namespace tomb4
 			UpdateBlood();
 			UpdateDrips();
 			UpdateGunShells();
-			UpdateLocusts();
-			UpdateScarabs();
+
+			if (plugin::flycheat::Trng.IdMyPlugin != -1)
+				plugin::flycheat::FriendlyFish();
+			else
+				UpdateLocusts();
+
+			if (plugin::flycheat::Trng.IdMyPlugin != -1)
+				plugin::flycheat::FriendlyBeetles();
+			else
+				UpdateScarabs();
+
 			UpdateShockwaves();
 			UpdateLightning();
+
+			if (plugin::particlesystem::Trng.IdMyPlugin != -1)
+				plugin::particlesystem::ControlParticles();
+
 			AnimateWaterfalls();
 			UpdatePulseColour();
 			SoundEffects();
@@ -637,8 +695,14 @@ namespace tomb4
 	}
 }
 
+__declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
+__declspec(naked) static void** Inject_Control_flipmap() { __asm lea eax, [tomb4::flipmap] __asm ret }
+
 void Inject_Control(bool replace)
 {
+	IndirectReferenceInject(Inject_Control_flip_stats());
+	IndirectReferenceInject(Inject_Control_flipmap());
+
 	ProcessInject(0x448B10, (unsigned int)tomb4::ControlPhase, replace);
 	ProcessInject(0x448A90, (unsigned int)tomb4::UpdateSky, false);
 	ProcessInject(0x4489D0, (unsigned int)tomb4::KillMoveItems, false);

@@ -7,10 +7,8 @@ namespace tomb4
 	extern ANIM_STRUCT* &anims;
 	extern long* &bones;
 	extern ulong &FmvSceneTriggered;
-	inline struct { long (*&_)[32] = *reinterpret_cast<decltype(&_)>(0x4598AF); decltype(*_) operator()() { return *_; } } flip_stats;
-#define flip_stats flip_stats()
-	inline struct { long (*&_)[32] = *reinterpret_cast<decltype(&_)>(0x4598D8); decltype(*_) operator()() { return *_; } } flipmap;
-#define flipmap flipmap()
+	extern long (&flip_stats)[32];
+	extern long (&flipmap)[32];
 	extern long &flipeffect;
 	extern long &fliptimer;
 	extern long &flip_status;

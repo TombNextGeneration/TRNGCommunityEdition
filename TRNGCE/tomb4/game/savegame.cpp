@@ -17,7 +17,7 @@
 #include "rope.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
-#include "../../flep/patches/vehicles/main.h"
+#include "../../flep/patches/vehicles.h"
 #include "../../trng/zRoomEditor.h"
 
 namespace tomb4
