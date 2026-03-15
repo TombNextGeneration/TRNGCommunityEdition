@@ -53,7 +53,7 @@ namespace trng {
 		pItem = &GlobTomb4.pAdr->pVetItems[ItemIndex];
 		CordY = pItem->CordY + IncY;
 
-		AggiornaPosizioneItem(ItemIndex, pItem->CordX, CordY, pItem->CordZ, -0x200);
+		AggiornaPosizioneItem((short) ItemIndex, pItem->CordX, CordY, pItem->CordZ, -0x200);
 	}
 }
 

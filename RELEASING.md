@@ -12,15 +12,15 @@ Work at this point can start by following the [GitHub flow](https://docs.github.
 
 Test builds can be created as needed and the changelog should be kept up-to-date.
 
-## We finish and feel stronger now
+## ~~We finish and feel stronger now~~
 
-When the release is considered to be done, a release candidate can be produced and validated.
+~~When the release is considered to be done, a release candidate can be produced and validated.~~
 
 ## We ship it and go home sweet home
 
 The unreleased header in the changelog should be replaced with the new version number and release date.
 
-The release candidate build is uploaded as a release on GitHub, tagged with the new version number, and its description filled with the corresponding changelog.
+The ~~release candidate~~ last test build is uploaded as a release on GitHub, tagged with the new version number, and its description filled with the corresponding changelog.
 
 ## We go back to the start
 

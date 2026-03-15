@@ -265,7 +265,7 @@ namespace tomb4
 
 						if (item->object_number != LARA)
 						{
-							byte = item->anim_number - obj->anim_index;
+							byte = uchar(item->anim_number - obj->anim_index);
 							WriteSG(&byte, sizeof(uchar));
 						}
 						else

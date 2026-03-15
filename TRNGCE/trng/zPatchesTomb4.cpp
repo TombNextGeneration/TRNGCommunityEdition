@@ -139,12 +139,12 @@ namespace trng {
 		if (pAssign->IndiceRubberBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
 			// inizializzare slot per RUBBER BOAT da assign slot
 
-			SetSlotRubberBoat(pAssign->IndiceRubberBoat, pAssign->IndiceAnimRubberBoat);
+			SetSlotRubberBoat((WORD) pAssign->IndiceRubberBoat, (WORD) pAssign->IndiceAnimRubberBoat);
 		}
 
 		if (pAssign->IndiceMotorBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
 			// inizializzare slot per MOTOR BOAT da assign slot
-			SetSlotMotorBoat(pAssign->IndiceMotorBoat, pAssign->IndiceAnimMotorBoat);
+			SetSlotMotorBoat((WORD) pAssign->IndiceMotorBoat, (WORD) pAssign->IndiceAnimMotorBoat);
 		}
 
 		// inizializzre slot di pannelli collisioni
@@ -183,7 +183,7 @@ namespace trng {
 		if (pSlotNow->Flags) {
 			i = pSlotNow->Flags;
 			i |= 0x2c78;
-			pSlotNow->Flags = i;
+			pSlotNow->Flags = (WORD) i;
 			pSlotNow->ShatterableMeshes = 6;
 			pSlotNow->pProcInitialise = &InitialiseGuardian;
 			pSlotNow->pProcControl = &GuardianControl;
@@ -347,7 +347,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_FLAT) {
 					// trasformare questo slot in bridge flat
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -360,7 +360,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_TILT1) {
 					// trasformare questo slot in bridge tilt1
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -373,7 +373,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_TILT2) {
 					// trasformare questo slot in bridge tilt2
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -1370,6 +1370,7 @@ namespace trng {
 		pBase = &GlobTomb4.BaseInputBoxes;
 
 		pBase->TotExtraCodes = 0;
+		z = 0;
 
 		pChar = GetStringaNG(666);
 		if (pChar == NULL)
@@ -1658,7 +1659,7 @@ namespace trng {
 						break;
 				}
 
-				NumeroCd = 0x4000 | j;
+				NumeroCd = (short) (0x4000 | j);
 				TestImport = true;
 			}
 		}
@@ -1716,7 +1717,7 @@ namespace trng {
 				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
 			}
 			if (IndiceCanale == 0 && Loop != 0) {
-				*GlobTomb4.pAdr->pAudioTrackLoop = IndiceSuono;
+				*GlobTomb4.pAdr->pAudioTrackLoop = (char) IndiceSuono;
 				*GlobTomb4.pAdr->pTestAudioTrackLoop = 1;
 			}
 		}
@@ -2140,7 +2141,7 @@ namespace trng {
 		StrPluginRec *pRec;
 		StrRecordCallBack *pCall;
 		int j;
-		int RetValue;
+		int CallRetValue;
 		int Temp;
 		CALL_LARA_CTRL CallLaraCtrl;
 		CALL_LARA_DRAW CallLaraDraw;
@@ -2151,7 +2152,7 @@ namespace trng {
 		CALL_ANIMATE_LARA CallAnimateLara;
 		CALL_OPTIONS_MANAGER CallOptions;
 
-		RetValue = SRET_OK;
+		CallRetValue = SRET_OK;
 
 		pDB = &MyGlobPrivate.DataBase;
 
@@ -2170,38 +2171,38 @@ namespace trng {
 							CallOptions = (CALL_OPTIONS_MANAGER) pCall->pCall;
 							// (bool TestTitle, bool TestCommands, int SelectedRow);
 							Temp = CallOptions(Test1, Test2, IndiceItem);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 
 						case CB_LARA_CONTROL:
 							CallLaraCtrl = (CALL_LARA_CTRL) pCall->pCall;
 							pItem = GlobTomb4.pAdr->pLara;
 							Temp = CallLaraCtrl(CBT_Flags, pItem);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_LARA_DRAW:
 							//  (WORD CBT_Flags, StrItemTr4 * pLara, bool TestNoUpdateLight, bool TestMirror);
 							CallLaraDraw = (CALL_LARA_DRAW) pCall->pCall;
 							Temp = CallLaraDraw(CBT_Flags, pItem, Test1, Test2);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_LARA_HAIR_DRAW:
 							// (WINAPI *CALL_HAIR_DRAW) (WORD CBT_Flags);
 							CallHairDraw = (CALL_HAIR_DRAW) pCall->pCall;
 							Temp = CallHairDraw(CBT_Flags);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_LARA_HAIR_CONTROL:
 							// CALL_HAIR_CONTROL) (WORD CBT_Flags, bool TestKeepDownHair, bool TestSecondTail, void *pData);
 							CallHairControl = (CALL_HAIR_CONTROL) pCall->pCall;
 							Temp = CallHairControl(CBT_Flags, Test2, Test1, pVertici);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_INVENTORY_MAIN:
 							CallInventory = (CALL_INVENTORY_MAIN) pCall->pCall;
 							// (WORD CBT_Flags, bool TestLoadedGame, int SelectedItem);
 							Temp = CallInventory(CBT_Flags, Test1, SlotSceltoInventario);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_INVENT_BACKGROUND_CREATE:
 						case CB_INVENT_BACKGROUND_DRAW:
@@ -2210,13 +2211,13 @@ namespace trng {
 							// (WORD CB_Type, WORD CBT_Flags, WORD PHASE_Type);
 
 							Temp = CallBackGroundInvent(CB_Type, CBT_Flags, IndiceItem);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						case CB_ANIMATE_LARA:
 							CallAnimateLara = (CALL_ANIMATE_LARA) pCall->pCall;
 							// (WORD CBT_Flags, StrItemTr4 *pLara);
 							Temp = CallAnimateLara(CBT_Flags, pItem);
-							RetValue |= Temp;
+							CallRetValue |= Temp;
 							break;
 						}
 					}
@@ -2228,7 +2229,7 @@ namespace trng {
 			pRec++;
 		}
 
-		return RetValue;
+		return CallRetValue;
 	}
 
 	int EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags, StrCollisionLara *pColl)
@@ -2241,12 +2242,12 @@ namespace trng {
 		StrRecordCallBack *pCall;
 		int j;
 		int SlotNow;
-		int RetValue;
+		int SlotRetValue;
 		CALL_SLOT_MANY MyCall;
 		CALL_SLOT_CB_COLLISION MyCallCollision;
 		int Temp;
 
-		RetValue = SRET_OK;
+		SlotRetValue = SRET_OK;
 
 		SlotNow = pItem->SlotID;
 		pDB = &MyGlobPrivate.DataBase;
@@ -2266,17 +2267,21 @@ namespace trng {
 					case CB_SLOT_DRAW_EXTRA:
 
 						MyCall = (CALL_SLOT_MANY) pCall->pCall;
-						Temp = MyCall(ItemIndex, pItem, CB_Flags);
+						Temp = MyCall(ItemIndex, pItem, (WORD) CB_Flags);
+
+						if (Temp != SRET_OK) {
+							SlotRetValue |= Temp;
+						}
 						break;
 					case CB_SLOT_COLLISION:
 						MyCallCollision = (CALL_SLOT_CB_COLLISION) pCall->pCall;
 						//(short IndexItem, StrItemTr4 *pItem, WORD CBT_Flags, StrCollisionLara * pCollision);
-						Temp = MyCallCollision(ItemIndex, pItem, CB_Flags,  pColl);
-						break;
-					}
+						Temp = MyCallCollision(ItemIndex, pItem, (WORD) CB_Flags,  pColl);
 
-					if (Temp != SRET_OK) {
-						RetValue |= Temp;
+						if (Temp != SRET_OK) {
+							SlotRetValue |= Temp;
+						}
+						break;
 					}
 				}
 
@@ -2286,7 +2291,7 @@ namespace trng {
 			pRec++;
 		}
 
-		return RetValue;
+		return SlotRetValue;
 	}
 
 	// viene chiamata PRIMA di eseguire sub CONTROL di oggetto
@@ -2308,7 +2313,7 @@ namespace trng {
 
 		TestGiaEseguitoHeavy = false;
 		// impostare indice
-		GlobTomb4.ItemIndexLastMoved = ItemIndex;
+		GlobTomb4.ItemIndexLastMoved = (short) ItemIndex;
 
 		// verificare se fa parte di moveable che richiedono controllo  basic collision
 		pCut = GlobTomb4.pBaseCutscene;
@@ -2318,7 +2323,7 @@ namespace trng {
 			}
 		}
 
-		if (pItem->Health <= 0 && pItem->Health != (short) 0xc000) {
+		if (pItem->Health <= 0 && pItem->Health != -0x4000) {
 			// sta morendo
 			// vedere  se e' una di quelli da far esplodere
 			TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
@@ -2326,7 +2331,7 @@ namespace trng {
 				pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
 				if (pItem->SlotID == pEnemy->SlotId && (pEnemy->FlagsNEF & NEF_EXPLODE) != 0) {
 					// attivare esplosione
-					tomb4::CreatureDie(ItemIndex, true);
+					tomb4::CreatureDie((short) ItemIndex, true);
 					tomb4::SoundEffect(0x69, 0, 0);
 					tomb4::SoundEffect(0x6A, 0, 0);
 					break;
@@ -2398,7 +2403,7 @@ namespace trng {
 				tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
 				pFloorDataNow = tomb4::trigger_index;
 
-				GlobTomb4.ItemIndexEnabledTrigger = ItemIndex;
+				GlobTomb4.ItemIndexEnabledTrigger = (short) ItemIndex;
 
 				tomb4::TestTriggers(pFloorDataNow, 1, 0);
 				TestGiaEseguitoHeavy = true;
@@ -2473,12 +2478,12 @@ namespace trng {
 				Distanza = (pItem->SpeedH << 1) + pItem->SpeedH;
 
 				CalcolaIncremento(pItem->OrientationH - 0x7fff, &IncX, &IncZ, Distanza);
-				AggiornaPosizioneItem(ItemIndex, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, 0);
+				AggiornaPosizioneItem((short) ItemIndex, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, 0);
 			}
 
 			// impostare animzione per blocco
 			StopAnim = TrovaAnimazioneStop(pItem);
-			EsecuzioneActionTrigger(0, 15 | (StopAnim << 8), ItemIndex, SCANF_DIRECT_CALL);
+			EsecuzioneActionTrigger(0, (WORD) (15 | (StopAnim << 8)), ItemIndex, SCANF_DIRECT_CALL);
 			pItem->StateIdNext = pItem->StateIdCurrent;
 			pItem->SpeedH = 0;
 			return;
@@ -2518,7 +2523,7 @@ namespace trng {
 		// se e' stato modificata posizione item fare aggiornamento
 		if (TestMod) {
 					// aggiornare numero stanza
-			AggiornaPosizioneItem(ItemIndex, pItem->CordX, pItem->CordY, pItem->CordZ, 0);
+			AggiornaPosizioneItem((short) ItemIndex, pItem->CordX, pItem->CordY, pItem->CordZ, 0);
 		}
 	}
 
@@ -2654,7 +2659,7 @@ namespace trng {
 	void SospendiLogScript(int IndiceSave)
 	{
 		VetSalvaOldDebug[IndiceSave].OldFlagsDgx = GlobTomb4.pDiagnostica->FlagsDgx;
-		VetSalvaOldDebug[IndiceSave].OldCounter = GlobTomb4.DebugModeCounter;
+		VetSalvaOldDebug[IndiceSave].OldCounter = (WORD) GlobTomb4.DebugModeCounter;
 
 		GlobTomb4.DebugModeCounter = 0;
 		GlobTomb4.pDiagnostica->FlagsDgx &= ~DGX_LOG_SCRIPT_COMMANDS;
@@ -2849,7 +2854,7 @@ namespace trng {
 			}
 		}
 
-		pDetector->TotIndici = j;
+		pDetector->TotIndici = (WORD) j;
 		if (j == 0) {
 			pDetector->TestAttivo = false;
 			pDetector->TestMostra = false;

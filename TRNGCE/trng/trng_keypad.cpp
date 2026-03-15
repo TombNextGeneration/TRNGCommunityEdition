@@ -8,8 +8,6 @@
 namespace trng {
 	int GestioneKeyPad(int TipoKeyPad, WORD OcbCode, WORD Slot)
 	{
-		const int TempoDelay = 10;
-
 		//nota poi tutti i dati saranno forniti da comando script
 		// ma intanto usare roba fissa.
 		int Colonna, Riga;
@@ -22,6 +20,7 @@ namespace trng {
 		DWORD FramePassati;
 		bool TestNuovoTasto;
 		WORD ValoreTasto;
+		const int TempoDelay = 10;
 		bool TestEsegui;
 		int Moltiplicatore;
 		int MaxCifre;
@@ -94,7 +93,7 @@ namespace trng {
 				pKeyPad->LaraX = GlobTomb4.pAdr->pLara->CordX;
 				pKeyPad->LaraZ = GlobTomb4.pAdr->pLara->CordZ;
 
-				VerificaSingleGlobalTrigger(GT_KEYPAD_SHOWED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+				VerificaSingleGlobalTrigger(GT_KEYPAD_SHOWED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 
 			} else {
 				return -1;
@@ -114,7 +113,7 @@ namespace trng {
 			GlobTomb4.KeysToStop = pKeyPad->OldTastiBloccati;
 			pKeyPad->LastFrameExit = *GlobTomb4.pAdr->pFrameCounter;
 			if (pKeyPad->TestAttivo) {
-				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 			}
 			pKeyPad->TestAttivo = false;
 			return 0;
@@ -140,7 +139,7 @@ namespace trng {
 				}
 			}
 			if (pKeyPad->TestAttivo) {
-				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 			}
 			pKeyPad->TestAttivo = false;
 			GlobTomb4.KeysToStop = pKeyPad->OldTastiBloccati;
@@ -151,7 +150,7 @@ namespace trng {
 
 		if (pKeyPad->Fase == FKP_ATTENDI_FINE_ESCAPE) {
 			if (GlobTomb4.VetKeysToStop[1] == 0) {
-				ValoreTasto = pKeyPad->IndiceTasto + 1;
+				ValoreTasto = (WORD) (pKeyPad->IndiceTasto + 1);
 				// ripristinare tasti
 				if (pKeyPad->IndiceTastoOld != -1) {
 					CambiaTasto(pKeyPad->pStartMeshTree, pKeyPad->IndiceTastoOld, 0, true);
@@ -162,7 +161,7 @@ namespace trng {
 				pKeyPad->ValoreInserito = -1;
 				pKeyPad->LastFrameExit = *GlobTomb4.pAdr->pFrameCounter;
 				if (pKeyPad->TestAttivo) {
-					VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+					VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 				}
 				pKeyPad->TestAttivo = false;
 			}
@@ -194,7 +193,7 @@ namespace trng {
 				ValoreTasto = 0;
 				Moltiplicatore = 1;
 				for (i = pKeyPad->TotInseriti - 1; i >= 0; i--) {
-					ValoreTasto += Moltiplicatore * pKeyPad->VetInseriti[i];
+					ValoreTasto += (WORD) (Moltiplicatore * pKeyPad->VetInseriti[i]);
 					Moltiplicatore *= 10;
 				}
 				pKeyPad->ValoreInserito = ValoreTasto;
@@ -213,7 +212,7 @@ namespace trng {
 						}
 					}
 					if (pKeyPad->TestAttivo) {
-						VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+						VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 					}
 					pKeyPad->TestAttivo = false;
 					pKeyPad->LastFrameExit = *GlobTomb4.pAdr->pFrameCounter;
@@ -241,7 +240,7 @@ namespace trng {
 			GlobTomb4.KeysToStop = pKeyPad->OldTastiBloccati;
 			pKeyPad->LastFrameExit = *GlobTomb4.pAdr->pFrameCounter;
 			if (pKeyPad->TestAttivo) {
-				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, GetNgleIndice(pKeyPad->IndiceKeypad), false);
+				VerificaSingleGlobalTrigger(GT_KEYPAD_REMOVED, (short) GetNgleIndice(pKeyPad->IndiceKeypad), false);
 			}
 			pKeyPad->TestAttivo = false;
 			GlobTomb4.pBaseVariableTRNG->Globals.LastInputNumber = pKeyPad->ValoreInserito;
@@ -316,7 +315,7 @@ namespace trng {
 						Colonna = 1;
 						Riga = 3;
 					} else {
-						ValoreTasto = i - 2;
+						ValoreTasto = (WORD) (i - 2);
 						Riga = ValoreTasto / 3;
 						Colonna = ValoreTasto % 3;
 					}
@@ -360,7 +359,7 @@ namespace trng {
 				ValoreTasto = 0;
 				Moltiplicatore = 1;
 				for (i = pKeyPad->TotInseriti - 1; i >= 0; i--) {
-					ValoreTasto += Moltiplicatore * pKeyPad->VetInseriti[i];
+					ValoreTasto += (WORD) (Moltiplicatore * pKeyPad->VetInseriti[i]);
 					Moltiplicatore *= 10;
 				}
 				pKeyPad->ValoreInserito = ValoreTasto;
@@ -388,7 +387,7 @@ namespace trng {
 		if ((TastiInput & 0x40) != 0 && FramePassati >= TempoDelay) {
 			ValoreTasto = 11;
 			if (pKeyPad->IndiceTasto < 9) {
-				ValoreTasto = pKeyPad->IndiceTasto + 1;
+				ValoreTasto = (WORD) (pKeyPad->IndiceTasto + 1);
 			}
 			if (pKeyPad->IndiceTasto == 10)
 				ValoreTasto = 0;

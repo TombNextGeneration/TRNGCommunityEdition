@@ -96,12 +96,12 @@ union LDR_DLL_NOTIFICATION_DATA {
 };
 
 static LPSTR (__stdcall *&GetCommandLineBinding)() = *reinterpret_cast<decltype(&GetCommandLineBinding)>(0x4A7128);
-const int RequiredPatches[3] = {
+static const int RequiredPatches[3] = {
 	flep::PATCH_SAVE_ROPES,
 	flep::PATCH_CLASSIC_VEHICLES,
 	flep::PATCH_FIX_BABOON_BUG
 };
-const char *PatchTitles[342] = {
+static const char *PatchTitles[342] = {
 	"Font Customizer",
 	"GFX1 Customizer",
 	"GFX2 Customizer",

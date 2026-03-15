@@ -99,7 +99,7 @@ namespace tomb4
 				gfResidentCut[3] = 0;
 				gfUVRotate = 0;
 				gfNumMips = 0;
-				gfMirrorRoom = -1;
+				gfMirrorRoom = uchar(-1);
 
 				if (gfStatus != 3 || gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
 				{
@@ -162,7 +162,7 @@ namespace tomb4
 				gfResidentCut[3] = 0;
 				gfUVRotate = 0;
 				gfNumMips = 0;
-				gfMirrorRoom = -1;
+				gfMirrorRoom = uchar(-1);
 
 				switch (gfStatus)
 				{

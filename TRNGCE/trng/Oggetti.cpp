@@ -217,7 +217,7 @@ namespace trng {
 
 		TempFont.lfOutPrecision = OUT_TT_ONLY_PRECIS;
 
-		TempFont.lfCharSet = pFont->CharSet;
+		TempFont.lfCharSet = (BYTE) pFont->CharSet;
 
 		strcpy_s(TempFont.lfFaceName, pFont->NomeFont);
 		SizeX = ((float) pFont->SizeFont * 50.0f) / 100.0f;
@@ -1036,7 +1036,7 @@ namespace trng {
 					Totale |= Numero;
 
 				}
-				pDiario->PaginaNow.FlagsPL = Totale;
+				pDiario->PaginaNow.FlagsPL = (WORD) Totale;
 			}
 
 			// ------------ #BG_IMAGE#= ----------------------------------
@@ -1047,7 +1047,7 @@ namespace trng {
 					sprintf_s(BufferLog, "ERROR DIARY. Non valid value (%s) in tag #BG_IMAGE# of page %d", pArg, IndicePagina);
 					InviaLog(BufferLog);
 				} else {
-					pDiario->PaginaNow.BgImage = Numero;
+					pDiario->PaginaNow.BgImage = (short) Numero;
 				}
 			}
 
@@ -1059,7 +1059,7 @@ namespace trng {
 					sprintf_s(BufferLog, "ERROR DIARY. Non valid value (%s) in tag #POP_IMAGE#=of page %d", pArg, IndicePagina);
 					InviaLog(BufferLog);
 				} else {
-					pDiario->PaginaNow.NImage = Numero;
+					pDiario->PaginaNow.NImage = (short) Numero;
 				}
 			}
 
@@ -1071,7 +1071,7 @@ namespace trng {
 					sprintf_s(BufferLog, "ERROR DIARY. Non valid value (%s) in tag #BG_AUDIO#=of page %d", pArg, IndicePagina);
 					InviaLog(BufferLog);
 				} else {
-					pDiario->PaginaNow.CbBack = Numero;
+					pDiario->PaginaNow.CbBack = (short) Numero;
 				}
 			}
 			// ------------- #TITLE#= --------------------------------------
@@ -1319,7 +1319,7 @@ namespace trng {
 
 				tomb4::S_CDPlay(NumeroCD, TestLoop);
 			}
-			pDiario->CdIsPlaying = NumeroCD;
+			pDiario->CdIsPlaying = (short) NumeroCD;
 		}
 	}
 
@@ -1457,15 +1457,15 @@ namespace trng {
 	int StampaTestoWindowsForCB(RECT *pRect, StrWindowsFont *pFont, HDC MioHdc, char *pTesto, bool *pTestErrore, bool TestSoloProva, DWORD WTF_Flags)
 	{
 		CALL_WINDOWS_TEXT_PRINT MyCall;
-		int RetValue;
+		int MyRetValue;
 
 		MyCall = (CALL_WINDOWS_TEXT_PRINT) MyGlobPrivate.BaseVetCbReplace.VetDirectCB[CB_WINDOWS_TEXT_PRINT];
 
 		if (MyCall) {
 			//
-			RetValue = MyCall(pRect, pFont, MioHdc, pTesto, pTestErrore, TestSoloProva, WTF_Flags);
-			if (RetValue)
-				return RetValue;
+			MyRetValue = MyCall(pRect, pFont, MioHdc, pTesto, pTestErrore, TestSoloProva, WTF_Flags);
+			if (MyRetValue)
+				return MyRetValue;
 		}
 
 		return StampaTestoWindows(pRect, pFont, MioHdc, pTesto, pTestErrore, TestSoloProva, WTF_Flags);
@@ -1496,11 +1496,13 @@ namespace trng {
 		AltezzaFrame = pRect->bottom - pRect->top;
 
 		TempRect = *pRect;
+		OldMode = GM_COMPATIBLE;
 		TestRuota = false;
 
 		pTestoW = NULL;
 		pTestoBinario = NULL;
 		TempFlags = pFont->FlagsWFF;
+		SizeY = 0;
 
 		// se testo inizia con '&' allora e' una stringa binria  e va convertita
 		if (pTesto[0] == '&') {
@@ -1752,12 +1754,12 @@ namespace trng {
 
 						if ((Codice & VAR_TYPE_STORE) == 0 && (Codice & VAR_MASK_SIZE) == VAR_TYPE_TEXT) {
 							// e' una variabile di testo, infatti se manca store
-							pChar = Char2Unicode(LeggiVariabileTesto(Codice));
+							pChar = Char2Unicode(LeggiVariabileTesto((WORD) Codice));
 							break;
 						}
 
 						// e' una numerica normale, store o locale,o globale
-						Valore = LeggiVariabile(Codice);
+						Valore = LeggiVariabile((WORD) Codice);
 						// se e' di tipo timer formattarla come cronometro
 						if (Codice == 0x33 || Codice == 0x73) {
 							// e' cronometro
@@ -1893,12 +1895,12 @@ namespace trng {
 
 						if ((Codice & VAR_TYPE_STORE) == 0 && (Codice & VAR_MASK_SIZE) == VAR_TYPE_TEXT) {
 							// e' una variabile di testo, infatti se manca store
-							pChar = LeggiVariabileTesto(Codice);
+							pChar = LeggiVariabileTesto((WORD) Codice);
 							break;
 						}
 
 						// e' una numerica normale, store o locale,o globale
-						Valore = LeggiVariabile(Codice);
+						Valore = LeggiVariabile((WORD) Codice);
 						// se e' di tipo timer formattarla come cronometro
 						if (Codice == 0x33 || Codice == 0x73) {
 							// e' cronometro
@@ -2223,7 +2225,7 @@ namespace trng {
 		IndiceAzione = CreaNuovaAzioneProgressiva();
 		pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
 		pAzione->ActionType = AZ_PREPARA_FILMATO;
-		pAzione->ItemIndex = NumeroFMV;
+		pAzione->ItemIndex = (short) NumeroFMV;
 		// se lo shcermo e' gia' hide non fare il fade out
 		if (GlobTomb4.TestNoUpdate)
 			TestFade = false;

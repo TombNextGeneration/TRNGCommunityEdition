@@ -734,7 +734,7 @@ namespace trng {
 					pImpFile->Tipo = pHeader->TipoFile;
 					pImpFile->NumeroFile = pHeader->NumeroFile;
 
-					GlobTomb4.BaseImportedFiles.VetID[pImpFile->Id] = Tot;
+					GlobTomb4.BaseImportedFiles.VetID[pImpFile->Id] = (short) Tot;
 
 					// adesso allocare la memora necessaria e spostare i dati
 					pImpFile->pData = (BYTE *) malloc(pHeader->SizeFile);
@@ -833,7 +833,7 @@ namespace trng {
 						i += 2;
 
 						// ora ci sarebbe lista di word per disable code
-						pPlugin->TotDisable = TotWords - i + 1;
+						pPlugin->TotDisable = (short) (TotWords - i + 1);
 						for (j = 0; j < pPlugin->TotDisable; j++) {
 							pPlugin->VetDisable[j] = ParseField.pData[i++];
 						}
@@ -1864,7 +1864,7 @@ namespace trng {
 
 			pCamera = &GlobTomb4.BaseSetCamera.VetSetCamera[n];
 			pCamera->IdCamera = MAX_SET_CAMERA - 1;
-			GlobTomb4.BaseSetCamera.VetID[pCamera->IdCamera] = n;
+			GlobTomb4.BaseSetCamera.VetID[pCamera->IdCamera] = (short) n;
 			// ora leggere altri parametri dopo l'id
 			pCamera->Flags = FSCAM_DISABLE_COMBAT_CAM;
 
@@ -1969,7 +1969,7 @@ namespace trng {
 								k = ParseField.pData[i++];  // flags DWF_...
 								if (k == -1)
 									k = 0;
-								pBaseFonts->FlagDWF = k;
+								pBaseFonts->FlagDWF = (WORD) k;
 
 								pBaseFonts->LineSpacing = ParseField.pData[i++];
 								if (pBaseFonts->LineSpacing == -1)
@@ -1981,7 +1981,7 @@ namespace trng {
 										pBaseFonts->VetOffsetPosY[k] = 0;
 								}
 
-								ImpostaDefaultWindowsFont(j);
+								ImpostaDefaultWindowsFont((short) j);
 								break;
 
 							case cnt_Demo:
@@ -2049,7 +2049,7 @@ namespace trng {
 								if (PluginId != 0) {
 									// appartiene ad un plugin: inviarlo alla callback
 									// fare anche conversione di pluginid
-									PluginIndex = GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
+									PluginIndex = (short) GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
 									if (PluginIndex == -1)
 										break;
 
@@ -2243,7 +2243,7 @@ namespace trng {
 								pStand->AudioTrack = ParseField.pData[i++];
 								pStand->VerticalOrient = ParseField.pData[i++];
 								if (pStand->VerticalOrient == -1)
-									pStand->VerticalOrient = -2730; // default valore
+									pStand->VerticalOrient = (WORD) -2730; // default valore
 
 								pStand->OrientSpeed = ParseField.pData[i++];
 								pStand->Distanza = ParseField.pData[i++];
@@ -2411,7 +2411,7 @@ namespace trng {
 								// attivare sempre il mirror all'inizio
 								pMirror->TestAttivo = 1;
 
-								GlobTomb4.BaseMirror.TotMirror = TotMirror + 1;
+								GlobTomb4.BaseMirror.TotMirror = (WORD) (TotMirror + 1);
 
 								break;
 
@@ -2464,11 +2464,11 @@ namespace trng {
 
 								// ora lista (opzionale) di item collegati ad ascensore
 								k = 0;
-								pElevatore->TotFrameItems = Indice - i;
+								pElevatore->TotFrameItems = (WORD) (Indice - i);
 
 								for (j = i; j < Indice; j++) {
 									if (ParseField.pData[j] == SCRIPT_IGNORE) {
-										pElevatore->TotFrameItems = k;
+										pElevatore->TotFrameItems = (WORD) k;
 										break;
 									}
 									pElevatore->VetFrameItems[k++] = ParseField.pData[j];
@@ -2488,7 +2488,7 @@ namespace trng {
 								pDetector->RangeMetri = ParseField.pData[i++];
 								// ora elenco item
 								k = 0;
-								pDetector->TotIndici = Indice - i;
+								pDetector->TotIndici = (WORD) (Indice - i);
 
 								for (j = i; j < Indice; j++) {
 
@@ -2528,13 +2528,13 @@ namespace trng {
 								if (PluginId > 0) {
 									// qui fare call back per customize di plugin
 									// fare anche conversione di pluginid
-									PluginIndex = GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
+									PluginIndex = (short) GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
 									if (PluginIndex == -1)
 										break;
 
 									pCallCustomize = (CALL_CUSTOMIZE) MyGlobPrivate.DataBase.pVetPlugins[PluginIndex].VetDirectCB[CB_CUSTOMIZE_MINE];
 									// cbCustomizeMine(WORD CustomizeValue, int NumberOfItems, short *pItemArray)
-									pCallCustomize(n, Indice - i, (short *) &ParseField.pData[i]);
+									pCallCustomize((WORD) n, Indice - i, (short *) &ParseField.pData[i]);
 								} else {
 									EseguiCustomize(n, (short *) &ParseField.pData[i], Indice - i);
 								}
@@ -2547,7 +2547,7 @@ namespace trng {
 
 								if (PluginId > 0) {
 									// chiamare callback di plugin per gestire parameter
-									PluginIndex = GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
+									PluginIndex = (short) GetPluginIndex(PluginId, PLUG_FROM_SCRIPT);
 									if (PluginIndex == -1)
 										break;
 
@@ -2558,7 +2558,7 @@ namespace trng {
 										break;
 									}
 									// (WORD ParameterValue, int NumberOfItems, short *pItemArray);
-									pCallParam(n, Indice - i, (short *) &ParseField.pData[i]);
+									pCallParam((WORD) n, Indice - i, (short *) &ParseField.pData[i]);
 									break;
 
 								}
@@ -2583,7 +2583,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.pBaseSpeechActor->VetId[pSpeech->IdSpeech] = n;
+									GlobTomb4.pBaseSpeechActor->VetId[pSpeech->IdSpeech] = (short) n;
 
 									pSpeech->Flags = ParseField.pData[i++];
 									if (pSpeech->Flags == SCRIPT_IGNORE)
@@ -2627,7 +2627,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseMoveItem.VetID[pMoveItem->IdMove] = n;
+									GlobTomb4.BaseMoveItem.VetID[pMoveItem->IdMove] = (short) n;
 									pMoveItem->Flags = ParseField.pData[i++];
 									if (pMoveItem->Flags == SCRIPT_IGNORE)
 										pMoveItem->Flags = 0;
@@ -2672,7 +2672,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseShowSprites.VetIdShowSprites[pShowSprite->IdShowSprite] = n;
+									GlobTomb4.BaseShowSprites.VetIdShowSprites[pShowSprite->IdShowSprite] = (short) n;
 
 									pShowSprite->Flags = ParseField.pData[i++];
 									if (pShowSprite->Flags == SCRIPT_IGNORE)
@@ -2692,7 +2692,7 @@ namespace trng {
 									if (n == SCRIPT_IGNORE) {
 										pShowSprite->Colore = 0;
 									} else {
-										pShowSprite->Colore = GetColoreId(n, 0x808080, false, MyBufInterno);
+										pShowSprite->Colore = GetColoreId((short) n, 0x808080, false, MyBufInterno);
 									}
 
 									pShowSprite->GridX = ParseField.pData[i++];
@@ -2716,7 +2716,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseScaleParam.VetIdScale[pScale->IdScale] = n;
+									GlobTomb4.BaseScaleParam.VetIdScale[pScale->IdScale] = (short) n;
 									pScale->ItemIndex = ParseField.pData[i++];
 									pScale->Flags = ParseField.pData[i++];
 									if (pScale->Flags == SCRIPT_IGNORE)
@@ -2741,7 +2741,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseColoraItem.VetID[pColora->IdColItem] = n;
+									GlobTomb4.BaseColoraItem.VetID[pColora->IdColItem] = (short) n;
 									GlobTomb4.BaseColoraItem.TotColoraItem++;
 
 									pColora->Flags = ParseField.pData[i++];
@@ -2766,7 +2766,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseCircles.VetIdCircle[pCircle->IdParam] = n;
+									GlobTomb4.BaseCircles.VetIdCircle[pCircle->IdParam] = (short) n;
 
 									pCircle->CenterX = ParseField.pData[i++];
 									pCircle->CenterY = ParseField.pData[i++];
@@ -2789,7 +2789,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseQuads.VetIdQuads[pQuad->IdParam] = n;
+									GlobTomb4.BaseQuads.VetIdQuads[pQuad->IdParam] = (short) n;
 
 									pQuad->Tria1.A.x = (float) ParseField.pData[i++];
 									pQuad->Tria1.A.y = (float) ParseField.pData[i++];
@@ -2827,7 +2827,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseTriangles.VetIdTriangles[pTria->IdParam] = n;
+									GlobTomb4.BaseTriangles.VetIdTriangles[pTria->IdParam] = (short) n;
 
 									pTria->Tria.A.x = (float) ParseField.pData[i++];
 									pTria->Tria.A.y = (float) ParseField.pData[i++];
@@ -2856,7 +2856,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseMoveAdvance.VetID[pMove->IdMove] = n;
+									GlobTomb4.BaseMoveAdvance.VetID[pMove->IdMove] = (short) n;
 									pMove->Flags = ParseField.pData[i++];
 									if (pMove->Flags == SCRIPT_IGNORE)
 										pMove->Flags = 0;
@@ -2885,7 +2885,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseRotateItem.VetID[pRotate->IdMove] = n;
+									GlobTomb4.BaseRotateItem.VetID[pRotate->IdMove] = (short) n;
 									pRotate->Flags = ParseField.pData[i++];
 									if (pRotate->Flags == SCRIPT_IGNORE)
 										pRotate->Flags = 0;
@@ -2916,7 +2916,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseSetCamera.VetID[pCamera->IdCamera] = n;
+									GlobTomb4.BaseSetCamera.VetID[pCamera->IdCamera] = (short) n;
 									// ora leggere altri parametri dopo l'id
 									pCamera->Flags = ParseField.pData[i++];
 									if (pCamera->Flags == SCRIPT_IGNORE)
@@ -2958,7 +2958,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseParamPrint.VetID[pPrint->IdPrint] = n;
+									GlobTomb4.BaseParamPrint.VetID[pPrint->IdPrint] = (short) n;
 									// ora leggere tre word successive
 									// come fossero quelli di comando TextFormat
 									ScansioneTextFormat(&pPrint->Formatting, &ParseField.pData[i]);
@@ -2986,7 +2986,7 @@ namespace trng {
 
 									}
 
-									GlobTomb4.pBaseSwapAnim->VetId[pSwap->Id] = n;
+									GlobTomb4.pBaseSwapAnim->VetId[pSwap->Id] = (short) n;
 
 									pSwap->FirstSourceAnim = ParseField.pData[i++];
 									pSwap->FirstTargetAnim = ParseField.pData[i++];
@@ -3009,7 +3009,7 @@ namespace trng {
 										break;
 									}
 
-									GlobTomb4.BaseInputBoxes.VetId[pInputBox->IdInputBox] = n;
+									GlobTomb4.BaseInputBoxes.VetId[pInputBox->IdInputBox] = (short) n;
 
 									// InputBoxId, BckImageId, WFontId, MaxChars, SfxSound, Flags (FIB_ values)
 									pInputBox->IdImage = ParseField.pData[i++];
@@ -3043,7 +3043,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseParamMyRects.VetId[pMyRect->Id] = n;
+									GlobTomb4.BaseParamMyRects.VetId[pMyRect->Id] = (short) n;
 
 									pMyRect->OrgX = ParseField.pData[i++];
 									pMyRect->OrgY = ParseField.pData[i++];
@@ -3070,7 +3070,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseParamWText.VetIds[pWText->IdParam] = n;
+									GlobTomb4.BaseParamWText.VetIds[pWText->IdParam] = (short) n;
 
 									pWText->Flags = ParseField.pData[i++];
 									if (pWText->Flags == SCRIPT_IGNORE)
@@ -3102,7 +3102,7 @@ namespace trng {
 										InviaLog(BufferLog);
 										break;
 									}
-									GlobTomb4.BaseParamLightning.VetId[pLightning->IdParamLgtn] = n;
+									GlobTomb4.BaseParamLightning.VetId[pLightning->IdParamLgtn] = (short) n;
 									// ora leggere i parametri
 									pLightning->Flags = ParseField.pData[i++];
 									if (pLightning->Flags == -1)
@@ -3167,7 +3167,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.BaseFonts.VetID[pFont->IdFont] = n;
+								GlobTomb4.BaseFonts.VetID[pFont->IdFont] = (short) n;
 								// indice nome font
 								j = ParseField.pData[i++];
 								pChar = GetString(j);
@@ -3183,10 +3183,10 @@ namespace trng {
 
 								// colore rgb
 								j = ParseField.pData[i++];
-								pFont->ColoreText = GetColoreId(j, 0xFFFFFF, true, MyBufInterno);
+								pFont->ColoreText = GetColoreId((short) j, 0xFFFFFF, true, MyBufInterno);
 								j = ParseField.pData[i++];
 								if (j != SCRIPT_IGNORE)
-									pFont->ColoreShadow = GetColoreId(j, 0x00000, true, MyBufInterno);
+									pFont->ColoreShadow = GetColoreId((short) j, 0x00000, true, MyBufInterno);
 								GlobTomb4.BaseFonts.TotFonts++;
 								break;
 							case ctn_TestPosition:
@@ -3203,7 +3203,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.BaseTestPosition.VetId[pTestPosition->IdTestPosition] = Tot;
+								GlobTomb4.BaseTestPosition.VetId[pTestPosition->IdTestPosition] = (short) Tot;
 								// flags
 								pTestPosition->Flags = ParseField.pData[i++];
 								if (pTestPosition->Flags == SCRIPT_IGNORE)
@@ -3249,7 +3249,7 @@ namespace trng {
 									break;
 								}
 								// salvare id
-								GlobTomb4.BaseColoriRGB.VetID[pColor->IdColor] = Tot;
+								GlobTomb4.BaseColoriRGB.VetID[pColor->IdColor] = (short) Tot;
 
 								Rosso = ParseField.pData[i++];
 								Verde = ParseField.pData[i++];
@@ -3281,16 +3281,16 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.pBaseTriggerGroups->VetID[pGroup->IdGroup] = TotGroups;
+								GlobTomb4.pBaseTriggerGroups->VetID[pGroup->IdGroup] = (short) TotGroups;
 
 								// ora leggere sequence di trigger
 								// ogni trigger ci sono tre valori
 								k = Indice - i;
 								if (TagScript == ctn_TriggerGroup) {
-									pGroup->TotTriggers = k / 6;  // calcola numero di word presenti per ogni trigger
+									pGroup->TotTriggers = (WORD) (k / 6);  // calcola numero di word presenti per ogni trigger
 								}else {
 									// dimensione word solo 3 word per ogni trigger
-									pGroup->TotTriggers = k / 3;
+									pGroup->TotTriggers = (WORD) (k / 3);
 								}
 								pDword = (DWORD *) &ParseField.pData[i];
 								pWord = &ParseField.pData[i];
@@ -3367,7 +3367,7 @@ namespace trng {
 									break;
 								}
 								// salvare id
-								GlobTomb4.pBaseEnvConditions->VetID[pEnvScript->IdEnvScript] = n;
+								GlobTomb4.pBaseEnvConditions->VetID[pEnvScript->IdEnvScript] = (short) n;
 								n = 0;
 								pEnvScript->VetEnvCondition[n].EnvCondition = ParseField.pData[i++];
 								pEnvScript->VetEnvCondition[n].DistanceEnv = ParseField.pData[i++];
@@ -3383,7 +3383,7 @@ namespace trng {
 									pEnvScript->VetEnvCondition[n].Extra = ParseField.pData[i + j + 2];
 									n++;
 								}
-								pEnvScript->TotEnvCondition = n;
+								pEnvScript->TotEnvCondition = (WORD) n;
 								break;
 							case ctn_ItemGroup:
 								Tot = GlobTomb4.BaseItemGroup.TotGroups;
@@ -3399,7 +3399,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.BaseItemGroup.VetID[pItemGroup->IdGroup] = Tot;
+								GlobTomb4.BaseItemGroup.VetID[pItemGroup->IdGroup] = (short) Tot;
 
 								n = Indice - i;
 								Tot = 0;
@@ -3425,7 +3425,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.pBaseOrganizer->VetID[pScriptOrg->Id] = n;
+								GlobTomb4.pBaseOrganizer->VetID[pScriptOrg->Id] = (short) n;
 
 								pScriptOrg->Flags = ParseField.pData[i++];
 								if (pScriptOrg->Flags == SCRIPT_IGNORE)
@@ -3466,7 +3466,7 @@ namespace trng {
 									break;
 								}
 								// salva id e indice
-								GlobTomb4.pBaseGlobalTriggers->VetID[pGlob->Id] = n;
+								GlobTomb4.pBaseGlobalTriggers->VetID[pGlob->Id] = (short) n;
 
 								pGlob->Flags = ParseField.pData[i++];
 								if (pGlob->Flags == SCRIPT_IGNORE)
@@ -3543,7 +3543,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.BaseSwitch.VetID[pSwitch->IdSwitch] = n;
+								GlobTomb4.BaseSwitch.VetID[pSwitch->IdSwitch] = (short) n;
 
 								pSwitch->Variable = ParseField.pData[i++];
 								if (pSwitch->Variable == SCRIPT_IGNORE)
@@ -3557,7 +3557,7 @@ namespace trng {
 
 								// ora eventuali extra parametri
 								k = 0;
-								pSwitch->TotIndici = Indice - i;
+								pSwitch->TotIndici = (WORD) (Indice - i);
 
 								for (j = i; j < Indice; j++) {
 									pSwitch->VetIndici[k++] = ParseField.pData[j];
@@ -3581,7 +3581,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.pBaseScriptImages->VetID[pSImage->IdCommand] = n;
+								GlobTomb4.pBaseScriptImages->VetID[pSImage->IdCommand] = (short) n;
 
 								pSImage->NumeroImage = ParseField.pData[i++];
 								pSImage->Flags = ParseField.pData[i++];
@@ -3625,7 +3625,7 @@ namespace trng {
 									InviaLog(BufferLog);
 									break;
 								}
-								GlobTomb4.BaseTexSequence.VetID[pTexSeq->IdSequenza] = n;
+								GlobTomb4.BaseTexSequence.VetID[pTexSeq->IdSequenza] = (short) n;
 
 								pTexSeq->FPS = ParseField.pData[i++];
 								if (pTexSeq->FPS == SCRIPT_IGNORE)
@@ -3692,7 +3692,7 @@ namespace trng {
 								pEffect->DurateEmit = ParseField.pData[i++];
 								pEffect->DuratePause = ParseField.pData[i++];
 								// salvare indice relativo a ID
-								GlobTomb4.pBaseEffects->VetID[pEffect->Id] = TotEffetti;
+								GlobTomb4.pBaseEffects->VetID[pEffect->Id] = (short) TotEffetti;
 
 								// ora eventuali extra parametri
 								k = 0;
@@ -4220,7 +4220,7 @@ namespace trng {
 		if (QuotaTick == 0)
 			QuotaTick = 1;
 
-		pRec->QuotaRiduzione = QuotaTick;
+		pRec->QuotaRiduzione = (WORD) QuotaTick;
 	}
 
 	// ripristina modifiche per danno di creeture a lara e azzera
@@ -4264,7 +4264,7 @@ namespace trng {
 
 			fAltezza = (fAltezza / 100.0f) * fVariazione;
 
-			*GlobTomb4.pAdr->pRowCharHeight = Float2Int(fAltezza);
+			*GlobTomb4.pAdr->pRowCharHeight = (short) Float2Int(fAltezza);
 
 		}
 
@@ -4393,7 +4393,7 @@ namespace trng {
 			}
 
 			GlobTomb4.BasePreloadImages.VetPreload[j].hBitMap = LoadImage(NULL, NomeImmagine, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-			GlobTomb4.BasePreloadImages.VetPreload[j].ImageId = NImage;
+			GlobTomb4.BasePreloadImages.VetPreload[j].ImageId = (WORD) NImage;
 			GlobTomb4.BasePreloadImages.TotPreload++;
 
 			if (TestCrypt) {
@@ -4592,7 +4592,7 @@ namespace trng {
 				pSImage = &TempImage;
 				pSImage->AudioTrack = -1;
 				pSImage->Flags = 0;
-				pSImage->NumeroImage = -1;
+				pSImage->NumeroImage = (WORD) -1;
 			}
 
 			switch (n) {
@@ -5762,7 +5762,7 @@ namespace trng {
 			Numero = 1; // corrisponde a  FT_BOTTOM_CENTER;
 
 		pText->Flags = Numero & 0xF000;
-		pText->FlagsMicro = (Numero & 0x0FF0) >> 4;
+		pText->FlagsMicro = (BYTE) ((Numero & 0x0FF0) >> 4);
 		pText->Posizione = Numero & 0x000F;
 
 		// terza word: velocita' blink
@@ -5886,14 +5886,14 @@ namespace trng {
 
 		if (TestSepara) {
 			// separare
-			GestionePickups(Primo, INV_INCREMENTA, 0);
-			GestionePickups(Secondo, INV_INCREMENTA, 0);
-			GestionePickups(Finale, INV_DECREMENTA, 0);
+			GestionePickups((WORD) Primo, INV_INCREMENTA, 0);
+			GestionePickups((WORD) Secondo, INV_INCREMENTA, 0);
+			GestionePickups((WORD) Finale, INV_DECREMENTA, 0);
 		} else {
 			// combinare
-			GestionePickups(Primo, INV_DECREMENTA, 0);
-			GestionePickups(Secondo, INV_DECREMENTA, 0);
-			GestionePickups(Finale, INV_INCREMENTA, 0);
+			GestionePickups((WORD) Primo, INV_DECREMENTA, 0);
+			GestionePickups((WORD) Secondo, INV_DECREMENTA, 0);
+			GestionePickups((WORD) Finale, INV_INCREMENTA, 0);
 		}
 	}
 
@@ -6269,7 +6269,7 @@ namespace trng {
 				Orient += pTarget->OrientationH;
 			}
 
-			Orient += pCut->Rotate;
+			Orient += (WORD) pCut->Rotate;
 
 			// se assoluto fare subito calcolo di posizione
 			CalcolaIncremento(Orient, &IncX, &IncZ, pCut->Distance);
@@ -6290,9 +6290,7 @@ namespace trng {
 			// soggettiva
 			// calcolo posizione camera con visione soggettiva
 			// scoprire quale moveable e' la sorgente
-			if (pCut->Flags & FTC_LEADING_LOOK_LARA) {
-				Indice = GlobTomb4.pBaseCutscene->LeadingActorIndex;
-			}
+			Indice = GlobTomb4.pBaseCutscene->LeadingActorIndex;
 
 			if (pCut->Flags & FTC_EXTRA_LOOK_LARA) {
 				Indice = GlobTomb4.pBaseCutscene->ExtraActorIndex;
@@ -6502,8 +6500,8 @@ namespace trng {
 					}
 
 					// adesso tenere impostato questo valore
-					tomb4::lara.head_y_rot = pPlay->OrientHTurnNow;
-					tomb4::lara.torso_y_rot = pPlay->OrientHTurnNow;
+					tomb4::lara.head_y_rot = (short) pPlay->OrientHTurnNow;
+					tomb4::lara.torso_y_rot = (short) pPlay->OrientHTurnNow;
 
 					// se comando shake e terminato vedere se abbiamo finito tutto o se dobbiamo invertire direzione
 					if (pPlay->OrientHLastCommand == SPC_HEAD_SHAKE && TestFineTurning == true) {
@@ -6575,8 +6573,8 @@ namespace trng {
 					}
 
 					// adesso tenere impostato questo valore
-					tomb4::lara.head_x_rot = pPlay->OrientVTurnNow;
-					tomb4::lara.torso_x_rot = pPlay->OrientVTurnNow;
+					tomb4::lara.head_x_rot = (short) pPlay->OrientVTurnNow;
+					tomb4::lara.torso_x_rot = (short) pPlay->OrientVTurnNow;
 
 					// se comando shake e terminato vedere se abbiamo finito tutto o se dobbiamo invertire direzione
 					if (pPlay->OrientVLastCommand == SPC_HEAD_NOD && TestFineTurning == true) {
@@ -6721,7 +6719,7 @@ namespace trng {
 						GlobTomb4.PrintString.Colore = pPlay->TextSettings.Colore;
 						GlobTomb4.PrintString.Posizione = pPlay->TextSettings.Posizione;
 
-						EsecuzioneFlipeffect(0, 360, Numero, SCANF_DIRECT_CALL);
+						EsecuzioneFlipeffect(0, 360, (WORD) Numero, SCANF_DIRECT_CALL);
 
 						GlobTomb4.PrintString.Colore = SalvaColore;
 						GlobTomb4.PrintString.Posizione = SalvaPosizione;
@@ -6737,7 +6735,7 @@ namespace trng {
 					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
 						ShowMsgDebug("Frame=%d: SPC_PLAY_CD track %d", TimerNow, Numero);
 					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: PLAY_CD %d", pPlay->pParam->IdSpeech, Numero);
-					PlayExtraCD(Numero, 2, false);
+					PlayExtraCD((short) Numero, 2, false);
 					pPlay->IndexCommandNow++;
 					TestNextComando = true;
 					break;
@@ -6748,7 +6746,7 @@ namespace trng {
 					if (GlobTomb4.DebugModeCounter && !(GlobTomb4.pDiagnostica->DgxExtra & EDGX_CONCISE_SCRIPT_LOG))
 						ShowMsgDebug("Frame=%d: SPC_PERFORM_TG triggergroup=%d", TimerNow, Numero);
 					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: PERFORM_TG %d", pPlay->pParam->IdSpeech, Numero);
-					EseguiTriggerGroup(Numero);
+					EseguiTriggerGroup((short) Numero);
 					pPlay->IndexCommandNow++;
 					TestNextComando = true;
 					break;
@@ -6758,7 +6756,7 @@ namespace trng {
 						ShowMsgDebug("Frame=%d: SPC_NEXT_STATE_ID %d", TimerNow, Numero);
 					FormattaLogCutscene("SPEECH", TimerNow, "SPEECH, %d: NEXT_STATEID %d", pPlay->pParam->IdSpeech, Numero);
 					pItem = &GlobTomb4.pAdr->pVetItems[pPlay->ItemIndex];
-					pItem->StateIdNext = Numero;
+					pItem->StateIdNext = (WORD) Numero;
 					pPlay->IndexCommandNow++;
 					TestNextComando = true;
 					break;
@@ -6776,7 +6774,7 @@ namespace trng {
 
 					pItem->FrameNow = GlobTomb4.pAdr->pVetAnimations[Numero].FrameStart;
 					pItem->StateIdCurrent = GlobTomb4.pAdr->pVetAnimations[Numero].StateId;
-					pItem->AnimationNow = Numero;
+					pItem->AnimationNow = (WORD) Numero;
 					pPlay->IndexCommandNow++;
 					TestNextComando = true;
 					break;
@@ -6877,25 +6875,25 @@ namespace trng {
 
 		if ((pPlay->Flags & SPCF_OLD_SPEECH_SLOTS) == 0 || pPlay->TestAbs == true) {
 			// e' nuovo metodo
-			return pPlay->IndexFirstMeshSpeech + MeshIndex * 2;
+			return (WORD) (pPlay->IndexFirstMeshSpeech + MeshIndex * 2);
 		}
 
 		if (pPlay->Flags & SPCF_OLD_SPEECH_SLOTS) {
 			// e' vecchio metodo: tutto piu' complicato
 			if (MeshIndex < pPlay->TotSpeech) {
 				// invertire l'ordine della mesh speech
-				i = pPlay->pParam->TotSpeechMesh - MeshIndex - 1;
+				i = (WORD) (pPlay->pParam->TotSpeechMesh - MeshIndex - 1);
 
 			} else {
-				i = MeshIndex;
+				i = (WORD) MeshIndex;
 			}
 			TotMesh = GlobTomb4.pAdr->pVetSlot[pPlay->pParam->SpeechSlot].TotMesh;
-			i *= TotMesh;
+			i *= (WORD) TotMesh;
 		} else {
-			i = MeshIndex;
+			i = (WORD) MeshIndex;
 		}
 
-		return pPlay->IndexFirstMeshSpeech + i * 2;
+		return (WORD) (pPlay->IndexFirstMeshSpeech + i * 2);
 	}
 
 	void EliminaStringaSpeech(StrPlaySpeech *pPlay)
@@ -7071,7 +7069,7 @@ namespace trng {
 				InviaLog(BufferLog);
 				return 1;
 			}
-			RepeatType = pCallMine(NumeroFlip, Timer , ExtraTimer, Flags);
+			RepeatType = pCallMine((WORD) NumeroFlip, Timer, (WORD) ExtraTimer, Flags);
 
 			return RepeatType;
 
@@ -7089,7 +7087,7 @@ namespace trng {
 						// trovata call back
 						// (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode);
 						pCallFlip = (CALL_FLIPEFFECT) pCB->pCall;
-						pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_FIRST);
+						pCallFlip((WORD) NumeroFlip, Timer, (WORD) ExtraTimer, Flags, CBT_FIRST);
 						break;
 					}
 					pCB++;
@@ -7106,7 +7104,7 @@ namespace trng {
 		if (pCallFlip != NULL) {
 			TestReplaced = true;
 			//  (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode, WORD CBType);
-			Responso = pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_REPLACE);
+			Responso = pCallFlip((WORD) NumeroFlip, Timer, (WORD) ExtraTimer, Flags, CBT_REPLACE);
 			if (Responso == TRET_EXECUTE_ORIGINAL) {
 				TestReplaced = false;
 			} else {
@@ -7136,7 +7134,7 @@ namespace trng {
 						// trovata call back
 						// (WORD FlipIndex, WORD Timer, WORD Extra, WORD ActivationMode);
 						pCallFlip = (CALL_FLIPEFFECT) pCB->pCall;
-						RepeatType = pCallFlip(NumeroFlip, Timer, ExtraTimer, Flags, CBT_AFTER);
+						RepeatType = pCallFlip((WORD) NumeroFlip, Timer, (WORD) ExtraTimer, Flags, CBT_AFTER);
 						break;
 					}
 					pCB++;
@@ -7204,7 +7202,7 @@ namespace trng {
 			SubTabLogScript();
 			return 1;
 		}
-		SalvaLastTimer = GlobTomb4.LastTimerTrigger;
+		SalvaLastTimer = (short) GlobTomb4.LastTimerTrigger;
 		GlobTomb4.LastTimerTrigger = 0;
 
 		// fare analisi particolare per accoppiata trigger camera + target
@@ -7327,7 +7325,7 @@ namespace trng {
 							if (GlobTomb4.DebugModeCounter)
 								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_TIMER field", Numero, 0);
 						}
-						pTrigger->Timer = (pTrigger->Timer & 0x7f00) | Numero;
+						pTrigger->Timer = (WORD) ((pTrigger->Timer & 0x7f00) | Numero);
 						break;
 					case TCMD_SET_FULL_TIMER:
 						if (Numero < 0 || Numero > 0x7fff) {
@@ -7335,7 +7333,7 @@ namespace trng {
 								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_FULL_TIMER field", Numero, 0);
 						}
 						// intero numero
-						pTrigger->Timer = Numero;
+						pTrigger->Timer = (WORD) Numero;
 						break;
 					case TCMD_SET_EXTRA_CONDITION:
 						if (Numero < 0 || Numero > 31) {
@@ -7343,7 +7341,7 @@ namespace trng {
 								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_EXTRA_CONDITION field", Numero, 0);
 						}
 						// byte alto di timer
-						pTrigger->Timer = (pTrigger->Timer & 0x00ff) | (Numero << 8);
+						pTrigger->Timer = (WORD) ((pTrigger->Timer & 0x00ff) | (Numero << 8));
 						break;
 					case TCMD_SET_EXTRA_TIMER:
 						if (Numero < 0 || Numero > 0x7f) {
@@ -7351,7 +7349,7 @@ namespace trng {
 								ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_EXTRA_TIMER field", Numero, 0);
 						}
 						// byte alto di timer
-						pTrigger->Timer = (pTrigger->Timer & 0x00ff) | (Numero << 8);
+						pTrigger->Timer = (WORD) ((pTrigger->Timer & 0x00ff) | (Numero << 8));
 						break;
 					case TCMD_SET_OBJECT:
 						// valore object
@@ -7363,7 +7361,7 @@ namespace trng {
 									ShowMsgDebug("ERROR: value out of range (%d) for TCMD_SET_OBJECT field", Numero, 0);
 							}
 							// e' indice ngle o valore non moveable index, lasciarlo come e'
-							pTrigger->Object = Numero;
+							pTrigger->Object = (WORD) Numero;
 						} else {
 							// NEGATIVO: e' indice tomb di moveable: lo devo converire in ngle
 							Numero = -Numero;
@@ -7372,7 +7370,7 @@ namespace trng {
 									ShowMsgDebug("ERROR: value out of range -(%d) for TCMD_SET_OBJECT field", Numero, 0);
 							}
 							//
-							pTrigger->Object = ConvertiTombItemIndex2NgleIndex(Numero);
+							pTrigger->Object = (WORD) ConvertiTombItemIndex2NgleIndex(Numero);
 
 						}
 						break;
@@ -8219,7 +8217,7 @@ Concludi:
 		for (i = 1; i < 1000; i++) {
 			sprintf_s(NomeFile, "data\\demo%d.pak", i);
 			if (EsisteFile(NomeFile)) {
-				GlobTomb4.DemoOnDiskArray[n++] = i;
+				GlobTomb4.DemoOnDiskArray[n++] = (WORD) i;
 			}
 		}
 
@@ -8482,7 +8480,7 @@ Concludi:
 								// tutto ok: e' stesso livello per cui basta solo attivare di nuovo il playing
 								GlobTomb4.TestEditingDemo = false;
 								pDemo->TestDemoInProgress = true;
-								pDemo->LastIdPlayed = DemoId;
+								pDemo->LastIdPlayed = (short) DemoId;
 								pDemo->VetDemoPlayed[i]++;
 								GlobTomb4.pBaseDemo->IndexFrame = 0;
 								GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
@@ -8506,7 +8504,7 @@ Concludi:
 
 						if (CaricaDemo(DemoId) == true) {
 							GlobTomb4.DemoNumberLoaded = DemoId;
-							pDemo->LastIdPlayed = DemoId;
+							pDemo->LastIdPlayed = (short) DemoId;
 							GlobTomb4.TestEditingDemo = false;
 							GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
 							pDemo->VetDemoPlayed[i]++;
@@ -8585,7 +8583,7 @@ Concludi:
 
 		pAzione->ActionType = AZ_PRINT_STRING;
 
-		pAzione->Arg1 = NumeroCicli + 1;
+		pAzione->Arg1 = (WORD) (NumeroCicli + 1);
 		pAzione->Arg2 = GlobTomb4.PrintString.FlagsMicro;
 		// salvare indice di stringa
 		pAzione->ItemIndex = -1; // segnale per stringa esterna
@@ -8910,8 +8908,8 @@ Concludi:
 			*GlobTomb4.pAdr->pTestWorkingOnMoveables = 1;
 			Indice = *GlobTomb4.pAdr->pLaraIndex;
 
-			tomb4::ItemNewRoom(Indice, NewRoom);
-			*GlobTomb4.pAdr->pTestWorkingOnMoveables = SalvaTest;
+			tomb4::ItemNewRoom((short) Indice, NewRoom);
+			*GlobTomb4.pAdr->pTestWorkingOnMoveables = (BYTE) SalvaTest;
 
 		}
 		tomb4::SetMapRoom();
@@ -9142,7 +9140,7 @@ Concludi:
 			if (GlobTomb4.ItemIndexTgroup != -1)
 				GlobTomb4.ItemIndexCurrent = GlobTomb4.ItemIndexTgroup;
 
-			EsecuzioneFlipeffect(PluginId, pTrigger->Object, pTrigger->Timer, SCANF_SCRIPT_TRIGGER);
+			EsecuzioneFlipeffect((WORD) PluginId, pTrigger->Object, pTrigger->Timer, SCANF_SCRIPT_TRIGGER);
 
 			if (GlobTomb4.DebugModeCounter) {
 
@@ -9182,7 +9180,7 @@ Concludi:
 			}
 			if (pTrigger->Flags & TGROUP_CONDITION_TRIGGER) {
 				// condizione
-				TestEsito = EseguiCondizione(PluginId, pTrigger->Timer & 0xff, ItemIndex, (pTrigger->Timer >> 8) & 0xff, &TestRestore, &TestSalta, &RepeatType, SCANF_SCRIPT_TRIGGER);
+				TestEsito = EseguiCondizione((WORD) PluginId, pTrigger->Timer & 0xff, (WORD) ItemIndex, (pTrigger->Timer >> 8) & 0xff, &TestRestore, &TestSalta, &RepeatType, SCANF_SCRIPT_TRIGGER);
 
 				if (GlobTomb4.DebugModeCounter)
 					ShowMsgDebug("TrigggerResult=%s", VetEsito[TestEsito], 0);
@@ -9193,7 +9191,7 @@ Concludi:
 
 			// deve essere un'azione
 
-			EsecuzioneActionTrigger(PluginId, pTrigger->Timer, ItemIndex, SCANF_SCRIPT_TRIGGER);
+			EsecuzioneActionTrigger((WORD) PluginId, pTrigger->Timer, ItemIndex, SCANF_SCRIPT_TRIGGER);
 
 		}
 		if (GlobTomb4.DebugModeCounter) {
@@ -10281,7 +10279,7 @@ Concludi:
 
 		GlobTomb4.TestStartDiary = false;
 
-		pDiario = GetDiarioConID(GlobTomb4.DiaryIDToStart);
+		pDiario = GetDiarioConID((WORD) GlobTomb4.DiaryIDToStart);
 		if (pDiario == NULL)
 			return;
 
@@ -11179,7 +11177,7 @@ Concludi:
 		StrSingleShotResumTG *pResume;
 		int Indice;
 		CALL_CYCLE_END CycleEnd;
-		int RetValue;
+		int EndRetValue;
 
 		// gestione global trigger per createditems
 		if (GlobTomb4.BaseCreatedItems.TotNewItems)
@@ -11394,9 +11392,9 @@ Concludi:
 			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
 				if (pRec->VetDirectCB[CB_CYCLE_END]) {
 					CycleEnd = (CALL_CYCLE_END) pRec->VetDirectCB[CB_CYCLE_END];
-					RetValue = CycleEnd();
-					if (RetValue & 0x80)
-						return RetValue;
+					EndRetValue = CycleEnd();
+					if (EndRetValue & 0x80)
+						return EndRetValue;
 				}
 				pRec++;
 			}
@@ -11426,7 +11424,7 @@ Concludi:
 		for (i = 0; i < GlobTomb4.BaseCreatedItems.TotNewItems; i++) {
 			Indice = GlobTomb4.BaseCreatedItems.VetNewItems[i];
 			pItem = &GlobTomb4.pAdr->pVetItems[Indice];
-			GlobTomb4.IndiceItemCondizione = Indice;
+			GlobTomb4.IndiceItemCondizione = (short) Indice;
 
 			VerificaSingleGlobalTrigger(GT_CREATED_NEW_ITEM, pItem->SlotID, false);
 		}
@@ -11913,7 +11911,7 @@ Concludi:
 
 		// vedere se sta usando keypad
 		if (GlobTomb4.BaseKeyPad.TestAttivo == true) {
-			GlobTomb4.ItemIndexUsedByLara = GlobTomb4.BaseKeyPad.IndiceKeypad;
+			GlobTomb4.ItemIndexUsedByLara = (short) GlobTomb4.BaseKeyPad.IndiceKeypad;
 			return;
 		}
 
@@ -11976,7 +11974,7 @@ Concludi:
 
 		if (pStand->TipoStandby != TSB_NO_CHANGE_CAMERA) {
 
-			GlobTomb4.BaseSetCamera.VetID[MAX_SET_CAMERA - 1] = i;
+			GlobTomb4.BaseSetCamera.VetID[MAX_SET_CAMERA - 1] = (short) i;
 			GlobTomb4.BaseSetCamera.TotSetCamera++;
 
 			pStand->IndiceSetCamera = i;
@@ -12297,7 +12295,7 @@ Concludi:
 		IndiceSlot = pOggetto->SlotID;
 		StartAnim = GlobTomb4.pAdr->pVetSlot[IndiceSlot].IndexFirstAnim;
 		// trovare indice assoluto di animazione
-		IndiceAnim += StartAnim;
+		IndiceAnim += (WORD) StartAnim;
 		if (pOggetto->AnimationNow == IndiceAnim)
 			return;
 
@@ -12416,12 +12414,12 @@ Concludi:
 							// ok l'indici i e' ok
 							NumeroDemo = pDemo->VetDemoIDs[i];
 							pDemo->VetDemoPlayed[i]++;
-							pDemo->LastIdPlayed = NumeroDemo;
+							pDemo->LastIdPlayed = (short) NumeroDemo;
 
 							if (CaricaDemo(NumeroDemo) == false)
 								return false;
 
-							*GlobTomb4.pAdr->pLevelNext = NumLivello;
+							*GlobTomb4.pAdr->pLevelNext = (BYTE) NumLivello;
 							pDemo->TestLoadAndPlay = true;
 							return true;
 						}
@@ -12459,7 +12457,7 @@ Concludi:
 			i = 0;
 		NumeroDemo = pDemo->VetDemoIDs[i];
 		pDemo->VetDemoPlayed[i]++;
-		pDemo->LastIdPlayed = NumeroDemo;
+		pDemo->LastIdPlayed = (short) NumeroDemo;
 
 		if (CaricaDemo(NumeroDemo) == false)
 			return false;
@@ -12743,7 +12741,7 @@ Concludi:
 							for (j = 0; j < GlobTomb4.BaseSalvaCollisioni.TotCollisioni; j++) {
 								if (pColl->pNemico == pItem && (pColl->Flags & Maschera) != 0) {
 									TestEsegui = true;
-									GlobTomb4.IndiceItemCondizione = Indice;
+									GlobTomb4.IndiceItemCondizione = (short) Indice;
 									break;
 								}
 								pColl++;
@@ -12768,7 +12766,7 @@ Concludi:
 							for (j = 0; j < GlobTomb4.BaseSalvaCollisioni.TotCollisioni; j++) {
 								if (pColl->pNemico->SlotID == SlotNow && (pColl->Flags & Maschera) != 0) {
 									TestEsegui = true;
-									GlobTomb4.IndiceItemCondizione = GetIndiceItem((DWORD) pColl->pNemico);
+									GlobTomb4.IndiceItemCondizione = (short) GetIndiceItem((DWORD) pColl->pNemico);
 									break;
 								}
 								pColl++;
@@ -12838,7 +12836,7 @@ Concludi:
 									if ((Slot >= 35 && Slot <= 95) || Slot == 102 || Slot == 106) {
 
 										TestEsegui = true;
-										GlobTomb4.IndiceItemCondizione = GetIndiceItem((DWORD) pColl->pNemico);
+										GlobTomb4.IndiceItemCondizione = (short) GetIndiceItem((DWORD) pColl->pNemico);
 										break;
 									}
 								}
@@ -13082,7 +13080,7 @@ Concludi:
 
 		for (i = 16; i < 51; i++) {
 			if (GlobTomb4.pAdr->pVetInputKeyboard[i])
-				return i;
+				return (BYTE) i;
 		}
 		return 0;
 	}
@@ -13241,9 +13239,9 @@ Concludi:
 			}
 		}
 
-		GlobTomb4.pAdr->pLara->SpeedH = pAnim->Speed;
+		GlobTomb4.pAdr->pLara->SpeedH = (short) pAnim->Speed;
 
-		GlobTomb4.pAdr->pLara->AnimationNow = IndiceAnim;
+		GlobTomb4.pAdr->pLara->AnimationNow = (WORD) IndiceAnim;
 	}
 
 	void GestioneAdaptiveFarView(void)
@@ -13396,7 +13394,7 @@ Concludi:
 					}
 
 					if (pStatusOrg->Status) {
-						pStatusOrg->indiceNow = j;
+						pStatusOrg->indiceNow = (WORD) j;
 						pStatusOrg->StartPerformed = TempoNow;
 					}
 
@@ -13584,7 +13582,7 @@ Concludi:
 
 		// ok, ora calcolare percentuale
 
-		pRec->Percentuale = (pRec->DamValue * 10) / 1000;
+		pRec->Percentuale = (WORD) ((pRec->DamValue * 10) / 1000);
 		if (pRec->Percentuale <= pRec->PercentualeBeep && (pRec->FlagProgresso & FPD_BLINK) == 0) {
 			// percentuale e' sotto 10 e non e' ancora stato attivato blink
 			// si dovrebbe farlo adesso, ameno che non siamo in fase di risalita
@@ -13645,7 +13643,7 @@ Concludi:
 		}
 
 		// salvare indice di stringa
-		pAzione->ItemIndex = Indice;
+		pAzione->ItemIndex = (short) Indice;
 		// alineamento = centrale
 
 		pAzione->VetArgWord[2] = GlobTomb4.PrintString.DefFlags;
@@ -13733,7 +13731,7 @@ Concludi:
 			pLara->FrameNow = GlobTomb4.pAdr->pVetAnimations[IndiceAnim].FrameStart;
 			pLara->StateIdCurrent = GlobTomb4.pAdr->pVetAnimations[IndiceAnim].StateId;
 
-			pLara->AnimationNow = IndiceAnim;
+			pLara->AnimationNow = (WORD) IndiceAnim;
 		}
 	}
 
@@ -14237,6 +14235,8 @@ Concludi:
 				GlobTomb4.BaseEnvEnemy.FirstAnim = FirstAnim;
 			}
 
+			Esito = true;
+
 			for (i = 0; i < pVetEnv->TotEnvCondition; i++) {
 
 				FlagsEnv = pVetEnv->VetEnvCondition[i].EnvCondition & ENV_MASK_FLAGS;
@@ -14398,7 +14398,7 @@ Concludi:
 				i += Casuale(pAnimazione->Extra);
 			}
 			if (TestLara) {
-				EseguiAnimazione(i, IndiceSlot, TestUsaNextId);
+				EseguiAnimazione((WORD) i, IndiceSlot, TestUsaNextId);
 			} else {
 				// e' animazione nemico
 				if (TestUsaNextId == false) {
@@ -14407,7 +14407,7 @@ Concludi:
 					NextId = GlobTomb4.pAdr->pVetAnimations[FirstAnim + i].StateId;
 				}
 
-				EseguiAnimNemico(pOggetto, i, NextId);
+				EseguiAnimNemico(pOggetto, (WORD) i, NextId);
 			}
 		}
 
@@ -14720,7 +14720,7 @@ Concludi:
 				return 0x6000;
 			}
 
-			MinDiff = AbsDiffO(Orient, (short) 0xA000);
+			MinDiff = AbsDiffO(Orient, -0x6000);
 
 			if (MinDiff <= 0x1000) {
 				*pGap = MinDiff;
@@ -14729,7 +14729,7 @@ Concludi:
 
 			// try north-east directio
 
-			MinDiff = AbsDiffO(Orient, (short) 0xE000);
+			MinDiff = AbsDiffO(Orient, -0x2000);
 
 			if (MinDiff <= 0x1000) {
 				*pGap = MinDiff;
@@ -14753,7 +14753,7 @@ Concludi:
 		}
 		// try with west
 
-		MinDiff = AbsDiffO(Orient, (short) 0x8000);
+		MinDiff = AbsDiffO(Orient, -0x8000);
 
 		if (MinDiff <= 0x2000) {
 			*pGap = MinDiff;
@@ -14762,7 +14762,7 @@ Concludi:
 
 		// try with north
 
-		MinDiff = AbsDiffO(Orient, (short) 0xc000);
+		MinDiff = AbsDiffO(Orient, -0x4000);
 
 		if (MinDiff <= 0x2000) {
 			*pGap = MinDiff;
@@ -15092,9 +15092,9 @@ Concludi:
 							pTarget->Incremento = 1;
 							// impostare differenze in metri
 
-							pTarget->DifZ = Float2Int(DifZ);
-							pTarget->DifY = Float2Int(DifY);
-							pTarget->DifX = Float2Int(DifX);
+							pTarget->DifZ = (short) Float2Int(DifZ);
+							pTarget->DifY = (short) Float2Int(DifY);
+							pTarget->DifX = (short) Float2Int(DifX);
 
 							// impostare vpos a seconda se e' sopra o sotto
 							if (pTarget->DifY >= -2 && pTarget->DifY <= 2) {

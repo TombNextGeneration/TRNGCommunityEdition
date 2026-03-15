@@ -346,7 +346,7 @@ namespace tomb4
 					BinocularRange = 0;
 					LaserSight = 0;
 					AlterFOV(14560);
-					lara_item->mesh_bits = -1;
+					lara_item->mesh_bits = ulong(-1);
 					lara.Busy = 0;
 					camera.type = BinocularOldCamera;
 					lara.head_y_rot = 0;
@@ -412,7 +412,7 @@ namespace tomb4
 							{
 								// eseguire call back
 								// (short IndexItem, StrItemTr4 *pItem, WORD CBT_Flags);
-								slot_call(trng::SalvaIndexItem, (trng::StrItemTr4*)item, trng::CBT_REPLACE);
+								slot_call((short)trng::SalvaIndexItem, (trng::StrItemTr4*)item, trng::CBT_REPLACE);
 							}
 							else
 							{
@@ -427,7 +427,7 @@ namespace tomb4
 						{
 							//  EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags,
 							//								StrCollisionLara *pColl)
-							trng::EseguiCB_SlotFirstAfter(trng::CB_SLOT_CONTROL, trng::SalvaIndexItem, (trng::StrItemTr4*)trng::SalvaStrItem, trng::CBT_AFTER, NULL);
+							trng::EseguiCB_SlotFirstAfter(trng::CB_SLOT_CONTROL, (short)trng::SalvaIndexItem, (trng::StrItemTr4*)trng::SalvaStrItem, trng::CBT_AFTER, NULL);
 						}
 					}
 				}
