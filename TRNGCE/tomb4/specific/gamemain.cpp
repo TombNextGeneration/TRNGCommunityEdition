@@ -3,7 +3,7 @@
 
 namespace tomb4
 {
-	THREAD MainThread = *reinterpret_cast<decltype(&MainThread)>(0x5339D4);
+	THREAD &MainThread = *reinterpret_cast<decltype(&MainThread)>(0x5339D4);
 
 	long S_SaveGame(long slot_num)
 	{
