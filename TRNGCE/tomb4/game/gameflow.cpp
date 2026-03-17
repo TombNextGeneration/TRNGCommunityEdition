@@ -7,6 +7,9 @@
 #include "newinv.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "text.h"
+#include "../../flep/PlugIn_trng.h"
+#include "../../flep/structures_mine.h"
 
 namespace tomb4
 {
@@ -46,6 +49,8 @@ namespace tomb4
 	PHD_VECTOR &gfLoadTarget = *reinterpret_cast<decltype(&gfLoadTarget)>(0x533984);
 	uchar &gfLoadRoom = *reinterpret_cast<decltype(&gfLoadRoom)>(0x4B0635);
 	uchar &gfInitialLegendTime = *reinterpret_cast<decltype(&gfInitialLegendTime)>(0x450F59);
+	ulong &GameTimer = *reinterpret_cast<decltype(&GameTimer)>(0x7FD138);
+	long &menu_to_display = *reinterpret_cast<decltype(&menu_to_display)>(0x4BF54C);
 
 	void DoGameflow()
 	{
@@ -56,6 +61,10 @@ namespace tomb4
 		num_fmvs = 0;
 		fmv_to_play[0] = 0;
 		fmv_to_play[1] = 0;
+
+		if (flep::pPatchMap[flep::PATCH_24_SAVEGAME_SLOTS_BUGFIXED])
+			small_font_scale = 0.5F;
+
 		gfCurrentLevel = Gameflow->TitleEnabled ? 0 : 1;
 		gf = &gfScriptWad[gfScriptOffset[gfCurrentLevel]];
 		trng::LeggiNG_ScriptForLevel();
@@ -64,16 +73,16 @@ namespace tomb4
 		{
 			switch (n = *gf++)
 			{
-			case (long)gf_commands::CMD_FMV:
+			case CMD_FMV:
 				trng::SalvaTagFmv(gf[0]);
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_LEVEL:
+			case CMD_LEVEL:
 				gfLevelFlags = gf[1] | (gf[2] << 8);
 				trng::ImpostaCapelliLara(&gfLevelFlags);
 
-				if (!(gfLevelFlags & (long)gf_level_options::GF_NOLEVEL))
+				if (!(gfLevelFlags & GF_NOLEVEL))
 					DoLevel(gf[3], gf[4]);
 				else
 				{
@@ -90,9 +99,9 @@ namespace tomb4
 				gfResidentCut[3] = 0;
 				gfUVRotate = 0;
 				gfNumMips = 0;
-				gfMirrorRoom = -1;
+				gfMirrorRoom = uchar(-1);
 
-				if (gfStatus != 3 || gfLevelFlags & (long)gf_level_options::GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
+				if (gfStatus != 3 || gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
 				{
 					gfFog.b = 0;
 					gfFog.g = 0;
@@ -115,7 +124,7 @@ namespace tomb4
 
 				case 3:
 
-					if (gfLevelFlags & (long)gf_level_options::GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
+					if (gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
 					{
 						sgInitialiseHub(0);
 						skipped_level = 0;
@@ -143,7 +152,7 @@ namespace tomb4
 				trng::LeggiNG_ScriptForLevel();
 				break;
 
-			case (long)gf_commands::CMD_TITLE:
+			case CMD_TITLE:
 				gfLevelFlags = gf[0] | (gf[1] << 8);
 				trng::ImpostaCapelliLara(&gfLevelFlags);
 				DoTitle(gf[2], gf[3]);
@@ -153,7 +162,7 @@ namespace tomb4
 				gfResidentCut[3] = 0;
 				gfUVRotate = 0;
 				gfNumMips = 0;
-				gfMirrorRoom = -1;
+				gfMirrorRoom = uchar(-1);
 
 				switch (gfStatus)
 				{
@@ -176,35 +185,35 @@ namespace tomb4
 				trng::LeggiNG_ScriptForLevel();
 				break;
 
-			case (long)gf_commands::CMD_ENDSEQ:
+			case CMD_ENDSEQ:
 				continue;
 
-			case (long)gf_commands::CMD_PLAYCUT:
+			case CMD_PLAYCUT:
 				gfCutNumber = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_CUT1:
+			case CMD_CUT1:
 				gfResidentCut[0] = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_CUT2:
+			case CMD_CUT2:
 				gfResidentCut[1] = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_CUT3:
+			case CMD_CUT3:
 				gfResidentCut[2] = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_CUT4:
+			case CMD_CUT4:
 				gfResidentCut[3] = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_LAYER1:
+			case CMD_LAYER1:
 				LightningRGB[0] = gf[0];
 				LightningRGBs[0] = gf[0];
 				gfLayer1Col.r = gf[0];
@@ -221,7 +230,7 @@ namespace tomb4
 				gf += 4;
 				break;
 
-			case (long)gf_commands::CMD_LAYER2:
+			case CMD_LAYER2:
 				LightningRGB[0] = gf[0];
 				LightningRGBs[0] = gf[0];
 				gfLayer2Col.r = gf[0];
@@ -238,12 +247,12 @@ namespace tomb4
 				gf += 4;
 				break;
 
-			case (long)gf_commands::CMD_UVROT:
+			case CMD_UVROT:
 				gfUVRotate = gf[0];
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_LEGEND:
+			case CMD_LEGEND:
 				gfLegend = gf[0];
 				gf++;
 
@@ -252,7 +261,7 @@ namespace tomb4
 
 				break;
 
-			case (long)gf_commands::CMD_LENSFLARE:
+			case CMD_LENSFLARE:
 				gfLensFlare.x = ((gf[1] << 8) | gf[0]) << 8;
 				gfLensFlare.y = short((gf[3] << 8) | gf[2]) << 8;
 				gfLensFlare.z = ((gf[5] << 8) | gf[4]) << 8;
@@ -262,26 +271,26 @@ namespace tomb4
 				gf += 9;
 				break;
 
-			case (long)gf_commands::CMD_MIRROR:
+			case CMD_MIRROR:
 				gfMirrorRoom = gf[0];
 				gfMirrorZPlane = (gf[4] << 24) | (gf[3] << 16) | (gf[2] << 8) | gf[1];
 				gf += 5;
 				break;
 
-			case (long)gf_commands::CMD_FOG:
+			case CMD_FOG:
 				gfFog.r = gf[0];
 				gfFog.g = gf[1];
 				gfFog.b = gf[2];
 				gf += 3;
 				break;
 
-			case (long)gf_commands::CMD_ANIMATINGMIP:
+			case CMD_ANIMATINGMIP:
 				gfMips[gfNumMips] = gf[0];
 				gfNumMips++;
 				gf++;
 				break;
 
-			case (long)gf_commands::CMD_CAMERA:
+			case CMD_CAMERA:
 				gfLoadCam.x = (gf[3] << 24) | (gf[2] << 16) | (gf[1] << 8) | gf[0];
 				gfLoadCam.y = (gf[7] << 24) | (gf[6] << 16) | (gf[5] << 8) | gf[4];
 				gfLoadCam.z = (gf[11] << 24) | (gf[10] << 16) | (gf[9] << 8) | gf[8];
@@ -292,25 +301,25 @@ namespace tomb4
 				gf += 25;
 				break;
 
-			case (long)gf_commands::CMD_RESETHUB:
+			case CMD_RESETHUB:
 				gfResetHubDest = gf[0];
 				gf++;
 				break;
 
 			default:
-				if (n >= (long)gf_commands::CMD_KEY1 && n <= (long)gf_commands::CMD_KEY12)
+				if (n >= CMD_KEY1 && n <= CMD_KEY12)
 					n -= 82;
-				else if (n >= (long)gf_commands::CMD_PUZZLE1 && n <= (long)gf_commands::CMD_PUZZLE12)
+				else if (n >= CMD_PUZZLE1 && n <= CMD_PUZZLE12)
 					n -= 122;
-				else if (n >= (long)gf_commands::CMD_PICKUP1 && n <= (long)gf_commands::CMD_PICKUP4)
+				else if (n >= CMD_PICKUP1 && n <= CMD_PICKUP4)
 					n -= 78;
-				else if (n >= (long)gf_commands::CMD_EXAMINE1 && n <= (long)gf_commands::CMD_EXAMINE3)
+				else if (n >= CMD_EXAMINE1 && n <= CMD_EXAMINE3)
 					n -= 59;
-				else if (n >= (long)gf_commands::CMD_KEYCOMBO1_1 && n <= (long)gf_commands::CMD_KEYCOMBO8_2)
+				else if (n >= CMD_KEYCOMBO1_1 && n <= CMD_KEYCOMBO8_2)
 					n -= 101;
-				else if (n >= (long)gf_commands::CMD_PUZZLECOMBO1_1 && n <= (long)gf_commands::CMD_PUZZLECOMBO8_2)
+				else if (n >= CMD_PUZZLECOMBO1_1 && n <= CMD_PUZZLECOMBO8_2)
 					n -= 145;
-				else if (n >= (long)gf_commands::CMD_PICKUPCOMBO1_1 && n <= (long)gf_commands::CMD_PICKUPCOMBO4_2)
+				else if (n >= CMD_PICKUPCOMBO1_1 && n <= CMD_PICKUPCOMBO4_2)
 					n -= 113;
 				else
 					break;

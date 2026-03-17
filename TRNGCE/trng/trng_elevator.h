@@ -6,6 +6,7 @@ namespace trng {
 	void TwoBlockPlatformCeiling(tomb4::ITEM_INFO *item, long x, long y, long z, long *height);
 	void TwoBlockPlatformFloor(tomb4::ITEM_INFO *item, long x, long y, long z, long *height);
 	void ControlTwoBlockPlatform(short ItemIndex);
+	void AggiornaPosY(int ItemIndex, int IncY);
 }
 
 void LoadTombNextGenerationInject_TrngElevator(bool replace);

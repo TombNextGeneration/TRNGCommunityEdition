@@ -30,12 +30,29 @@
 #include "../tomb4/specific/audio.h"
 #include "zRoomEditor.h"
 #include "../tomb4/game/laraskin.h"
+#include "../tomb4/game/sphere.h"
+#include "../tomb4/game/box.h"
+#include "../tomb4/game/delstuff.h"
+#include "../tomb4/specific/function_stubs.h"
+#include "../tomb4/game/bike.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
 	StrBaseMemAllocata &BaseAlloc = *reinterpret_cast<decltype(&BaseAlloc)>(0x10658848);
 	int &LivelloOldNumber = *reinterpret_cast<decltype(&LivelloOldNumber)>(0x10679F50); // usato per passarlo a callback cbInitLevel
 	int &GlobIndiceCombine = *reinterpret_cast<decltype(&GlobIndiceCombine)>(0x10679E68);
+	// chiamata quando si entra in inventario
+	int &TestLoadedGame = *reinterpret_cast<decltype(&TestLoadedGame)>(0x10657B68);
+	WORD &RetSlotAss = *reinterpret_cast<decltype(&RetSlotAss)>(0x10657B6A);
+	int &SlotSceltoInventario = *reinterpret_cast<decltype(&SlotSceltoInventario)>(0x10657F7C);
+	int &TestEsitoBow = *reinterpret_cast<decltype(&TestEsitoBow)>(0x10679E3C);
+	int &ExitMyFunction = *reinterpret_cast<decltype(&ExitMyFunction)>(0x10679F60);
+	int &SalvaSlot = *reinterpret_cast<decltype(&SalvaSlot)>(0x10679F70);
+	int &SalvaIndexItem = *reinterpret_cast<decltype(&SalvaIndexItem)>(0x10679F68);
+	int &SalvaStrItem = *reinterpret_cast<decltype(&SalvaStrItem)>(0x10679F74);
+	int &SalvaCall = *reinterpret_cast<decltype(&SalvaCall)>(0x10679F6C);
+	DWORD &MyOutResult = *reinterpret_cast<decltype(&MyOutResult)>(0x10679F2C);
+	StrSalvaOldDebug (&VetSalvaOldDebug)[30] = *reinterpret_cast<decltype(&VetSalvaOldDebug)>(0x106699EC);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -122,12 +139,12 @@ namespace trng {
 		if (pAssign->IndiceRubberBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
 			// inizializzare slot per RUBBER BOAT da assign slot
 
-			SetSlotRubberBoat(pAssign->IndiceRubberBoat , pAssign->IndiceAnimRubberBoat);
+			SetSlotRubberBoat((WORD) pAssign->IndiceRubberBoat, (WORD) pAssign->IndiceAnimRubberBoat);
 		}
 
 		if (pAssign->IndiceMotorBoat != -1 && pAssign->IndiceAnimMotorBoat != -1) {
 			// inizializzare slot per MOTOR BOAT da assign slot
-			SetSlotMotorBoat(pAssign->IndiceMotorBoat, pAssign->IndiceAnimMotorBoat);
+			SetSlotMotorBoat((WORD) pAssign->IndiceMotorBoat, (WORD) pAssign->IndiceAnimMotorBoat);
 		}
 
 		// inizializzre slot di pannelli collisioni
@@ -166,8 +183,8 @@ namespace trng {
 		if (pSlotNow->Flags) {
 			i = pSlotNow->Flags;
 			i |= 0x2c78;
-			pSlotNow->Flags = i;
-			pSlotNow->ShatterableMeshes  = 6;
+			pSlotNow->Flags = (WORD) i;
+			pSlotNow->ShatterableMeshes = 6;
 			pSlotNow->pProcInitialise = &InitialiseGuardian;
 			pSlotNow->pProcControl = &GuardianControl;
 			pSlotNow->pProcCollision = tomb4::CreatureCollision;
@@ -330,7 +347,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_FLAT) {
 					// trasformare questo slot in bridge flat
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -343,7 +360,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_TILT1) {
 					// trasformare questo slot in bridge tilt1
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -356,7 +373,7 @@ namespace trng {
 				if (pEnemy->FlagsNEF & NEF_SET_AS_BRIDGE_TILT2) {
 					// trasformare questo slot in bridge tilt2
 					FlagSlot = 0x0200;
-					pSlotNow->Vitality = (short) 0xc000;
+					pSlotNow->Vitality = -0x4000;
 					pSlotNow->ss_Unknown3 = 0x0a;
 					pSlotNow->pProcControl = NULL;
 					pSlotNow->pProcCollision = NULL;
@@ -628,7 +645,7 @@ namespace trng {
 		GlobTomb4.pAdr->p2CurrentEnemyTarget = (StrItemTr4 **) &tomb4::lara.target;
 		GlobTomb4.pAdr->pWeaponSelected = (WORD *) &tomb4::lara.last_gun_type;
 		GlobTomb4.pAdr->pDashBarValue = &tomb4::DashTimer;
-		GlobTomb4.pAdr->pVetDrip = &tomb4::lara.electric;
+		GlobTomb4.pAdr->pVetDrip = tomb4::lara.drip;
 		GlobTomb4.pAdr->pWeaponHolding = &tomb4::lara.weapon_item;
 		GlobTomb4.pAdr->pInputExtGameCommands = (DWORD*) &tomb4::linput;
 		GlobTomb4.pAdr->pLaraIndex = (WORD *) &tomb4::lara.item_number;
@@ -1353,6 +1370,7 @@ namespace trng {
 		pBase = &GlobTomb4.BaseInputBoxes;
 
 		pBase->TotExtraCodes = 0;
+		z = 0;
 
 		pChar = GetStringaNG(666);
 		if (pChar == NULL)
@@ -1557,6 +1575,1356 @@ namespace trng {
 			}
 		}
 	}
+
+	// suona un cd con bass senza usare in alcun
+	// modo, ne' influenzare, la gestione dei suoni di tomb
+	// il numero di canale dovrebbe partire da 2 fino a 4
+	void PlayExtraCD(short NumeroCd, int Canale, int Loop)
+	{
+		if (GlobTomb4.BaseBassHandles.TestPresente == false)
+			return;
+		GlobTomb4.BaseBassHandles.CanaleNow = Canale;
+		GestioneCdPlay(NumeroCd, Loop);
+	}
+
+	// sostituisce S_CDPlay quando e' attivo bass
+	// puo' essere chiamata direttamnte da codice tomb4
+	// o da miei flipeffect
+	// se in NumeroCd c'e' il bit 0x4000 attivo vuol dire che l'indice
+	// riguarda un file Preload di script.dat
+	// usa sempre il primo canale, a meno che:
+	// il suono non sia di tipo loop=0
+	// oppure
+	// e' stato impostato il valore "1"  in GlobTomb4.Basess.CanaleNow
+	// se c'era gia' un suono nel canale usato effettua un fadeout
+	// per il suono precedente.
+	// NOTA: chiamata da ogni parte del codice e questa funzione gestisce le callback per la funzione
+	// effettiva SubGestionePlayCd()
+	void GestioneCdPlay(short NumeroCd, int Loop)
+	{
+		int IndiceCanale;
+		int IndiceSuono;
+		char NomeFile[80];
+		int i;
+		DWORD Flags;
+		StrImportFile *pImpFile;
+		int FadeOut;
+		int j;
+		StrCanaleBass *pCanale;
+		StrBassHandles *pBass;
+		bool TestImport;
+		StrBaseImportFile *pImport;
+		StrListaWav *pVetNomiTracce;
+
+		if (NumeroCd == 130) {
+			j = 0;
+		}
+		pVetNomiTracce = tomb4::TrackFileNames;
+		AggiornaVolumeBass();
+
+		pBass = &GlobTomb4.BaseBassHandles;
+		IndiceCanale = 0;
+		if (GlobTomb4.pBaseCustomize->TestOldCDTrigger == false) {
+			if (Loop == 0)
+				IndiceCanale = 1;
+		}
+		if (pBass->CanaleNow) {
+			IndiceCanale = pBass->CanaleNow & 0x3f;
+		}
+
+		if (NumeroCd == -1) {
+			StopBassSuoni(IndiceCanale);
+			pBass->CanaleNow = 0;
+			return;
+		}
+
+		pCanale = &pBass->VetCanali[IndiceCanale];
+		if (NumeroCd & 0x4000) {
+			TestImport = true;
+		} else {
+			// non e' import, pero' se c'e' tra i file import un file audio con lo stesso numero
+			// impostare adesso come fosse di tipo import
+			pImpFile = &GlobTomb4.BaseImportedFiles.VetFiles[0];
+			for (i = 0; i < GlobTomb4.BaseImportedFiles.TotFiles; i++) {
+				if (pImpFile->Tipo == FTYPE_SOUND && pImpFile->NumeroFile == NumeroCd)
+					break;
+				pImpFile++;
+			}
+			if (i == GlobTomb4.BaseImportedFiles.TotFiles) {
+				TestImport = false;
+			} else {
+				// convertire l'indice in ID
+				for (j = 0; j < MAX_IMPORT_FILES * 10; j++) {
+					if (GlobTomb4.BaseImportedFiles.VetID[j] == i)
+						break;
+				}
+
+				NumeroCd = (short) (0x4000 | j);
+				TestImport = true;
+			}
+		}
+		// ora eseguire su canale IndiceCanale
+		IndiceSuono = NumeroCd & 0x3fff;
+
+		// qui si dovrebbe fare analisi per estensione di default
+		// e anche per uso di suono precaricato
+		if (TestImport == false) {
+			sprintf_s(NomeFile, "audio\\%s", pVetNomiTracce[IndiceSuono].Testo);
+		}
+
+		// se canale e' gia' attivo fare il fade out
+		// azzerare valore di canale now per la prossima richiesta
+		pBass->CanaleNow = 0;
+
+		// se era attivo il canale chiuderlo con fade-out
+
+		if (pCanale->Canale) {
+			// se era gia' attivo lo stesso cd in modo loop uscire subito
+			if (pCanale->NumeroCd == NumeroCd && pCanale->Loop)
+				return;
+
+			FadeOut = GlobTomb4.pBaseCustomize->BassDll.TimeFadeOutCorto;
+
+			pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, (float) -0.02, FadeOut);
+			// togliere attributo loop per far si che si chiuda da solo
+			pBass->Proc.BASS_ChannelFlags(pCanale->Canale, 0, BASS_SAMPLE_LOOP);
+		}
+
+		if (Loop)
+			Flags = BASS_SAMPLE_LOOP;
+		else
+			Flags = 0;
+
+		if (TestImport == true) {
+			pImport = &GlobTomb4.BaseImportedFiles;
+			i = pImport->VetID[IndiceSuono];
+
+			if (i == -1) {
+
+				InviaLog("Cann't find imported file");
+
+				return;
+			}
+			// usare dati id import file = i
+			pImpFile = &pImport->VetFiles[i];
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE + Flags);
+			if (pBass->StartOffset > 0) {
+				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
+			}
+		} else {
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE + Flags);
+			if (pBass->StartOffset > 0) {
+				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
+			}
+			if (IndiceCanale == 0 && Loop != 0) {
+				*GlobTomb4.pAdr->pAudioTrackLoop = (char) IndiceSuono;
+				*GlobTomb4.pAdr->pTestAudioTrackLoop = 1;
+			}
+		}
+
+		if (GlobTomb4.pBaseCustomize->TestOldCDTrigger == true) {
+			if (IndiceCanale == 0 && pCanale->Loop != 0) {
+				pBass->OldCdLoop = pCanale->NumeroCd;
+			}
+		}
+
+		pBass->StartOffset = 0;
+
+		if (pCanale->Canale == 0) {
+			ShowBASSErrore(NomeFile);
+			return;
+		}
+
+		if (pCanale->Canale) {
+			pCanale->NumeroCd = NumeroCd;
+			pCanale->Loop = Loop;
+		}
+		// imposta volume con crescita di fadeout
+		pBass->Proc.BASS_ChannelSetAttribute(pCanale->Canale, BASS_ATTRIB_VOL, 0.1f);
+
+		pBass->Proc.BASS_ChannelPlay(pCanale->Canale, 0);
+
+		// ora fare slid per farlo crescere fino al massimo
+		pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, pBass->VolumeMusica, GlobTomb4.pBaseCustomize->BassDll.TimeFadeOutCorto);
+
+		// qui nella patch del trep si crerava un synt con call back
+		// poi provare a vedere a che serve
+	}
+
+	// legge il contenuto di tomb4 per il volume e lo converte in float
+	// e lo salva basebass
+	// non viene effettuata alcuna chiamata di funzione
+	void AggiornaVolumeBass(void)
+	{
+		GlobTomb4.BaseBassHandles.VolumeMusica = *GlobTomb4.pAdr->pSetting_MusicVolume / (float) 100;
+	}
+
+	// se bass.dll e'attiva chiude i suoni bass
+	// se invece non e' attiva chiama il normale S_CDStop()
+	// iusare -1 come numero canale per chiudere tutto
+	// oppure 0 per primo canale e 1 per il secondo
+	void StopBassSuoni(int NumeroCanale)
+	{
+		StrBassHandles *pBass;
+		DWORD FadeOut;
+		int i;
+		StrCanaleBass *pCanale;
+		int Inizio, Fine;
+
+		pBass = &GlobTomb4.BaseBassHandles;
+
+		if (pBass->TestPresente == false) {
+			tomb4::S_CDStop();
+			return;
+		}
+		switch (NumeroCanale) {
+		case -1:
+			Inizio = 0;
+			Fine = 2;
+			break;
+		case 0:
+			Inizio = 0;
+			Fine = 1;
+			break;
+		case 1:
+			Inizio = 1;
+			Fine = 2;
+			break;
+		default:
+			Inizio = NumeroCanale;
+			Fine = NumeroCanale + 1;
+			break;
+		}
+
+		// chiudere con fade out breve
+		FadeOut = GlobTomb4.pBaseCustomize->BassDll.TimeFadeOut;
+
+		for (i = Inizio; i < Fine; i++) {
+			pCanale = &pBass->VetCanali[i];
+
+			if (pCanale->Canale) {
+				pBass->Proc.BASS_ChannelSlideAttribute(pCanale->Canale, BASS_ATTRIB_VOL, (float) -0.02, FadeOut);
+				// rimuove flag loop in modo che si fermi il prima
+				// possibile
+				pBass->Proc.BASS_ChannelFlags(pCanale->Canale, 0, BASS_SAMPLE_LOOP);
+			}
+
+			pCanale->Canale = 0;
+			pCanale->Loop = 0;
+			pCanale->NumeroCd = -1;
+		}
+	}
+
+	// controllare errore
+	void ShowBASSErrore(char *pNome)
+	{
+		int Codice;
+
+		Codice = GlobTomb4.BaseBassHandles.Proc.BASS_ErrorGetCode();
+
+		sprintf_s(BufferLog, "BassError after operation \"%s\": Error Code = %d", pNome, Codice);
+		InviaLog(BufferLog);
+	}
+
+	// incrementa il numero di debug attivi
+	// se alla fine c'e' un valore attivo di debug restitusice true
+	bool AddTabLogScript(void)
+	{
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) != 0 && (GlobTomb4.pDiagnostica->FlagsDgx & DGX_LOG_SCRIPT_COMMANDS) != 0) {
+
+			GlobTomb4.DebugModeCounter++;
+		}
+
+		if (GlobTomb4.DebugModeCounter)
+			return true;
+		return false;
+	}
+
+	DWORD FindSkipPhase(void)
+	{
+		DWORD FlagsSkip;
+
+		FlagsSkip = SKIP_NONE;
+
+		if (*GlobTomb4.pAdr->pFadeScreen)
+			FlagsSkip |= SKIP_FADE;
+
+		if (*GlobTomb4.pAdr->pTestLoading)
+			FlagsSkip |= SKIP_LOADING_LEVEL;
+
+		if (*GlobTomb4.pAdr->Camera.pModeCameraNow == 1)
+			FlagsSkip |= SKIP_FIXED_CAMERA;
+
+		if (*GlobTomb4.pAdr->pTestFlybyInProgress)
+			FlagsSkip |= SKIP_FLY_CAMERA;
+
+		if (*GlobTomb4.pAdr->pLevelNow == 0 && (*GlobTomb4.pAdr->pScriptMainFlags & 0x04))
+			FlagsSkip |= SKIP_TITLE_LEVEL;
+
+		if (*GlobTomb4.pAdr->pTestGrayScreen)
+			FlagsSkip |= SKIP_GRAY_SCREEN;
+
+		if (GlobTomb4.TestSuspendObjectShowing == true)
+			FlagsSkip |= SKIP_NO_VIEW_OGGETTI;
+
+		if (*GlobTomb4.pAdr->pZoomFactor != 0 && *GlobTomb4.pAdr->pTestLaserSight == 0)
+			FlagsSkip |= SKIP_BINOCULARS;
+
+		if (*GlobTomb4.pAdr->pTestLaserSight && (*GlobTomb4.pAdr->pInputExtGameCommands & 0x200) != 0)
+			FlagsSkip |= SKIP_LASER_SIGHT;
+
+		if (GlobTomb4.TestOverlapImage == true)
+			FlagsSkip |= SKIP_FULL_IMAGE;
+		return FlagsSkip;
+	}
+
+
+	bool TastoPremutoTomb4(int ScanCode)
+	{
+		if (GlobTomb4.pAdr->pVetInputKeyboard[ScanCode])
+			return true;
+		return false;
+	}
+
+	// quando e' presente immagine per title viene allocata solo una volta all'inizio
+	// verra' poi rilasciata alla fine di tutto.
+	void AllocaTitleImage(void)
+	{
+		StrBaseImgBackGround *pTitle;
+		StrShowImage *pBase;
+		BLENDFUNCTION Blend;
+
+		pTitle = &GlobTomb4.BaseImgTitle;
+
+		if (pTitle->TestEnabled == false)
+			return;
+		if (pTitle->TestAllocatedImage == true)
+			return;
+		InviaLog("Allocate Title Image");
+		pBase = &GlobTomb4.BaseImages;
+
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+			pTitle->TestEnabled = false;
+			return;
+		}
+
+		if ((pTitle->Flags & BKGDF_KEEP_GAME_SCREEN) == 0) {
+
+			if (AllocaImmagine(pTitle->ImageNumber, &pBase->ImageTitle, -1, -1) == false) {
+				pTitle->TestEnabled = false;
+				LiberaHdcTomb(pBase, false);
+				return;
+			}
+
+			SetStretchBltMode(pBase->Temp.MemHdc, COLORONCOLOR);
+
+			// ora ridimensionare e copiare immagine title in temphdc con dimensione uguali a quelle di tomb
+			StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageTitle.MemHdc, 0, 0, pBase->ImageTitle.SizeX, pBase->ImageTitle.SizeY, SRCCOPY);
+			// ora liberare title perche' poi usero' title con immagine di temp
+			LiberaImmagine(&pBase->ImageTitle);
+
+		} else {
+			// c'e' flag BKGDF_KEEP_GAME_SCREEN
+			if (pTitle->Flags & BKGDF_SEMI_TRANSPARENT) {
+				// allocare immagine e copiarla con effetto trasparenza su quella temp
+				if (AllocaImmagine(pTitle->ImageNumber, &pBase->ImageTitle, -1, -1) == false) {
+					InviaLog("ERROR: Failed loading image for BKGDT_TITLE of CUST_BACKGROUND command");
+
+					return;
+				}
+				Blend.AlphaFormat = 0; // 1= valore di AC_SRC_ALPHA;
+				Blend.BlendFlags = 0;
+				Blend.BlendOp = AC_SRC_OVER;
+				Blend.SourceConstantAlpha = (BYTE) pTitle->Parameter;  // livello trasparenza 0=trasparenza / 255=opaco
+
+				AlphaBlend(pBase->Temp.MemHdc, 0, 0, pBase->Temp.SizeX, pBase->Temp.SizeY, pBase->ImageTitle.MemHdc, 0, 0, pBase->ImageTitle.SizeX, pBase->ImageTitle.SizeY, Blend);
+				LiberaImmagine(&pBase->ImageTitle);
+			}
+		}
+
+		pTitle->TestAllocatedImage = true;
+		InviaLog("Save in TitleImage the image from temp hdc");
+		// adesso traferire dati di temp hdc in title
+		pBase->ImageTitle = pBase->Temp;
+		// ora segnalare temp come gia' liberato
+		memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+	}
+
+	// immagine per binocolo viene allocata all'inizio del livello e verra' poi rilasciata
+	// solo al cariamento di un nuovo livello
+	void AllocaBinocularImage(void)
+	{
+		StrBaseImgBackGround *pBin;
+		StrShowImage *pBase;
+		StrCustBinocular *pCust;
+
+		pBin = &GlobTomb4.BaseImgBinocular;
+		if (pBin->TestEnabled == false)
+			return;
+
+		if (pBin->TestAllocatedImage == true)
+			return;
+
+		pBase = &GlobTomb4.BaseImages;
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+
+			pBin->TestEnabled = false;
+			return;
+		}
+
+		// dovrei convertire l'immagine in una dimensioje fissa?
+		// magari per ora no, solo dopo customize per binocular faro' sta cosa
+
+		if (AllocaImmagine(pBin->ImageNumber, &pBase->ImageBinocular, -1, -1) == false) {
+			pBin->TestEnabled = false;
+			LiberaHdcTomb(pBase, false);
+			return;
+		}
+
+		pBin->TestAllocatedImage = true;
+
+		pCust = &GlobTomb4.pBaseCustomize->CustBinoculars;
+
+		if (pCust->TestPresente == true) {
+			// c''e cusotmize, non cambiare dimensione e richiedere che sia 1024x768
+			if (pBase->ImageBinocular.SizeX != 1024 || pBase->ImageBinocular.SizeY != 768) {
+				InviaLog("ERROR: binocular image background different than 1024x768");
+			}
+			// allocare immagine eventuale per compass
+			if ((pCust->Flags & BINF_COMPASS) != 0 && (pCust->CompassRect & BINT_STRIP) != 0) {
+				if (AllocaImmagine(pCust->CompassImage, &pBase->ImageBinocCompass, -1, -1) == false) {
+					InviaLog("Error trying to allocate image for compass strip of binocular");
+					pBin->TestEnabled = false;
+					pCust->TestPresente = false;
+					LiberaHdcTomb(pBase, false);
+					return;
+				}
+			}
+
+			if ((pCust->Flags & BINF_SEXTANT) != 0 && (pCust->SextantRect & BINT_STRIP) != 0) {
+				if (AllocaImmagine(pCust->SextantImage, &pBase->ImageBinocSextant, -1, -1) == false) {
+					InviaLog("Error trying to allocate image for sextant strip of binocular");
+					pBin->TestEnabled = false;
+					pCust->TestPresente = false;
+					LiberaHdcTomb(pBase, false);
+					return;
+				}
+			}
+
+		} else {
+
+			// ora ridimensionare e copiare immagine binocolo in temphdc con dimensione uguali a quelle di tomb
+			StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageBinocular.MemHdc, 0, 0, pBase->ImageBinocular.SizeX, pBase->ImageBinocular.SizeY, SRCCOPY);
+			// ora liberare imagebinocula perche' poi usero' title con immagine di temp
+			LiberaImmagine(&pBase->ImageBinocular);
+
+			// adesso traferire dati di temp hdc in title
+			pBase->ImageBinocular = pBase->Temp;
+			// ora segnalare temp come gia' liberato
+			memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+		}
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+		InviaLog("Allocated binocular image");
+	}
+
+	// immagine per mirino viene allocata all'inizio del livello e verra' poi rilasciata
+	// solo al cariamento di un nuovo livello
+	void AllocaLaserSightImage(void)
+	{
+		StrBaseImgBackGround *pMirino;
+		StrShowImage *pBase;
+
+		pMirino = &GlobTomb4.BaseImgLaserSight;
+		if (pMirino->TestEnabled == false)
+			return;
+
+		if (pMirino->TestAllocatedImage == true)
+			return;
+
+		pBase = &GlobTomb4.BaseImages;
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+
+			pMirino->TestEnabled = false;
+			return;
+		}
+
+		if (AllocaImmagine(pMirino->ImageNumber, &pBase->ImageLaserSight, -1, -1) == false) {
+			pMirino->TestEnabled = false;
+			LiberaHdcTomb(pBase, false);
+			return;
+		}
+
+		pMirino->TestAllocatedImage = true;
+
+		// ora ridimensionare e copiare immagine title in temphdc con dimensione uguali a quelle di tomb
+		StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageLaserSight.MemHdc, 0, 0, pBase->ImageLaserSight.SizeX, pBase->ImageLaserSight.SizeY, SRCCOPY);
+		// ora liberare title perche' poi usero' title con immagine di temp
+		LiberaImmagine(&pBase->ImageLaserSight);
+
+		// adesso traferire dati di temp hdc in title
+		InviaLog("Save temp image in Laser Sight image record");
+		pBase->ImageLaserSight = pBase->Temp;
+		// ora segnalare temp come gia' liberato
+		memset(&pBase->Temp, 0, sizeof(StrRecordImage));
+
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+		InviaLog("Allocated LaserSight image");
+	}
+
+	void SalvaScreenShotTr4(void)
+	{
+		DWORD TempoNow;
+		char NomeFile[256];
+
+		TempoNow = (DWORD) GetTickCount64();
+
+		if ((TempoNow - GlobTomb4.ScreenShot.LastTimeScreenShot) < 500)
+			return;
+		TrovaNuovoNomeShot(NomeFile);
+
+		SalvaShotTomb4(NomeFile, true);
+
+		// avviare un soundeffect sempre presente
+		tomb4::SoundEffect(GlobTomb4.pBaseCustomize->VetCustSFX[TS_SCREENSHOT_CAPTURE], NULL, 2);
+
+		GlobTomb4.ScreenShot.LastTimeScreenShot = (DWORD) GetTickCount64();
+	}
+
+	void TrovaNuovoNomeShot(char *pNuovoNome)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// restituisce true se i piedi di lara sono in palude
+	bool IsLaraPiediInPalude(void)
+	{
+		StrMovePosition TriRec;
+		void *pFloor;
+		short Room;
+		int BaseLaraY;
+
+		TriRec.RelX = 0;
+		TriRec.RelY = 0;
+		TriRec.RelZ = 0;
+		tomb4::GetJointAbsPosition((tomb4::ITEM_INFO *) GlobTomb4.pAdr->pLara, (tomb4::PHD_VECTOR *) &TriRec, JOINT_LEFT_ANCKLE);
+		BaseLaraY = TriRec.RelY;
+
+		Room = GlobTomb4.pAdr->pLara->Room;
+		pFloor = tomb4::GetFloor(GlobTomb4.pAdr->pLara->CordX, BaseLaraY, GlobTomb4.pAdr->pLara->CordZ, &Room);
+
+		if (GlobTomb4.pAdr->pVetRooms[Room].FlagsRoom & 0x4)
+			return true;
+		return false;
+	}
+
+	// chiamata prima di entrare in inventario o in pannello di salvataggio
+	// savegame
+	// cattura lo schermo in anticipo in modo da poter eventualmwente
+	// salvarne l'immagine in savegame
+	void SalvaMiniShot(void)
+	{
+		if (GlobTomb4.ScreenShot.TestSalvaMiniShot == false)
+			return;
+
+		// provare a salvarlo direttamente in memoria
+		SalvaShotTomb4("ShotGame.bmp", false);
+	}
+
+	// gestisce TUTTE (non proprio tutte in realta') le callback directCB con flags ma senza argomenti
+
+	int EseguiCallBackDirects(WORD CB_Type, WORD CBT_Flags, StrItemTr4 *pItem, short IndiceItem, bool Test1, bool Test2, void *pVertici)
+	{
+		DWORD i;
+		StrMyDatabase *pDB;
+		StrPluginRec *pRec;
+		StrRecordCallBack *pCall;
+		int j;
+		int CallRetValue;
+		int Temp;
+		CALL_LARA_CTRL CallLaraCtrl;
+		CALL_LARA_DRAW CallLaraDraw;
+		CALL_HAIR_DRAW CallHairDraw;
+		CALL_HAIR_CONTROL CallHairControl;
+		CALL_INVENTORY_MAIN CallInventory;
+		CALL_INVENTORY_BACKGROUND CallBackGroundInvent;
+		CALL_ANIMATE_LARA CallAnimateLara;
+		CALL_OPTIONS_MANAGER CallOptions;
+
+		CallRetValue = SRET_OK;
+
+		pDB = &MyGlobPrivate.DataBase;
+
+		pRec = &pDB->pVetPlugins[1];
+
+		for (i = 1; i < pDB->TotPlugins; i++) {
+			if (pRec->VetDirectCB[CB_Type]) {
+
+				// c'e' una callback del tipo cercato
+				pCall = &pRec->VetRequiredCB[0];
+				for (j = 0; j < pRec->TotRequiredCB; j++) {
+					if (pCall->CB_Tipo == CB_Type && (pCall->Flags & CBT_Flags) != 0) {
+						// trovata, ora eseguirla in modo diverso a seconda del tipo
+						switch (CB_Type) {
+						case CB_OPTIONS_MANAGER:
+							CallOptions = (CALL_OPTIONS_MANAGER) pCall->pCall;
+							// (bool TestTitle, bool TestCommands, int SelectedRow);
+							Temp = CallOptions(Test1, Test2, IndiceItem);
+							CallRetValue |= Temp;
+							break;
+
+						case CB_LARA_CONTROL:
+							CallLaraCtrl = (CALL_LARA_CTRL) pCall->pCall;
+							pItem = GlobTomb4.pAdr->pLara;
+							Temp = CallLaraCtrl(CBT_Flags, pItem);
+							CallRetValue |= Temp;
+							break;
+						case CB_LARA_DRAW:
+							//  (WORD CBT_Flags, StrItemTr4 * pLara, bool TestNoUpdateLight, bool TestMirror);
+							CallLaraDraw = (CALL_LARA_DRAW) pCall->pCall;
+							Temp = CallLaraDraw(CBT_Flags, pItem, Test1, Test2);
+							CallRetValue |= Temp;
+							break;
+						case CB_LARA_HAIR_DRAW:
+							// (WINAPI *CALL_HAIR_DRAW) (WORD CBT_Flags);
+							CallHairDraw = (CALL_HAIR_DRAW) pCall->pCall;
+							Temp = CallHairDraw(CBT_Flags);
+							CallRetValue |= Temp;
+							break;
+						case CB_LARA_HAIR_CONTROL:
+							// CALL_HAIR_CONTROL) (WORD CBT_Flags, bool TestKeepDownHair, bool TestSecondTail, void *pData);
+							CallHairControl = (CALL_HAIR_CONTROL) pCall->pCall;
+							Temp = CallHairControl(CBT_Flags, Test2, Test1, pVertici);
+							CallRetValue |= Temp;
+							break;
+						case CB_INVENTORY_MAIN:
+							CallInventory = (CALL_INVENTORY_MAIN) pCall->pCall;
+							// (WORD CBT_Flags, bool TestLoadedGame, int SelectedItem);
+							Temp = CallInventory(CBT_Flags, Test1, SlotSceltoInventario);
+							CallRetValue |= Temp;
+							break;
+						case CB_INVENT_BACKGROUND_CREATE:
+						case CB_INVENT_BACKGROUND_DRAW:
+						case CB_INVENT_BACKGROUND_QUIT:
+							CallBackGroundInvent = (CALL_INVENTORY_BACKGROUND) pCall->pCall;
+							// (WORD CB_Type, WORD CBT_Flags, WORD PHASE_Type);
+
+							Temp = CallBackGroundInvent(CB_Type, CBT_Flags, IndiceItem);
+							CallRetValue |= Temp;
+							break;
+						case CB_ANIMATE_LARA:
+							CallAnimateLara = (CALL_ANIMATE_LARA) pCall->pCall;
+							// (WORD CBT_Flags, StrItemTr4 *pLara);
+							Temp = CallAnimateLara(CBT_Flags, pItem);
+							CallRetValue |= Temp;
+							break;
+						}
+					}
+
+					pCall++;
+				}
+			}
+
+			pRec++;
+		}
+
+		return CallRetValue;
+	}
+
+	int EseguiCB_SlotFirstAfter(int CB_Value, short ItemIndex, StrItemTr4 *pItem, int CB_Flags, StrCollisionLara *pColl)
+	{
+		// eseguire tutte le patch del tipo di input nella sequenza dei plugin
+		// funziona per: CB_SLOT_INITIALISE ; CB_SLOT_CONTROL e CB_SLOT_COLLISION e CB_SLOT_DRAW
+		DWORD i;
+		StrMyDatabase *pDB;
+		StrPluginRec *pRec;
+		StrRecordCallBack *pCall;
+		int j;
+		int SlotNow;
+		int SlotRetValue;
+		CALL_SLOT_MANY MyCall;
+		CALL_SLOT_CB_COLLISION MyCallCollision;
+		int Temp;
+
+		SlotRetValue = SRET_OK;
+
+		SlotNow = pItem->SlotID;
+		pDB = &MyGlobPrivate.DataBase;
+
+		pRec = &pDB->pVetPlugins[1];
+
+		for (i = 1; i < pDB->TotPlugins; i++) {
+			pCall = &pRec->VetRequiredCB[0];
+			for (j = 0; j < pRec->TotRequiredCB; j++) {
+				if (pCall->CB_Tipo == CB_Value && (pCall->Flags & CB_Flags) != 0 && pCall->Numero == SlotNow) {
+
+					// trovata call back di stesso tipo e numero: eseguirla
+					switch (CB_Value) {
+					case CB_SLOT_INITIALISE:
+					case CB_SLOT_CONTROL:
+					case CB_SLOT_DRAW:
+					case CB_SLOT_DRAW_EXTRA:
+
+						MyCall = (CALL_SLOT_MANY) pCall->pCall;
+						Temp = MyCall(ItemIndex, pItem, (WORD) CB_Flags);
+
+						if (Temp != SRET_OK) {
+							SlotRetValue |= Temp;
+						}
+						break;
+					case CB_SLOT_COLLISION:
+						MyCallCollision = (CALL_SLOT_CB_COLLISION) pCall->pCall;
+						//(short IndexItem, StrItemTr4 *pItem, WORD CBT_Flags, StrCollisionLara * pCollision);
+						Temp = MyCallCollision(ItemIndex, pItem, (WORD) CB_Flags,  pColl);
+
+						if (Temp != SRET_OK) {
+							SlotRetValue |= Temp;
+						}
+						break;
+					}
+				}
+
+				pCall++;
+
+			}
+			pRec++;
+		}
+
+		return SlotRetValue;
+	}
+
+	// viene chiamata PRIMA di eseguire sub CONTROL di oggetto
+	// restituisce true per far eseguire la funzione control
+	// restituisce false se si deve saltare l'esecuzione della sub control
+	bool GestioneControlObject(StrItemTr4 *pItem, int ItemIndex)
+	{
+		int i;
+		StrRecordEnemyScript *pEnemy;
+		short *pFloorDataNow;
+		int TotEnemy;
+		WORD Slot;
+		bool TestGiaEseguitoHeavy;
+		void *pFloor;
+		short Room;
+		StrBaseCutscene *pCut;
+		StrRecordFreeze *pFreeze;
+		int n;
+
+		TestGiaEseguitoHeavy = false;
+		// impostare indice
+		GlobTomb4.ItemIndexLastMoved = (short) ItemIndex;
+
+		// verificare se fa parte di moveable che richiedono controllo  basic collision
+		pCut = GlobTomb4.pBaseCutscene;
+		for (i = 0; i < pCut->TotBasicCollision; i++) {
+			if (pCut->VetBasicCollisionIndices[i] == ItemIndex) {
+				GestioneBasicCollision(pItem, ItemIndex);
+			}
+		}
+
+		if (pItem->Health <= 0 && pItem->Health != -0x4000) {
+			// sta morendo
+			// vedere  se e' una di quelli da far esplodere
+			TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
+			for (i = 0; i < TotEnemy; i++) {
+				pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
+				if (pItem->SlotID == pEnemy->SlotId && (pEnemy->FlagsNEF & NEF_EXPLODE) != 0) {
+					// attivare esplosione
+					tomb4::CreatureDie((short) ItemIndex, true);
+					tomb4::SoundEffect(0x69, 0, 0);
+					tomb4::SoundEffect(0x6A, 0, 0);
+					break;
+				}
+			}
+		}
+
+		// vedere se vanno bloccati tutti gli enemyes
+		if (GlobTomb4.TestFreezeAll == true) {
+			//  bloccare ma evitando gl iemitter
+			Slot = pItem->SlotID;
+			switch (Slot) {
+			case 142:
+			case 143:
+			case 144:
+			case 145:
+			case 146:
+			case 147:
+			case 148:
+
+			case 380:
+			case 381:
+			case 382:
+				// questi eseguirli
+				break;
+			default:
+				return false;
+			}
+		}
+
+		// vedere se questo indice e' uno di quelli da ignorare
+		pFreeze = &GlobTomb4.BaseFreeze.VetFreeze[0];
+
+		n = GlobTomb4.BaseFreeze.TotFreeze;
+
+		for (i = 0; i < n; i++) {
+			if (ItemIndex == pFreeze->ItemIndex)
+				break;
+
+			pFreeze++;
+		}
+
+		if (i < n) {
+			// trovato
+
+			if (pFreeze->Tempo != 0xFFFF)
+				pFreeze->Tempo--;
+			if (pFreeze->Tempo > 0)
+				return false;
+
+			// finito il tempo
+			// disattivare questo record
+			if (n > 1) {
+				*pFreeze = GlobTomb4.BaseFreeze.VetFreeze[n - 1];
+			}
+			GlobTomb4.BaseFreeze.TotFreeze--;
+		}
+
+		Slot = pItem->SlotID;
+
+		TotEnemy = GlobTomb4.BaseEnemys.TotEnemy;
+		for (i = 0; i < TotEnemy; i++) {
+			pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
+			if (pEnemy->SlotId == Slot && (pEnemy->FlagsNEF & NEF_EASY_HEAVY_ENABLING) != 0) {
+				// attivare heavy trigger in questa posizione
+				Room = pItem->Room;
+
+				pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+				tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+				pFloorDataNow = tomb4::trigger_index;
+
+				GlobTomb4.ItemIndexEnabledTrigger = (short) ItemIndex;
+
+				tomb4::TestTriggers(pFloorDataNow, 1, 0);
+				TestGiaEseguitoHeavy = true;
+			}
+
+		}
+
+		// se non e' bloccoato, ed e' leading actor, allora eseguire tirgger heavy immediati
+		if (TestGiaEseguitoHeavy == false && ItemIndex == GlobTomb4.pBaseCutscene->LeadingActorIndex) {
+			Room = pItem->Room;
+			pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+			tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+			pFloorDataNow = tomb4::trigger_index;
+
+			tomb4::TestTriggers(pFloorDataNow, 1, 0);
+		}
+		return true;
+	}
+
+	// Moveable su cui effettuare controllo per basic collision
+	// solo relativo a floor e gavita'
+	void GestioneBasicCollision(StrItemTr4 *pItem, int ItemIndex)
+	{
+		void *pFloor;
+		short Room;
+		int Altezza;
+		int IndiceSlot;
+		bool TestMod;
+		StrBoxCollisione *pBox;
+		int TopY, BottomY;
+		DWORD DistanzaAvanti;
+		int IncX, IncZ;
+		int MaxY;
+		int StopAnim;
+		int Distanza;
+
+		TestMod = false;
+		IndiceSlot = pItem->SlotID;
+		pBox = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItem);
+
+		if (pItem->SpeedV != 0) {
+			pItem->CordY += pItem->SpeedV;
+			pItem->SpeedV += 5;
+			if (pItem->SpeedV > 128)
+				pItem->SpeedV = 128;
+			TestMod = true;
+		}
+
+		TopY = pItem->CordY + pBox->MinY;
+		MaxY = pBox->MaxY;
+		// considerare posizione bottom y solo per rollingball, tutti gli altri sono al pavimento
+		if (pItem->SlotID != 130) {
+			// e' diverso da rollingball: ignorare bottomy
+			MaxY = 0;
+		}
+
+		BottomY = pItem->CordY + MaxY;
+		DistanzaAvanti = pBox->MaxZ;
+
+		// scoprire se sta per sbattere addosso a un muro
+		CalcolaIncremento(pItem->OrientationH, &IncX, &IncZ, DistanzaAvanti);
+		Room = pItem->Room;
+		pFloor = tomb4::GetFloor(pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, &Room);
+
+		Altezza = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ);
+
+		if (Altezza == WALL_FLOOR) {
+
+			if (pItem->SpeedH) {
+				// spostarloindietro rispetto al senso di marcia della velocita' di speed ma in direzione opposta
+				// e poi cambiare animazione
+				Distanza = (pItem->SpeedH << 1) + pItem->SpeedH;
+
+				CalcolaIncremento(pItem->OrientationH - 0x7fff, &IncX, &IncZ, Distanza);
+				AggiornaPosizioneItem((short) ItemIndex, pItem->CordX + IncX, pItem->CordY, pItem->CordZ + IncZ, 0);
+			}
+
+			// impostare animzione per blocco
+			StopAnim = TrovaAnimazioneStop(pItem);
+			EsecuzioneActionTrigger(0, (WORD) (15 | (StopAnim << 8)), ItemIndex, SCANF_DIRECT_CALL);
+			pItem->StateIdNext = pItem->StateIdCurrent;
+			pItem->SpeedH = 0;
+			return;
+		}
+
+		// ora fare analisi floor
+
+		Room = pItem->Room;
+		pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY, pItem->CordZ, &Room);
+
+		Altezza = tomb4::GetHeight((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+
+		pItem->HeightFloor = Altezza;
+
+		if (BottomY > Altezza) {
+			pItem->SpeedV = 0;
+			pItem->CordY = Altezza - MaxY;
+			TestMod = true;
+		}
+
+		if (BottomY == Altezza) {
+			pItem->SpeedV = 0;
+		}
+
+		if (BottomY < Altezza && pItem->SpeedV == 0)
+			pItem->SpeedV = 30;
+
+		// ora analisi per soffitto
+		Altezza = tomb4::GetCeiling((tomb4::FLOOR_INFO *) pFloor, pItem->CordX, pItem->CordY, pItem->CordZ);
+
+		if (TopY < Altezza) {
+			// stiamo sforando soffitto
+			pItem->CordY = Altezza - pBox->MinY;
+			TestMod = true;
+		}
+
+		// se e' stato modificata posizione item fare aggiornamento
+		if (TestMod) {
+					// aggiornare numero stanza
+			AggiornaPosizioneItem((short) ItemIndex, pItem->CordX, pItem->CordY, pItem->CordZ, 0);
+		}
+	}
+
+	// trova animazione (numero relativo da zero) di moveable pItem che NON abbia velocita' orizzontale
+	// cerca solo nelle prime 32 animazioni (da 0 a 31)
+	int TrovaAnimazioneStop(StrItemTr4 *pItem)
+	{
+		StrSlot *pSlot;
+		int i;
+		StrAnimationTr4 *pAnim;
+
+		pSlot = &GlobTomb4.pAdr->pVetSlot[pItem->SlotID];
+
+		i = 0;
+
+		while (i < 32) {
+			pAnim = &GlobTomb4.pAdr->pVetAnimations[pSlot->IndexFirstAnim + i];
+			if (pAnim->Speed == 0 && pAnim->Accel == 0)
+				return i;
+
+			i++;
+		}
+
+		// non trovata, restituire la prima
+		return 0;
+	}
+
+	void LaraBreath(tomb4::ITEM_INFO *item)
+	{
+		tomb4::PHD_VECTOR p;
+		tomb4::PHD_VECTOR v;
+
+		// lara e 'sott'acqua
+		if (tomb4::lara.water_status == tomb4::LW_UNDERWATER)
+			return;
+
+		// calcolare cosa  bisogna fare sulla base di contatore
+		if (!ContatoreFiato)
+			ContatoreFiato = 60;
+		ContatoreFiato--;
+		if (ContatoreFiato > 15)
+			return;
+
+		// se e' morta niente fiato
+		if (tomb4::lara_item->hit_points <= 0)
+			return;
+
+		// controllare se siamo in stanza cold
+		if ((tomb4::room[tomb4::lara_item->room_number].flags & tomb4::ROOM_COLD) == 0)
+			return;
+
+		p.x = 0;
+		p.y = -4;
+		p.z = 96;
+		tomb4::GetLaraJointPos(&p, 8);
+
+		v.x = (tomb4::GetRandomControl() & 7) - 4;
+		v.y = (tomb4::GetRandomControl() & 7) - 8;
+		v.z = (tomb4::GetRandomControl() & 0x7F) + 64;
+		tomb4::GetLaraJointPos(&v, 8);
+
+		tomb4::BikeTriggerExhaustSmoke(p.x, p.y, p.z, (short) (v.x - p.x), v.y - p.y, v.z - p.z);
+	}
+
+	// verifica se c'e' l'esecuzione del singolo globaltrigger
+	// col dato parametro
+	bool VerificaSingleGlobalTrigger(short GlobalTrigger, short Parametro, bool TestIgnoraParametro)
+	{
+		int i;
+		StrGlobalTrigger *pRec;
+		int Tot;
+		bool TestEsegui;
+		bool TestTrovato;
+		bool TestAlmenoUno;
+		bool TestEsito;
+
+		Tot = GlobTomb4.pBaseGlobalTriggers->TotTriggers;
+		pRec = &GlobTomb4.pBaseGlobalTriggers->VetTriggers[0];
+
+		TestAlmenoUno = false;
+
+		for (i = 0; i < Tot; i++) {
+			TestEsegui = false;
+			TestTrovato = false;
+
+			if ((pRec->Flags & FGT_DISABLED) == 0) {
+
+				// vedere se va disattivato il log per queso global trigger
+				if (pRec->Flags & FGT_HIDE_IN_DEBUG) {
+					SospendiLogScript(BREAK_GLOBAL_TRIGGER);
+				}
+				if (pRec->GlobalTrigger == GlobalTrigger) {
+
+					TestTrovato = true;
+					if (TestIgnoraParametro) {
+						TestEsegui = true;
+					} else {
+
+						if (Parametro == pRec->Parameter)
+							TestEsegui = true;
+					}
+
+					if (pRec->Flags & FGT_NOT_TRUE)
+						TestEsegui ^= 1;
+				}
+
+
+				if (TestTrovato) {
+					TestEsito = GestioneGlobaleOk(pRec, TestEsegui);
+					if (TestEsito) {
+						if ((pRec->Flags & FGT_REPLACE_MANAGEMENT) != 0 || pRec->GlobalTrigger != GT_SELECTED_INVENTORY_ITEM)
+							TestAlmenoUno = true;
+					}
+				}
+
+				if (pRec->Flags & FGT_HIDE_IN_DEBUG) {
+					RiprendiLogScript(BREAK_GLOBAL_TRIGGER);
+				}
+			}
+			pRec++;
+		}
+
+		return TestAlmenoUno;
+	}
+
+	// sospende temporaneamente logscript
+	// questo non riguarda la sospensione col tasto f9
+	// ma una sospensione per eliminare solo qualche procedura dal log
+	// WORD OldFlagsDgx;
+	// int OldDebugCounter;
+	// i valori attuali vengono salvati in  VetOldDebug[] record
+
+	void SospendiLogScript(int IndiceSave)
+	{
+		VetSalvaOldDebug[IndiceSave].OldFlagsDgx = GlobTomb4.pDiagnostica->FlagsDgx;
+		VetSalvaOldDebug[IndiceSave].OldCounter = (WORD) GlobTomb4.DebugModeCounter;
+
+		GlobTomb4.DebugModeCounter = 0;
+		GlobTomb4.pDiagnostica->FlagsDgx &= ~DGX_LOG_SCRIPT_COMMANDS;
+	}
+
+	void RiprendiLogScript(int IndiceSave)
+	{
+		GlobTomb4.pDiagnostica->FlagsDgx = VetSalvaOldDebug[IndiceSave].OldFlagsDgx;
+		GlobTomb4.DebugModeCounter = VetSalvaOldDebug[IndiceSave].OldCounter;
+	}
+
+	void OpenAllDoors(void)
+	{
+		int i;
+		WORD Slot;
+
+		for (i = 0; i < GlobTomb4.pAdr->TotItemsMax; i++) {
+			Slot = GlobTomb4.pAdr->pVetItems[i].SlotID;
+
+			if ((Slot >= 122 && Slot <= 129) || (Slot >= 322 && Slot <= 334)) {
+
+				// ok provare eseguendo l'action per chiudere porta
+				// azione per aprire porta
+				// azione 26 (0x14) per Aprire (0x100) porta con indice (i)
+				EsecuzioneActionTrigger(0, 0x11A, i, SCANF_DIRECT_CALL);
+			}
+
+		}
+	}
+
+	// calcola variazione coordinate pPos sulla base di record mirror attuale
+	// salvato in GlobTomb4.BaseMirror.pRecNow
+	// salva  lle coordinate cosi' ottenute
+	// in GlobTomb4.BaseMirror.CordX/Y/Z
+
+	void CalcolaCordMirror(StrPosizione *pPos)
+	{
+		BaseMirrors *pMirror;
+		RecordMirror *pRecNow;
+
+		pMirror = &GlobTomb4.BaseMirror;
+		pRecNow = pMirror->pRecNow;
+
+		pMirror->CordX = pPos->OrgX;
+		pMirror->CordY = pPos->OrgY;
+		pMirror->CordZ = pPos->OrgZ;
+
+		switch (pRecNow->MirrorType) {
+		case MIR_WEST_WALL:
+		case MIR_INVERSE_WEST:
+		case MIR_EAST_WALL:
+
+			if (pRecNow->MirrorType == MIR_INVERSE_WEST) {
+
+				pMirror->CordX = pRecNow->MaxCordMirror - pMirror->CordX;
+				pMirror->CordX += pRecNow->MinCordMirror;
+			}
+
+			pMirror->CordZ = pRecNow->CordMirror - pMirror->CordZ;
+			break;
+		case MIR_SOUTH_WALL:
+		case MIR_NORTH_WALL:
+			pMirror->CordX = pRecNow->CordMirror - pMirror->CordX;
+			break;
+		case MIR_FLOOR:
+		case MIR_CEILING:
+			pMirror->CordY = pRecNow->CordMirror - pMirror->CordY;
+			break;
+		}
+	}
+
+	// calcola variazione orientamenti sulla base di record mirror
+	// salvato in GlobTomb4.BaseMirror.pRecNow
+	// e salva gli orientamenti ottenuti in GlobTomb4.BaseMirror.OrientV/H/R
+	// nota: se testaltrnate = true cerca un modo alternativo di effettuare la rotazione
+	void CalcolaOrientMirror(StrOrient *pOrient, bool TestLara, bool TestAlternate)
+	{
+		BaseMirrors *pMirror;
+		RecordMirror *pRecNow;
+
+		pMirror = &GlobTomb4.BaseMirror;
+		pRecNow = pMirror->pRecNow;
+
+		if (TestLara) {
+
+			switch (pRecNow->MirrorType) {
+			case MIR_WEST_WALL:
+			case MIR_EAST_WALL:
+
+				pMirror->OrientV = -pOrient->OrientV;
+				pMirror->OrientH = -pOrient->OrientH;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			case MIR_INVERSE_WEST:
+				pMirror->OrientV = pOrient->OrientV;
+				pMirror->OrientH = pOrient->OrientH + 0x8000;
+				pMirror->OrientR = pOrient->OrientR;
+				break;
+			case MIR_SOUTH_WALL:
+			case MIR_NORTH_WALL:
+				pMirror->OrientV = -pOrient->OrientV;
+				pMirror->OrientH = -pOrient->OrientH;
+				pMirror->OrientH += -32768;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			case MIR_FLOOR:
+			case MIR_CEILING:
+
+				pMirror->OrientV = pOrient->OrientV + 32768;
+				pMirror->OrientH = pOrient->OrientH;
+				pMirror->OrientR = pOrient->OrientR - 32768;
+				break;
+			}
+		}
+
+		if (TestLara == false) {
+			// in questi calcoli omettere la rotazione relativa
+			// va usato per altri oggetti tipo flare e capelli
+			pMirror->OrientR = pOrient->OrientR;
+
+			switch (pRecNow->MirrorType) {
+			case MIR_WEST_WALL:
+			case MIR_EAST_WALL:
+				if (TestAlternate == false) {
+					pMirror->OrientV = pOrient->OrientV;
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+				} else {
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+					pMirror->OrientR = 0x8000 - pOrient->OrientR;
+					pMirror->OrientV = 0x8000 - pOrient->OrientV;
+				}
+
+				break;
+			case MIR_SOUTH_WALL:
+			case MIR_NORTH_WALL:
+				if (TestAlternate == false) {
+					pMirror->OrientV = pOrient->OrientV;
+					pMirror->OrientH = -pOrient->OrientH;
+				} else {
+					pMirror->OrientH = 0x8000 - pOrient->OrientH;
+					pMirror->OrientR = -pOrient->OrientR;
+					pMirror->OrientV = -pOrient->OrientV;
+				}
+				break;
+
+			case MIR_INVERSE_WEST:
+				// questo e'sempre giusto: niente testalternate
+				pMirror->OrientV = pOrient->OrientV;
+				pMirror->OrientH = pOrient->OrientH + 0x8000;
+
+				break;
+
+			case MIR_FLOOR:
+			case MIR_CEILING:
+				if (TestAlternate == false) {
+					pMirror->OrientV = 0x8000 - pOrient->OrientV;
+					pMirror->OrientH = pOrient->OrientH;
+				} else {
+					pMirror->OrientR = pOrient->OrientR + 0x8000;
+					pMirror->OrientH = pOrient->OrientH;
+					pMirror->OrientV = pOrient->OrientV;
+				}
+				break;
+			}
+		}
+	}
+
+	// verifica che gli item della lista siano ancora presenti.
+	// quelli che non sono presenti vengono eliminati
+	// se alla fine non ne rimane uno disabilita il detector
+	void VerificaTargetDetector(void)
+	{
+		StrDetector *pDetector;
+		int i;
+		int j;
+
+		j = 0;
+		pDetector = &GlobTomb4.BaseDetector;
+
+		for (i = 0; i < pDetector->TotIndici; i++) {
+			if ((GlobTomb4.pAdr->pVetItems[pDetector->VetIndici[i]].Objectbuttons & 0x8000) == 0) {
+				// target ancora presnte
+				if (j != i) {
+					pDetector->VetIndici[j] = pDetector->VetIndici[i];
+					// copiare anche targert item se e' di tipo radar
+					if (pDetector->Flags & DTF_RADAR_MODE) {
+						memcpy(&pDetector->VetTargets[j], &pDetector->VetTargets[i], sizeof(StrTargetDetector));
+					}
+				}
+
+				j++;
+			}
+		}
+
+		pDetector->TotIndici = (WORD) j;
+		if (j == 0) {
+			pDetector->TestAttivo = false;
+			pDetector->TestMostra = false;
+		}
+
+		pDetector->Indice = pDetector->VetIndici[0];
+	}
+
+	// ok, viene chiamato subito dopo aver incrementato un frame
+	// adesso inserire in puntatore attuale e poi incrementare
+	// puntatore e calcolare anche fps
+	// nota: se bisogna recuperare frame restituisce false
+	// se tutto e' ok restituisce true
+	bool CalcolaFPS(DWORD FrameNow)
+	{
+		StrBaseFPS *pFps;
+		int i;
+		DWORD TempoNow;
+		DWORD DifNow;
+		DWORD DifFrame;
+		int j;
+		float Totale, Divisore;
+
+		TempoNow = (DWORD) GetTickCount64();
+		pFps = &GlobTomb4.BaseFPS;
+		i = pFps->IndiceNow;
+
+		pFps->VetTempi[i] = TempoNow;
+		pFps->VetFrameCount[i] = FrameNow;
+		if (pFps->TotCicli < MAX_TEMPI_FPS)
+			pFps->TotCicli++;
+		pFps->LastIndice = i;
+		pFps->IndiceNow++;
+		if (pFps->IndiceNow >= MAX_TEMPI_FPS)
+			pFps->IndiceNow = 0;
+		// ora fare calcolo di fps, a patto di avere gia' salvato
+		// tutti i valori
+		if (pFps->TotCicli == MAX_TEMPI_FPS) {
+			// calcolo fps
+			// indietreggiare fino a trovare una distanza di almeno un secondo
+
+			i = pFps->LastIndice;
+			for (j = 0; j < MAX_TEMPI_FPS; j++) {
+				DifNow = TempoNow - pFps->VetTempi[i];
+				if (DifNow >= 950) {
+					// ok trovato ora fare il calcolo dei frame
+					DifFrame = FrameNow - pFps->VetFrameCount[i];
+					DifFrame *= 1000;
+					// adesso fare calcolo in floating point
+					Totale = (float) DifFrame;
+					Divisore = (float) DifNow;
+
+					pFps->FPS = Totale / Divisore;
+					pFps->LastFps = (int) pFps->FPS;
+
+					if (pFps->FPS < 29.0)
+						return false;
+					return true;
+				}
+				i--;
+				if (i < 0)
+					i = MAX_TEMPI_FPS - 1;
+
+			}
+		}
+
+		pFps->FPS = -1;
+		pFps->LastFps = -1;
+		return true;
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -1590,4 +2958,33 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100C523C, (unsigned int)trng::RestorePriorita, replace);
 	ProcessInject(0x100C411A, (unsigned int)trng::SalvaDimensioneSchermo, replace);
 	ProcessInject(0x100B9277, (unsigned int)trng::PreparaBarCust, replace);
+	ProcessInject(0x100C7C10, (unsigned int)trng::PlayExtraCD, replace);
+	ProcessInject(0x100C7858, (unsigned int)trng::GestioneCdPlay, replace);
+	ProcessInject(0x100C7802, (unsigned int)trng::AggiornaVolumeBass, replace);
+	ProcessInject(0x100C7C3C, (unsigned int)trng::StopBassSuoni, replace);
+	ProcessInject(0x100C7820, (unsigned int)trng::ShowBASSErrore, replace);
+	ProcessInject(0x100AFE13, (unsigned int)trng::AddTabLogScript, replace);
+	ProcessInject(0x100C0D03, (unsigned int)trng::FindSkipPhase, replace);
+	ProcessInject(0x100CCD5E, (unsigned int)trng::TastoPremutoTomb4, replace);
+	ProcessInject(0x100CA197, (unsigned int)trng::AllocaTitleImage, replace);
+	ProcessInject(0x100C7F9E, (unsigned int)trng::AllocaBinocularImage, replace);
+	ProcessInject(0x100C9ECA, (unsigned int)trng::AllocaLaserSightImage, replace);
+	ProcessInject(0x100CD777, (unsigned int)trng::SalvaScreenShotTr4, replace);
+	ProcessInject(0x100CD726, (unsigned int)trng::TrovaNuovoNomeShot, false);
+	ProcessInject(0x100CC782, (unsigned int)trng::IsLaraPiediInPalude, replace);
+	ProcessInject(0x100CD82E, (unsigned int)trng::SalvaMiniShot, replace);
+	ProcessInject(0x100BCFCB, (unsigned int)trng::EseguiCallBackDirects, replace);
+	ProcessInject(0x100D1C98, (unsigned int)trng::EseguiCB_SlotFirstAfter, replace);
+	ProcessInject(0x100BFC9C, (unsigned int)trng::GestioneControlObject, replace);
+	ProcessInject(0x100BF97F, (unsigned int)trng::GestioneBasicCollision, replace);
+	ProcessInject(0x100BF90E, (unsigned int)trng::TrovaAnimazioneStop, replace);
+	ProcessInject(0x100D3678, (unsigned int)trng::LaraBreath, replace);
+	ProcessInject(0x100CB839, (unsigned int)trng::VerificaSingleGlobalTrigger, replace);
+	ProcessInject(0x100AFE59, (unsigned int)trng::SospendiLogScript, replace);
+	ProcessInject(0x100B00F7, (unsigned int)trng::RiprendiLogScript, replace);
+	ProcessInject(0x100CB71C, (unsigned int)trng::OpenAllDoors, replace);
+	ProcessInject(0x100C36FA, (unsigned int)trng::CalcolaCordMirror, replace);
+	ProcessInject(0x100C3809, (unsigned int)trng::CalcolaOrientMirror, replace);
+	ProcessInject(0x100B7DDA, (unsigned int)trng::VerificaTargetDetector, replace);
+	ProcessInject(0x100CC9DD, (unsigned int)trng::CalcolaFPS, replace);
 }

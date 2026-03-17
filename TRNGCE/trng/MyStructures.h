@@ -2,8 +2,6 @@
 #include "MyConstants.h"
 
 namespace trng {
-	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);
-
 #pragma pack(push, 1)
 	// reocrd per memorizzare callback richieste dai plugin
 	struct StrRecordCallBack {
@@ -62,9 +60,9 @@ namespace trng {
 		WORD Reserved_3A;				// 3A
 		void *pZonaSavegame;		// 3C
 
-		DWORD  CordX;					// 40
-		int  CordY;					// 44
-		DWORD  CordZ;					// 48
+		DWORD CordX;					// 40
+		int CordY;					// 44
+		DWORD CordZ;					// 48
 		short OrientationV;  // 4c
 		short OrientationH;  // 4e
 		short OrientationT;		// 50
@@ -78,22 +76,22 @@ namespace trng {
 
 	// dimensione record 0x32
 	struct StrSlotTomb3 {
-		WORD  TotMesh;		// 0
-		WORD  IndexFirstMesh;	// 2
-		int   IndexFirstTree;	// 4
-		int   IndexFirstFrame;  // 8
+		WORD TotMesh;		// 0
+		WORD IndexFirstMesh;	// 2
+		int IndexFirstTree;	// 4
+		int IndexFirstFrame;  // 8
 		void *pProcInitialise;	// 0C
 		void *pProcControl;		// 10
 		void *pProcFloor;		// 14
 		void *pProcCeiling;		// 18
 		void *pProcDrawEmitted; // 1C
 		void *pProcCollision;   // 20
-		WORD  IndexFirstAnim;   // 24 (era 26)
+		WORD IndexFirstAnim;   // 24 (era 26)
 		short Vitality;			// 26 (era 28)
 		WORD Sconosciuto2;		// 28 (era 2A)
 		WORD ss_Unknown3;		// 2A    2C
 		WORD FootStep;			// 2C      2E
-		WORD  TestGuard;		// 2E       30
+		WORD TestGuard;		// 2E       30
 		WORD Flags;				// 30         32
 	};
 
@@ -104,11 +102,11 @@ namespace trng {
 		void *pCollsionSectors; // 08
 		void *pLights;           // 0c
 		StrMeshInfo *Ptr_StaticMesh;       // 10
-		int  OriginZ;                 // 14
-		int  Mistero1;              // 18
-		int  OriginX;                 // 1C
-		int  OrigYBottom;           // 20
-		int  OrigYTop;              // 24
+		int OriginZ;                 // 14
+		int Mistero1;              // 18
+		int OriginX;                 // 1C
+		int OrigYBottom;           // 20
+		int OrigYTop;              // 24
 		WORD Z_SizeSectors;         // 28
 		WORD X_SizeSectors;         // 2A
 		DWORD ColorIntensityLight;  // 2C
@@ -118,34 +116,34 @@ namespace trng {
 		char FlipMapIndex;   // 35
 		char MisteroFlip1;			// 36
 		BYTE Mistero30;              // 37
-		int  Mistero2;              // 38
-		int  Mistero3;		        // 3C
-		int  Mistero4;				// 40
-		int  Mistero5; 			    // 44
+		int Mistero2;              // 38
+		int Mistero3;		        // 3C
+		int Mistero4;				// 40
+		int Mistero5; 			    // 44
 		short FirstItemIndex;			// 48
 		short FirstEffect;			// 4A
-		short  AlternateRoom;			// 4C  -1 se non c'e' o e' stanza flippata?
-		WORD  FlagsRoom;		     // 4E
+		short AlternateRoom;			// 4C  -1 se non c'e' o e' stanza flippata?
+		WORD FlagsRoom;		     // 4E
 	};
 
 	// struttura singolo record animation
 	struct StrAnimationTr3 {
 		DWORD FrameOffset;		// 0x00
-		BYTE  FrameRate;		// 0x04
-		BYTE  FrameSize;		// 0x05
-		WORD  StateId;			// 0x06
-		WORD  Mistery1;			// 0x08
-		WORD  Speed;			// 0x0A
-		WORD  AccelLO;			// 0x0C
-		WORD  AccelHI;			// 0x0e
-		WORD  FrameStart;		// 0x10
-		WORD  FrameEnd;			// 0x12
-		WORD  NextAnimation;	// 0x14
-		WORD  NextFrame;		// 0x16
-		WORD  NumStateChanges;	// 0x18
-		WORD  StateChangeOffset; // 0x1a
-		WORD  NunAnimCommands;	// 0x1c
-		WORD  AnimCommand;		// 0x1e
+		BYTE FrameRate;		// 0x04
+		BYTE FrameSize;		// 0x05
+		WORD StateId;			// 0x06
+		WORD Mistery1;			// 0x08
+		WORD Speed;			// 0x0A
+		WORD AccelLO;			// 0x0C
+		WORD AccelHI;			// 0x0e
+		WORD FrameStart;		// 0x10
+		WORD FrameEnd;			// 0x12
+		WORD NextAnimation;	// 0x14
+		WORD NextFrame;		// 0x16
+		WORD NumStateChanges;	// 0x18
+		WORD StateChangeOffset; // 0x1a
+		WORD NunAnimCommands;	// 0x1c
+		WORD AnimCommand;		// 0x1e
 	};
 
 	struct StrRobaTomb3 {
@@ -193,7 +191,7 @@ namespace trng {
 	struct StrCodePatch {
 		DWORD Inizio;
 		DWORD Fine;
-		int   NewValue;  // solo per patch parametrica
+		int NewValue;  // solo per patch parametrica
 		DWORD ProcStart; // solo per patch rilocatrice
 		DWORD ProcEnd;   // solo per patch rilocatore
 		WORD IndexPlugin;  // indice a nome libreria che ha effettuato questa patch
@@ -279,21 +277,23 @@ namespace trng {
 		void * VetStateIdControl[256];
 		void * VetStateIdCollision[256];
 		void * VetDirectCB[MAX_DIRECT_CB];
-		int    VetDirectCB_PluginId[MAX_DIRECT_CB];
+		int VetDirectCB_PluginId[MAX_DIRECT_CB];
 	};
+
+	typedef BOOL (__stdcall *TYPE_DebugPresente) (VOID);
 
 	struct StrMyGlob {
 		StrRobaTomb3 RobaTomb3;
 		StrRobaTomb5 RobaTomb5;
 		WORD TotBlindSavegame;
 		WORD SettingScriptDat; // copia di setting script.dat
-		TYPE_DebugPresente  ProcIsDebuggerPresente;
+		TYPE_DebugPresente ProcIsDebuggerPresente;
 		BYTE VetBlindSavegame[128];
 		BYTE VetControlloKrypt[1034]; // usata per controlli debugger
 		bool TestDebuggerPresente;
 		WORD VetNascondiSetting[251]; // vettore tutto nullo tranne 111 dove
 									  // c'e' copia di settings di script.dat
-		TYPE_DebugPresente  ProcIsDebuggerPresente2;
+		TYPE_DebugPresente ProcIsDebuggerPresente2;
 		bool TestNG_NoScript;
 		bool TestNG_NoTr4;
 		int TotCtrlScript;

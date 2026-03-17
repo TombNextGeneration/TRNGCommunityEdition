@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0), 
 
 ## Unreleased
 
+## 0.2.0 - 2026-03-16
+
 ### Fixed
 
 - HAIR_ONE_TR5_PONYTAIL in Customize=CUST_HAIR_TYPE command.
@@ -17,13 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0), 
 - Crash Resume System (CRS).
 
 ## 0.1.0 - 2025-07-06
-
-### Integrated
-
-- FLEP patches:
-  - Fix baboon bug
-  - Classic vehicles
-  - Save ropes
 
 ### Fixed
 

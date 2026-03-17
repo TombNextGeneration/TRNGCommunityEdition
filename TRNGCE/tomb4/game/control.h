@@ -7,10 +7,8 @@ namespace tomb4
 	extern ANIM_STRUCT* &anims;
 	extern long* &bones;
 	extern ulong &FmvSceneTriggered;
-	extern long (*&flip_stats)[32];
-#define flip_stats (*tomb4::flip_stats)
-	extern long (*&flipmap)[32];
-#define flipmap (*tomb4::flipmap)
+	extern long (&flip_stats)[32];
+	extern long (&flipmap)[32];
 	extern long &flipeffect;
 	extern long &fliptimer;
 	extern long &flip_status;
@@ -29,4 +27,32 @@ namespace tomb4
 	extern short &SmashedMeshCount;
 	extern uchar &IsAtmospherePlaying;
 	extern uchar &InItemControlLoop;
+	extern long &SetDebounce;
+	extern long &framecount;
+	extern ushort &GlobalCounter;
+	extern long &reset_flag;
+	extern uchar &WeaponDelay;
+	extern short &XSoff1;
+	extern short &YSoff1;
+	extern short &ZSoff1;
+	extern short &XSoff2;
+	extern short &YSoff2;
+	extern short &ZSoff2;
+	extern char &PoisonFlag;
+	extern short* &trigger_index;
+	extern short &FXType;
+
+	long ControlPhase(long nframes, long demo_mode);
+	void UpdateSky();
+	void KillMoveItems();
+	void KillMoveEffects();
+	FLOOR_INFO* GetFloor(long x, long y, long z, short* room_number);
+	long GetHeight(FLOOR_INFO* floor, long x, long y, long z);
+	void TestTriggers(short* data, long heavy, long HeavyFlags);
+	void RefreshCamera(short type, short* data);
+	long GetCeiling(FLOOR_INFO* floor, long x, long y, long z);
+	long GetWaterHeight(long x, long y, long z, short room_number);
+	void FlipMap(long FlipNumber);
 }
+
+void Inject_Control(bool replace);

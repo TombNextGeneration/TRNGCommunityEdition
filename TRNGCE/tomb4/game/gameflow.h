@@ -28,6 +28,8 @@ namespace tomb4
 	extern PHD_VECTOR &gfLoadTarget;
 	extern uchar &gfLoadRoom;
 	extern uchar &gfInitialLegendTime;
+	extern ulong &GameTimer;
+	extern long &menu_to_display;
 
 	void DoGameflow();
 	void DoLevel(uchar Name, uchar Audio);

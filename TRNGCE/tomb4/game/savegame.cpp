@@ -17,7 +17,8 @@
 #include "rope.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
-#include "../../flep/patches/vehicles/main.h"
+#include "../../flep/patches/vehicles.h"
+#include "../../trng/zRoomEditor.h"
 
 namespace tomb4
 {
@@ -26,10 +27,10 @@ namespace tomb4
 
 	SAVEGAME_INFO &savegame = *reinterpret_cast<decltype(&savegame)>(0x7F75A0);
 
-	static bool NemicoMorto(ITEM_INFO* item)
+	// chiamata da salvasavegame
+	// indirizzo di item e' -0x40
+	static bool IsCreatureDead(ITEM_INFO* item)
 	{
-		short object_number;
-
 		// il nemico sarebbe morto
 		// vedere se e' attiva patch per mantenere vivi nemici
 		if (!trng::BaseCustomize.TestKeepNemiciMorti)
@@ -37,9 +38,10 @@ namespace tomb4
 
 		// la patch e' attiva
 		// se lo slot pero' non e' di creatura considerarlo morto
-		object_number = trng::ConvertiSlotAssigned(item->object_number);
+		// considerare possibili modifiche con assignslot:
+		trng::RetSlotAss = trng::ConvertiSlotAssigned(item->object_number);
 
-		if (object_number < (long)object_types::SKELETON || object_number > (long)object_types::AHMET_MIP)
+		if (trng::RetSlotAss < SKELETON || trng::RetSlotAss > AHMET_MIP)
 			return true;
 
 		// se vitalita 0xc000 allora morto con esplosione
@@ -52,7 +54,9 @@ namespace tomb4
 			return true;
 
 		// vedere se questo nemico era stato ucciso mediante esplosione
-		if (trng::IsNemicoEsploso(item->object_number))
+		trng::RetValue = trng::IsNemicoEsploso(item->object_number);
+
+		if (trng::RetValue)
 			return true;
 
 		return false;
@@ -155,7 +159,7 @@ namespace tomb4
 
 			// se livello trasparenza e' minore di 128
 			// mantenerlo
-			if ((item->after_death > 127 && (item->object_number < (long)object_types::GAME_PIECE1 || item->object_number > (long)object_types::ENEMY_PIECE)) || item->flags & (long)ITEM_FLAGS::IFL_CLEARBODY && NemicoMorto(item))
+			if ((item->after_death > 127 && (item->object_number < GAME_PIECE1 || item->object_number > ENEMY_PIECE)) || item->flags & IFL_CLEARBODY && IsCreatureDead(item))
 			{
 				packed = 0x2000;
 				WriteSG(&packed, sizeof(ushort));
@@ -164,14 +168,14 @@ namespace tomb4
 			{
 				// e' lara, salvare l'offset nel quale si sta per salvsre
 				// struttura lara
-				if (item->object_number == (long)object_types::LARA)
+				if (item->object_number == LARA)
 					trng::OffsetPosLara = SGcount;
 
 				// e' l'item braciere usato per enigna di versa petrolio e poi
 				// incendia
 				// se +34h diverso da zero forzare il salvataggio dei
 				// dati
-				if (item->object_number == (long)object_types::ELEMENT_PUZZLE && item->item_flags[0] || item->flags & ((long)ITEM_FLAGS::IFL_CODEBITS | (long)ITEM_FLAGS::IFL_INVISIBLE | (long)ITEM_FLAGS::IFL_TRIGGERED) || item->object_number == (long)object_types::LARA && FullSave)
+				if (item->object_number == ELEMENT_PUZZLE && item->item_flags[0] || item->flags & (IFL_CODEBITS | IFL_INVISIBLE | IFL_TRIGGERED) || item->object_number == LARA && FullSave)
 				{
 					packed = 0x8000;
 
@@ -259,9 +263,9 @@ namespace tomb4
 						byte = (uchar)item->required_anim_state;
 						WriteSG(&byte, sizeof(uchar));
 
-						if (item->object_number != (long)object_types::LARA)
+						if (item->object_number != LARA)
 						{
-							byte = item->anim_number - obj->anim_index;
+							byte = uchar(item->anim_number - obj->anim_index);
 							WriteSG(&byte, sizeof(uchar));
 						}
 						else
@@ -349,10 +353,10 @@ namespace tomb4
 
 					flep::SaveVehicle(item);
 
-					if (item->object_number == (long)object_types::MOTORBIKE)
+					if (item->object_number == MOTORBIKE)
 						WriteSG(item->data, sizeof(BIKEINFO));
 
-					if (item->object_number == (long)object_types::JEEP)
+					if (item->object_number == JEEP)
 						WriteSG(item->data, sizeof(JEEPINFO));
 				}
 				else
@@ -360,7 +364,7 @@ namespace tomb4
 			}
 		}
 
-		if (objects[(long)object_types::WHEEL_OF_FORTUNE].loaded)
+		if (objects[WHEEL_OF_FORTUNE].loaded)
 		{
 			WriteSG(senet_item, sizeof(short) * 6);
 			WriteSG(senet_piece, sizeof(char) * 6);
@@ -385,7 +389,7 @@ namespace tomb4
 			if (level_items < 1024)
 				trng::SalvaItemCreati();
 
-			if (objects[(long)object_types::LITTLE_BEETLE].loaded)
+			if (objects[LITTLE_BEETLE].loaded)
 			{
 				byte = 0;
 
@@ -439,7 +443,7 @@ namespace tomb4
 
 			for (int i = level_items; i < 1024; i++)
 			{
-				if (item->active && item->object_number == (long)object_types::CLOCKWORK_BEETLE)
+				if (item->active && item->object_number == CLOCKWORK_BEETLE)
 				{
 					byte = 1;
 					break;
@@ -510,6 +514,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void sgSaveGame()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Savegame(bool replace)
@@ -519,4 +528,5 @@ void Inject_Savegame(bool replace)
 	ProcessInject(0x45B150, (unsigned int)tomb4::ReadSG, replace);
 	ProcessInject(0x4594E0, (unsigned int)tomb4::sgInitialiseHub, false);
 	ProcessInject(0x45B190, (unsigned int)tomb4::sgSaveLevel, false);
+	ProcessInject(0x4596C0, (unsigned int)tomb4::sgSaveGame, false);
 }

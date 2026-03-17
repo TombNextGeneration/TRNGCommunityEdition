@@ -106,6 +106,7 @@ namespace trng {
 	inline constexpr int MAX_EXTRA_EFFECT = 20;
 	inline constexpr int MAX_STATIC_MIP = 160;
 	inline constexpr int MAX_SALVA_CORD = 1024;
+	inline constexpr int MAX_TARA_ITEMS = 14;
 
 	// index to access to GlobTomb4.VetStringOffsets[]
 	// Print OFFset
@@ -1574,7 +1575,669 @@ namespace trng {
 	inline constexpr int INV_SCRIVI_NO_BIT = 4;
 	inline constexpr int INV_LEGGI_NO_BIT = 5;
 
-	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
+	// flag for recording/playing demog
+	inline constexpr int RECF_STOP = 0;
+	inline constexpr int RECF_RECORDING = 1;
+	inline constexpr int RECF_PLAYING = 2;
+
+	// costanti per singole operazioni che devono essere eseguite una volta
+	inline constexpr int ON_NONE = 0;
+	inline constexpr int ON_SAVE_BACKGAME = 1;
+	inline constexpr int ON_LOAD_BACKGAME = 2;
+	inline constexpr int ON_SHOW_SCREEN_AT_START = 3;
+	inline constexpr int ON_WAIT_AND_HIDE = 4;
+	inline constexpr int ON_WAIT_ESCAPE = 6;
+
+	// flag per cutscene camera
+	inline constexpr int FTC_NONE = 0;
+	inline constexpr int FTC_LEADING_LOOK_LARA = 0x0001;
+	inline constexpr int FTC_EXTRA_LOOK_LARA = 0x0002;
+	inline constexpr int FTC_LARA_LOOK_LEADING = 0x0004;
+	inline constexpr int FTC_LARA_LOOK_EXTRA = 0x0008;
+
+	// flag for param_speech_actor
+	inline constexpr int SPCF_OLD_SPEECH_SLOTS = 0x0001;
+	inline constexpr int SPCF_LOOP = 0x0002;
+	inline constexpr int SPCF_FREEZE_HAIR = 0x0004;
+
+	inline constexpr int DEMO_FRAME = 0x0800;
+
+	// speech commands
+
+	inline constexpr int SPC_MESH = 0x0000;  // + numero mesh
+	inline constexpr int SPC_SYLL = 0x1000;
+	inline constexpr int SPC_TEXT = 0x2000;
+	inline constexpr int SPC_SEQUENCE = 0x3000;
+	inline constexpr int SPC_PAUSE = 0x4000;
+	inline constexpr int SPC_LOOK_RIGHT = 0x5000;
+	inline constexpr int SPC_LOOK_LEFT = 0x6000;
+	inline constexpr int SPC_LOOK_UP = 0x7000;
+	inline constexpr int SPC_LOOK_DOWN = 0x8000;
+	inline constexpr int SPC_HEAD_SHAKE = 0x9000;
+	inline constexpr int SPC_HEAD_NOD = 0xA000;
+	inline constexpr int SPC_PLAY_SFX = 0xB000;
+	inline constexpr int SPC_ANIMATION = 0xC000;
+	inline constexpr int SPC_PLAY_CD = 0xD000;
+	inline constexpr int SPC_PERFORM_TG = 0xE000;
+	inline constexpr int SPC_NEXT_STATEID = 0xF000;
+	inline constexpr int SPC_MASK_COMMANDS = 0xF000;
+	inline constexpr int SPC_MASK_FRAMES = 0x0FC0;
+	inline constexpr int SPC_MASK_MESH = 0x003F;
+	inline constexpr int SPC_MASK_SINGLE = 0x0FFF;
+	inline constexpr int SPC_MASK_PAUSE = 0x07FF;
+
+	inline constexpr int SCANF_HEAVY = 0x100;  // Only for SCANF_FLOOR_DATA
+	inline constexpr int SCANF_TEMP_ONE_SHOT = 0x200;  // internal setting to stop trigger until lara is yet standing on same sector
+	inline constexpr int SCANF_BUTTON_ONE_SHOT = 0x400;  // one-shot button of the trigger. Only with SCANF_FLOOR_DATA
+	inline constexpr int SCANF_YET_TO_PERFORM = 0x800;  // internal setting to remember this trigger has yet to be performed
+	inline constexpr int SCANF_SCRIPT_TRIGGER = 0x1000; // trigger read from triggergroup of script.dat
+	inline constexpr int SCANF_DIRECT_CALL = 0x2000; // trigger has been called from code in direct way
+	inline constexpr int SCANF_FLOOR_DATA = 0x4000;  // trigger has been read directly from floor data of tr4 file
+	inline constexpr int SCANF_ANIM_COMMAND = 0x8000; // trigger has been called from an animcommand of some animation
+
+	// Trigger RETurn values for flipeffect and action callbacks
+	inline constexpr int TRET_PERFORM_ALWAYS = 0;   // let enabled, the trigger, it will be continuosly performed until lara is over it
+	inline constexpr int TRET_PERFORM_ONCE_AND_GO = 1; // disable temporary further executions until lara is yet on this sector
+	inline constexpr int TRET_PERFORM_NEVER_MORE = 2;  // disable forever this trigger on this sector (single-shot)
+	inline constexpr int TRET_EXECUTE_ORIGINAL = 3; // used only with CBT_REPLACE to change idea and let execution of original code, in this way the CBT_REPLACE becomes dinamically a CBT_FIRST callback
+
+	// flags per importfile type
+	inline constexpr int FTYPE_USERFILE = 1;
+	inline constexpr int FTYPE_SOUND = 2;
+	inline constexpr int FTYPE_SETTINGS = 3;
+
+	// commands for TGROUP_COMMAND script flag
+	inline constexpr int TCMD_GOTO = 1;   // go to Index trigger of current TriggerGroup
+	inline constexpr int TCMD_EXIT = 2;   // quit from current triggergroup, returning the value true/false (1/0) in conditions
+	inline constexpr int TCMD_SET_TIMER = 3;   // 0/255 used only with Flipeffects
+	inline constexpr int TCMD_SET_FULL_TIMER = 4;   // 0/32767 used only with flipeffect having NO (E)xtra argument
+	inline constexpr int TCMD_SET_EXTRA_TIMER = 5;   // 0/127 used with flipeffects and Action triggers
+	inline constexpr int TCMD_SET_EXTRA_CONDITION = 6;   // 0/31 used only with conditons. It is the (E)xtra argument
+	inline constexpr int TCMD_SET_OBJECT = 7;   // 0/4095 used with conditions and action triggers
+	inline constexpr int TCMD_LOG = 8;   // enable/disable the script log
+	inline constexpr int TCMD_PAUSE = 9;   // feeze the game for a given microseconds or wait for user input (scancode)
+	inline constexpr int TCMD_TIMER_FIELD = 10;
+	inline constexpr int TCMD_MAX_ID = 11; // limit of TCMD values ATTENZIONE: DUPLICATO PER ROOM EDITOR
+
+	// flag gestione demo FGD_...
+	inline constexpr int FDG_NONE = 0;
+	inline constexpr int FDG_START = 0x0001;
+	inline constexpr int FDG_END = 0x0002;
+	inline constexpr int FDG_END_FOR_ESCAPE = 0x0004;
+	inline constexpr int FDG_END_FOR_TRIGGER = 0x0008;  //required stot demo via trigger
+	inline constexpr int FDG_FROM_TITLE = 0x0010;  // demo launched from title demo
+	inline constexpr int FDG_IN_PROGRESS = 0x0020; // in the midle of playing
+
+	// flag per organizer
+	inline constexpr int FO_ENABLED = 0x0001;
+	inline constexpr int FO_LOOP = 0x0002;
+	inline constexpr int FO_TICK_TIME = 0x0004;
+	inline constexpr int FO_DEMO_ORGANIZER = 0x0008;
+
+	// flags for extra activity off normal game
+	inline constexpr int SKIP_NONE = 0x0000;
+	inline constexpr int SKIP_FIXED_CAMERA = 0x0001;
+	inline constexpr int SKIP_FLY_CAMERA = 0x0002;
+	inline constexpr int SKIP_LOADING_LEVEL = 0x0004;
+	inline constexpr int SKIP_FADE = 0x0008;
+	inline constexpr int SKIP_TITLE_LEVEL = 0x0010;
+	inline constexpr int SKIP_GRAY_SCREEN = 0x0020;  // pause, inventory load/save game from the game
+	inline constexpr int SKIP_NO_VIEW_OGGETTI = 0x0040;
+	inline constexpr int SKIP_BINOCULARS = 0x0080;
+	inline constexpr int SKIP_LASER_SIGHT = 0x0100;
+	inline constexpr int SKIP_FULL_IMAGE = 0x200; // creata da trng
+
+	inline constexpr int VAR_TYPE_TEXT = 0x0020;  // --10 ----
+	inline constexpr int VAR_TYPE_LOCAL = 0x0040;  // 64
+	inline constexpr int VAR_TYPE_BYTE = 0x0000;  //  0
+	inline constexpr int VAR_TYPE_SHORT = 0x0010;  // 16
+	inline constexpr int VAR_TYPE_LONG = 0x0030;  // 48
+	inline constexpr int VAR_TYPE_STORE = 0x0100;  // e' un tipo di variabile store
+	inline constexpr int VAR_TYPE_INPUT_NUMBER = 0x0200;  // variabile numerica LastInputNumber
+	inline constexpr int VAR_TYPE_INPUT_TEXT = 0x0400; // ultimo testo inserito da utente
+	inline constexpr int VAR_TYPE_CURRENT_VALUE = 0x0800; // variabile speciale current value
+	inline constexpr int VAR_TYPE_BIG_TEXT = 0x1000; // variable speciale big text
+	// used only to add to 0/15 values for specific long type store variables
+	inline constexpr int VAR_TYPE_LONG_STORE = 0x1c0;
+
+	inline constexpr int STORE_MASK_INDEX = 0x003F; // indice
+	inline constexpr int STORE_MASK_SIZE = 0x00C0;  // tipo size byte, short, long
+
+	inline constexpr int STORE_TYPE_BYTE = 0x0040;
+	inline constexpr int STORE_TYPE_SHORT = 0x0080;
+	inline constexpr int STORE_TYPE_LONG = 0x00C0;
+
+	// costanti per accedere a variabili (BaseVariabili)
+	inline constexpr int VAR_MASK_TYPE = 0x0070;  // -111 ----
+	inline constexpr int VAR_MASK_SIZE = 0x0030;  // --11 ----
+	inline constexpr int VAR_MASK_INDEX = 0x000F;  // ---- 1111
+
+	// Condition Trigger RETurn values for callback of conditional trigger
+	inline constexpr int CTRET_IS_TRUE = 0x0001; // condition is true. se this value is missing then it will be false
+	inline constexpr int CTRET_EXTRA_PARAM = 0x0002; // this condition trigger had an Extra parameter
+	inline constexpr int CTRET_ON_MOVEABLE = 0x0004;   // this condition trigger worked on a moveable
+	inline constexpr int CTRET_PERFORM_ALWAYS = 0x0008; // peforming: Perform continuosly this condition
+	inline constexpr int CTRET_ONLY_ONCE_ON_TRUE = 0x0010; // (suggested) Next peforming: No more performing until lara is over this sector and the condition was true
+	inline constexpr int CTRET_NEVER_MORE_ON_TRUE = 0x0020; // Next peforming: No more performing forever if the condition was true
+	inline constexpr int CTRET_PERFORM_ONCE_AND_GO = 0x040; // No more performing until lara is over this sector, no matter if the conditon was true or false
+	inline constexpr int CTRET_EXECUTE_ORIGINAL = 0x0080;  // Only for CBT_REPLACE and CBT_AFTER callbacks.  it lets to original trng code the target to return a response.
+
+	// flag per diario
+	inline constexpr int LDF_SILENT = 0x0100;
+	inline constexpr int LDF_PLAY_TRACK = 0x0200;
+	inline constexpr int LDF_SOUND_EFFECTS = 0x0400;
+	inline constexpr int LDF_ZOOM_START = 0x0800;
+	inline constexpr int LDF_TRANSPARENT_BKG = 0x2000;
+
+	// flags per PARAM_WTEXT command
+	inline constexpr int WTF_FLYING_TEXT = 0x0001;
+	inline constexpr int WTF_PULSING_TEXT = 0x0002;
+	inline constexpr int WTF_CHANGE_COLOR = 0x0004;
+	inline constexpr int WTF_OVER_INVENTORY = 0x0008;
+	inline constexpr int WTF_OVER_IMAGE = 0x0010;
+	inline constexpr int WTF_OVER_FLYCAMERA = 0x0020;
+	inline constexpr int WTF_OVER_FIXCAMERA = 0x0040;
+	inline constexpr int WTF_OVER_BINOCULAR = 0x0080;
+	inline constexpr int WTF_OVER_LASER_SIGHT = 0x0100;
+
+	// flag per VetCollisionePushable[]
+	inline constexpr int CP_NULL = 0x00;
+	inline constexpr int CP_COLLISION = 0x01;
+	inline constexpr int CP_RAISE_PAD = 0x02;
+	inline constexpr int CP_FALLING = 0x04;
+	inline constexpr int CP_MOVING_ACTION = 0x08;
+
+	// costanti per indie di joint da usare con funzione
+	inline constexpr int JOINT_LEFT_THIGH = 1;
+	inline constexpr int JOINT_LEFT_KNEE = 2;
+	inline constexpr int JOINT_LEFT_ANCKLE = 3;
+	inline constexpr int JOINT_RIGHT_THIGH = 4;
+	inline constexpr int JOINT_RIGHT_KNEE = 5;
+	inline constexpr int JOINT_RIGHT_ANCKLE = 6;
+	inline constexpr int JOINT_ABDOMEN = 7;
+	inline constexpr int JOINT_NECK = 8;
+	inline constexpr int JOINT_LEFT_SHOULDER = 9;
+	inline constexpr int JOINT_LEFT_ELBOW = 10;
+	inline constexpr int JOINT_LEFT_WRIST = 11;
+	inline constexpr int JOINT_RIGHT_SHOULDER = 12;
+	inline constexpr int JOINT_RIGHT_ELBOW = 13;
+	inline constexpr int JOINT_RIGHT_WRIST = 14;
+
+	// returned value for CB_INVENTORY_MAIN callbacks
+	inline constexpr int IRET_OK = 0x0000;  // all fine, go on with common callback managemnt
+	inline constexpr int IRET_SKIP_ORIGINAL = 0x0001;   // skip original management, valid only for CBT_FIRST callback
+	inline constexpr int IRET_LOADED_GAME = 0x0002;   // valid only for CBT_REPLACE or CBT_AFTER callbacks.
+											          // It means that it has been loaded a savegame, in callback code.
+
+	// return value from callbacks for all slot procredures: Initialise, Control, Collision, Draw, Floor
+	// note: you can return two or more of following contant in some case, using or | operator:
+	// example: return SRET_SKIP_ORIGINAL | SRET_SKIP_TRNG_CODE;
+	inline constexpr int SRET_OK = 0x0000;  // all fine: go on with common callback mangement
+	inline constexpr int SRET_SKIP_ORIGINAL = 0x0001;  // valid only on CBT_FIRST call backs: the callback requires to skip the execution of tomb4 original code (becoming from CBT_FIRST to CBT_REPLACE)
+	inline constexpr int SRET_SKIP_TRNG_CODE = 0x0002; // valid only with CBT_FIRST call back on codes already managed by trng code (example: control object)
+
+	// return values for CB_PAUSE_MANAGER (pause manu) callback
+	inline constexpr int PRET_OK = 0;  // come back to game phase, the pause menu has been handled by this callback
+	inline constexpr int PRET_GO_TO_TITLE = 1;  // player selected "exit to title"
+	inline constexpr int PRET_EXECUTE_ORIGINAL = 2; // perform original pause management
+
+	// flagsper harpoon
+	inline constexpr int HRP_NO_SWIM_UNDERWATER = 0x0001;
+	inline constexpr int HRP_SINGLE_AMMO = 0x0002;
+	inline constexpr int HRP_DOUBLE_AMMO = 0x0004;
+	inline constexpr int HRP_DISABLE_LASER_SIGHT = 0x0008;
+
+	// costanti usate per trigger condition e per gobal trigger
+	inline constexpr int HOLD_PISTOLS = 1;
+	inline constexpr int HOLD_REVOLVER = 2;
+	inline constexpr int HOLD_UZI = 3;
+	inline constexpr int HOLD_SHOTGUN = 4;
+	inline constexpr int HOLD_GRENADEGUN = 5;
+	inline constexpr int HOLD_CROSSBOW = 6;
+	inline constexpr int HOLD_FLARE = 7;
+	inline constexpr int HOLD_OUT_TORCH = 8;
+	inline constexpr int HOLD_FIRED_TORCH = 9;
+	inline constexpr int HOLD_JEEP = 10;
+	inline constexpr int HOLD_SIDECAR = 11;
+	inline constexpr int HOLD_RUBBER_BOAT = 12;
+	inline constexpr int HOLD_MOTOR_BOAT = 13;
+	inline constexpr int HOLD_ROPE = 14;
+	inline constexpr int HOLD_POLE = 15;
+	inline constexpr int HOLD_ANY_TORCH = 16;
+	inline constexpr int HOLD_KAYAK = 17;
+
+	// costante a volte restituita da funzione GetHeight
+	// che vuol dire che nel settore analizzato c'e' un muro
+	inline constexpr int WALL_FLOOR = -32512;
+
+	// ---- flag per level_tr4
+	inline constexpr int FLT_NONE = 0;
+	inline constexpr int FLT_NEW_TRIGGERS = 0x0001;
+	inline constexpr int FLT_EXTRA_SOUND_TABLE = 0x0002;
+
+	// valori global triggers
+	inline constexpr int GT_USED_INVENTORY_ITEM = 1;  // proc separata
+	inline constexpr int GT_SCREEN_TIMER_REACHED = 2;
+	inline constexpr int GT_ENEMY_KILLED = 3;
+	inline constexpr int GT_LARA_HP_LESS_THAN = 4;
+	inline constexpr int GT_LARA_HP_HIGHER_THAN = 5;
+	inline constexpr int GT_USED_BIG_MEDIPACK = 6;
+	inline constexpr int GT_USED_LITTLE_MEDIPACK = 7;
+	inline constexpr int GT_USING_BINOCULAR = 8;
+	inline constexpr int GT_DAMAGE_BAR_LESS_THAN = 9;
+	inline constexpr int GT_LARA_POISONED = 10;
+	inline constexpr int GT_CONDITION_GROUP = 11;
+	inline constexpr int GT_DISTANCE_FROM_ITEM = 12;
+	inline constexpr int GT_COLLIDE_ITEM = 13;
+	inline constexpr int GT_COLLIDE_SLOT = 14;
+	inline constexpr int GT_COLLIDE_CREATURE = 15;
+	inline constexpr int GT_LOADED_SAVEGAME = 16;
+	inline constexpr int GT_SAVED_SAVEGAME = 17;
+	inline constexpr int GT_COLLIDE_STATIC_SLOT = 18;
+	inline constexpr int GT_DISTANCE_FROM_STATIC = 19;
+	inline constexpr int GT_LARA_HOLDS_ITEM = 20;
+	inline constexpr int GT_VSCROLL_COMPLETE = 21;
+	inline constexpr int GT_VSCROLL_LAST_VISIBLE = 22;
+	inline constexpr int GT_GAME_KEY1_COMMAND = 23;
+	inline constexpr int GT_GAME_KEY2_COMMAND = 24;
+	inline constexpr int GT_KEYBOARD_CODE = 25;
+	inline constexpr int GT_FMV_COMPLETED = 26;
+	inline constexpr int GT_TITLE_SCREEN = 27;
+	inline constexpr int GT_ELEVATOR_STOPS_AT_FLOOR = 28;
+	inline constexpr int GT_ELEVATOR_STARTS_FROM_FLOOR = 29;
+	inline constexpr int GT_BEFORE_SAVING_VARIABLES = 30;
+	inline constexpr int GT_AFTER_RELOADING_VARIABLES = 31;
+	inline constexpr int GT_ALWAYS = 32;
+	inline constexpr int GT_TRNG_G_TIMER_EQUALS = 33;
+	inline constexpr int GT_TRNG_L_TIMER_EQUALS = 34;
+	inline constexpr int GT_KEYPAD_SHOWED = 35;
+	inline constexpr int GT_KEYPAD_REMOVED = 36;
+	inline constexpr int GT_NO_ACTION_ON_ITEM = 37;
+	inline constexpr int GT_COMPLETED_SCALING_ON_ITEM = 38;
+	inline constexpr int GT_SELECTED_INVENTORY_ITEM = 39;
+	inline constexpr int GT_CREATED_NEW_ITEM = 40;
+
+	// flags per global triggers
+	inline constexpr int FGT_SINGLE_SHOT = 0x0001;
+	inline constexpr int FGT_NOT_TRUE = 0x0002;
+	inline constexpr int FGT_PUSHING_COLLISION = 0x0004;
+	inline constexpr int FGT_DISABLED = 0x0008;
+	inline constexpr int FGT_REMOVE_INPUT = 0x0010;
+	inline constexpr int FGT_SINGLE_SHOT_RESUMED = 0x0020;
+	inline constexpr int FGT_REPLACE_MANAGEMENT = 0x0040;
+	inline constexpr int FGT_HIDE_IN_DEBUG = 0x2000; // per escluderlo da log
+	inline constexpr int FGT_PAUSE_ONE_SHOT = 0x4000;  // interno
+
+	inline constexpr int BREAK_CONDTION_TRIGGER = 0;
+	inline constexpr int BREAK_GLOBAL_TRIGGER = 1;
+
+	inline constexpr int FRB_SWINGING_NORMAL = 0;
+	inline constexpr int FRB_SWINGING_LOW = 0x0001;
+	inline constexpr int FRB_SWINGING_HIGH = 0x0002;
+	inline constexpr int FRB_PITCHING_NORMAL = 0;
+	inline constexpr int FRB_PITCHING_LOW = 0x0004;
+	inline constexpr int FRB_PITCHING_HIGH = 0x0008;
+	inline constexpr int FRB_ALLOW_DRIFT = 0x0010;
+
+	// flags per standby
+
+	inline constexpr int FSB_DISABLE_ON_CRAMPED_SPACE = 0x0001;
+	inline constexpr int FSB_DISABLE_ON_COMBAT = 0x0002;
+	inline constexpr int FSB_EXIT_ON_ATTACK = 0x0004;
+	inline constexpr int FSB_FLIP_DISTANCE = 0x0008;
+	inline constexpr int FSB_FLIP_V_ANGLE = 0x0010;
+	inline constexpr int FSB_FLIP_H_ORIENT = 0x0020;
+	inline constexpr int FSB_FLIP_SPEED = 0x0040;
+	inline constexpr int FSB_FREEZE_ENEMIES = 0x0080;
+	inline constexpr int FSB_FREEZE_LARA = 0x0100;
+	inline constexpr int FSB_OVERLAP_AUDIO = 0x0200;
+	inline constexpr int FSB_IMMEDIATE = 0x0400;
+
+	// tipo di effetto per stand-by
+	inline constexpr int TSB_NO_CHANGE_CAMERA = 0;
+	inline constexpr int TSB_MATRIX = 1;
+	inline constexpr int TSB_PORTRAIT = 2;
+	inline constexpr int TSB_PANORAMA = 3;
+
+	// mnemonic constant for FlagsMain of StrItemTr4 structure
+	inline constexpr int FITEM_NONE = 0x0000; // used only to clear flags
+	inline constexpr int FITEM_ACTIVE = 0x0001; // item is active (it will move) flag set after calling AddActiveItem()
+	inline constexpr int FITEM_CREATURE = 0x0002; // Creatures are invisible until they have not been triggered
+	inline constexpr int FITEM_NOT_VISIBLE = 0x0004; // the item was not visible at start
+	inline constexpr int FITEM_GRAVITY_AFFECTED = 0x0008; // the item is falling down (or jumping up) and it's subject to gravity simulation, currently
+	inline constexpr int FITEM_FLAG_10 = 0x0010;  // (let for backward compatibility but now it is sure its meaning:
+								                  //  see the FITEM_ITEM_HAS_BEEN_HIT flag)
+	inline constexpr int FITEM_ITEM_HAS_BEEN_HIT = 0x0010; // the item has been hit: with weapons (but not grenade)
+	inline constexpr int FITEM_NOT_YET_ENABLED = 0x0020;  // the item has not yet been enabled (triggered)
+	inline constexpr int FITEM_KILLED_WITH_EXPLOSION = 0x0040; // trng flag, added to remember that this enemy has been killed with an explosion
+	inline constexpr int FITEM_POISONED = 0x0100; // enemy (or lara?) has been poisoned
+	inline constexpr int FITEM_AI_GUARD = 0x0200; // enemy was over a AI_GUARD item
+	inline constexpr int FITEM_AI_AMBUSH = 0x0400; // emeny was over a AI_AMBUSH item
+	inline constexpr int FITEM_AI_PATROL1 = 0x0800; // enemy was over a AI_PATROL1 (and perhaps AI_PATROL2)
+	inline constexpr int FITEM_AI_MODIFY = 0x1000; // enemy was over a AI_MODIFY item
+	inline constexpr int FITEM_AI_FOLLOW = 0x2000;  // enemy was over a AI_FOLLOW item
+	inline constexpr int FITEM_THROWN_AMMO = 0x4000; // (not sure) it used with visible ammo like greande or arrows of crossbow
+
+	// returned value for reply of cbGlobalTrigger call back
+	inline constexpr int RGT_TRUE = 0x01;   // condition is true
+	inline constexpr int RGT_FALSE = 0x00;   // condition is false
+	inline constexpr int RGT_IGNORE = 0x80;   // the callback doesn't handle this kind of GT_ value
+
+	inline constexpr int GTD_IGNORE_HEIGHT = 0x40000000;
+
+	// flags StatusNG  (SNG_...) per salvare test di qualche tipo in savegame
+	inline constexpr int SNG_NONE = 0;
+	inline constexpr int SNG_INFINITE_AIR = 0x00000001;  // anche patch trlm
+	inline constexpr int SNG_DISABLE_WEAPONS = 0x00000002;
+	inline constexpr int SNG_HIDE_HOLSTERS = 0x00000004;
+	inline constexpr int SNG_IMMORTAL_LARA = 0x00000008;  // usata solo come patch trlm 2009
+	inline constexpr int SNG_OPEN_ALL_DOORS = 0x00000010; // usata per patch trlm 2009
+	inline constexpr int SNG_KILL_ALL_ENEMIES = 0x00000020; // usata per trlm 2009
+	inline constexpr int SNG_REMOVE_IMMORTAL_LARA = 0x00000040; // usata da trlm 2009
+	inline constexpr int SNG_PATCH_LARA_STAR = 0x0000080; // usata trlm 2009
+	inline constexpr int SNG_UPDATE_LARA_POS = 0x0000100; // usata trlm 2009 dopo un move lara
+	inline constexpr int SNG_SUPER_BINOCULARS = 0x0000200; // usata per binocolo potenziato
+
+	// valori ocb per static
+	inline constexpr int OCBS_ATTIVO = 0x0001;
+	inline constexpr int OCBS_SALVARE = 0x002;
+	inline constexpr int OCBS_NO_COLLISIONI = 0x0004;
+	inline constexpr int OCBS_TRASPARENZA_GLASS = 0x0008;
+	inline constexpr int OCBS_TRASPARENZA_ICE = 0x0010;
+	inline constexpr int OCBS_DAMAGE_LARA = 0x0020;
+	inline constexpr int OCBS_BURN_LARA = 0x0040;
+	inline constexpr int OCBS_EXPLODE = 0x0080;
+	inline constexpr int OCBS_POISON = 0x0100;
+	inline constexpr int OCBS_HUGE_COLLISION = 0x0200;
+	inline constexpr int OCBS_HARD_SHATTER = 0x0400;
+	inline constexpr int OCBS_HEAVY_TRIGGER = 0x0800;
+	inline constexpr int OCBS_SCALABLE = 0x1000;
+	inline constexpr int OCBS_SHATTER_SPECIFIC = 0x2000;
+
+	// valore per TipoVar usata in adaptive far view
+	inline constexpr int TV_MIGLIORATO = 1;
+	inline constexpr int TV_UGUALE = 2;
+	inline constexpr int TV_PEGGIORATO = 3;
+
+	// flag FAN_ ossia flag per comando Animation=
+	inline constexpr int FAN_SET_FREE_HANDS = 0x0001;
+	inline constexpr int FAN_START_FROM_EXTRA_FRAME = 0x0002;
+	inline constexpr int FAN_SET_NEUTRAL_STATE_ID = 0x0004;
+	inline constexpr int FAN_KEYS_AS_SCANCODE = 0x0008;
+	inline constexpr int FAN_DISABLE_PUSH_AWAY = 0x0010;
+	inline constexpr int FAN_KEEP_NEXT_STATEID = 0x0020;
+	inline constexpr int FAN_ENABLE_GRAVITY = 0x0040;
+	inline constexpr int FAN_DISABLE_GRAVITY = 0x0080;
+	inline constexpr int FAN_PERFORM_TRIGGER_GROUP = 0x0100;
+	inline constexpr int FAN_SET_FREE_HANDS_TEMP = 0x0200;
+	inline constexpr int FAN_SET_BUSY_HANDS = 0x0400;
+	inline constexpr int FAN_ALIGN_TO_ENV_POS = 0x0800;
+	inline constexpr int FAN_SET_ADDEFFECT = 0x1000;
+	inline constexpr int FAN_RANDOM = 0x2000;
+	inline constexpr int FAN_SET_LARA_PLACE = 0x4000;
+
+	// comando key1
+	inline constexpr int KEY1_RELEASED = 0x8000;
+
+	// valori costanti per campo Environment di comando animation
+	inline constexpr int ENV_NO_BLOCK_IN_FRONT = 1;
+	inline constexpr int ENV_HANG_WITH_FEET = 2;
+	inline constexpr int ENV_HOLE_FLOOR_IN_FRONT = 3;
+	inline constexpr int ENV_MONKEY_CEILING = 4;
+	inline constexpr int ENV_CLIMB_WALL_IN_FRONT = 5;
+	inline constexpr int ENV_CLIMB_WALL_AT_RIGHT = 6;
+	inline constexpr int ENV_CLIMB_WALL_AT_LEFT = 7;
+	inline constexpr int ENV_HOLE_IN_FRONT_CEILING_CLIMB = 8;
+	inline constexpr int ENV_HOLE_BACK_CEILING_CLIMB = 9;
+	inline constexpr int ENV_NO_BLOCK_AT_RIGHT = 10;
+	inline constexpr int ENV_NO_BLOCK_AT_LEFT = 11;
+	inline constexpr int ENV_HOLE_FLOOR_AT_RIGHT = 12;
+	inline constexpr int ENV_HOLE_FLOOR_AT_LEFT = 13;
+	inline constexpr int ENV_HOLE_FLOOR_BACK = 14;
+	inline constexpr int ENV_NO_BLOCK_BACK = 15;
+	inline constexpr int ENV_CLIMB_WALL_BACK = 16;
+	inline constexpr int ENV_SUPPORT_IN_FRONT_WALL = 17;
+	inline constexpr int ENV_SUPPORT_IN_RIGHT_WALL = 18;
+	inline constexpr int ENV_SUPPORT_IN_LEFT_WALL = 19;
+	inline constexpr int ENV_SUPPORT_IN_BACK_WALL = 20;
+	inline constexpr int ENV_ITEM_EXTRA_IN_FRONT = 21;
+	inline constexpr int ENV_ITEM_EXTRA_OVER = 22;
+	inline constexpr int ENV_ITEM_EXTRA_UNDER = 23;
+	inline constexpr int ENV_MULT_CONDITION = 24;
+	inline constexpr int ENV_HANG_LEFT_IN_CORNER = 25;
+	inline constexpr int ENV_HANG_LEFT_OUT_CORNER = 26;
+	inline constexpr int ENV_HANG_RIGHT_IN_CORNER = 27;
+	inline constexpr int ENV_HANG_RIGHT_OUT_CORNER = 28;
+	inline constexpr int ENV_HANG_LEFT_SPACE = 29;
+	inline constexpr int ENV_HANG_RIGHT_SPACE = 30;
+	inline constexpr int ENV_DISTANCE_CEILING = 31;
+	inline constexpr int ENV_CLIMB_LEFT_IN_CORNER = 32;
+	inline constexpr int ENV_CLIMB_LEFT_OUT_CORNER = 33;
+	inline constexpr int ENV_CLIMB_RIGHT_IN_CORNER = 34;
+	inline constexpr int ENV_CLIMB_RIGHT_OUT_CORNER = 35;
+	inline constexpr int ENV_CLIMB_LEFT_SPACE = 36;
+	inline constexpr int ENV_CLIMB_RIGHT_SPACE = 37;
+	inline constexpr int ENV_MULT_OR_CONDITION = 38;
+	inline constexpr int ENV_DISTANCE_FLOOR = 39;
+	inline constexpr int ENV_FRAME_NUMBER = 40;
+	inline constexpr int ENV_VERTICAL_ORIENT = 41;
+	inline constexpr int ENV_ON_VEHICLE = 42;
+	inline constexpr int ENV_FREE_HANDS = 43;
+	inline constexpr int ENV_UNDERWATER = 44;
+	inline constexpr int ENV_FLOATING = 45;
+	inline constexpr int ENV_ONLAND = 46;
+	inline constexpr int ENV_IS_STILL = 47;
+	inline constexpr int ENV_ANIM_COMPLETE = 48;
+	inline constexpr int ENV_FLYING_UP = 49;
+	inline constexpr int ENV_FLYING_DOWN = 50;
+	inline constexpr int ENV_WALL_HOLE_IN_FRONT = 51;
+	inline constexpr int ENV_IN_LEFT_SIDE_SECTOR = 52;
+	inline constexpr int ENV_IN_RIGHT_SIDE_SECTOR = 53;
+	inline constexpr int ENV_ITEM_EXTRA_AT_LEFT = 54;
+	inline constexpr int ENV_ITEM_EXTRA_AT_RIGHT = 55;
+	inline constexpr int ENV_ITEM_TEST_POSITION = 56;
+	inline constexpr int ENV_HOLD_EXTRA_ITEM_IN_HANDS = 57;
+	inline constexpr int ENV_CONDITION_TRIGGER_GROUP = 58;
+	inline constexpr int ENV_ROOM_IS = 59;
+	inline constexpr int ENV_PLAYER_IS_SLEEPING = 60;
+	inline constexpr int ENV_PLAYER_WOKE_UP = 61;
+	inline constexpr int ENV_DISTANCE_NORTH_WALL = 62;
+	inline constexpr int ENV_DISTANCE_SOUTH_WALL = 63;
+	inline constexpr int ENV_DISTANCE_EAST_WALL = 64;
+	inline constexpr int ENV_DISTANCE_WEST_WALL = 65;
+	inline constexpr int ENV_LARA_IN_MICRO_STRIP = 66;
+	// usati da nemici:
+	inline constexpr int ENV_NO_BOX_IN_FRONT = 67;
+	inline constexpr int ENV_NO_BOX_AT_LEFT = 68;
+	inline constexpr int ENV_NO_BOX_AT_RIGHT = 69;
+	inline constexpr int ENV_NO_BOX_BACK = 70;
+	inline constexpr int ENV_ENEMY_SEE_LARA = 71;
+	inline constexpr int ENV_FRAME_RANGE = 72;
+
+	// quelli di byte alto considerarli numberi e non flag, usare maschera, eccetto ENV_NON_TRUE che puo' essere usato
+	// con altri
+	inline constexpr int ENV_NON_TRUE = 0x0080;
+
+	inline constexpr int ENV_POS_LEFT_CORNER = 0x0100;
+	inline constexpr int ENV_POS_RIGHT_CORNER = 0x0200;
+	inline constexpr int ENV_POS_CENTRAL = 0x0400;
+	inline constexpr int ENV_POS_HORTOGONAL = 0x0800;
+	inline constexpr int ENV_POS_IN_THE_MIDDLE = 0x1000;
+	inline constexpr int ENV_POS_STRIP_3 = 0x2000;
+	inline constexpr int ENV_POS_STRIP_2 = 0x4000;
+	inline constexpr int ENV_POS_STRIP_1 = 0x8000;
+
+	// maschere per ottenere flag o condizioni
+	inline constexpr int ENV_MASK_CONDITION = 0x7f;
+	inline constexpr int ENV_MASK_FLAGS = 0xFF80;
+
+	// usati per flag di testposition script command
+	inline constexpr int TPOS_DOUBLE_HORIENT = 0x0001;
+	inline constexpr int TPOS_FOUR_HORIENT = 0x0002;
+	inline constexpr int TPOS_TEST_ITEM_INDEX = 0x0004;
+	inline constexpr int TPOS_FAST_ALIGNMENT = 0x0008;
+	inline constexpr int TPOS_OPPOSITE_FACING = 0x0010;
+	inline constexpr int TPOS_ROUND_HORIENT = 0x0020;
+	inline constexpr int TPOS_TURN_FACING_90 = 0x0040;
+	inline constexpr int TPOS_TURN_FACING_180 = 0x0080;
+	inline constexpr int TPOS_SELF_FIXING = 0x0100;
+
+	// flag aggiunti a indici di animating di mirror per attuare aggiustamenti
+	inline constexpr int FMIR_MASK_INDEX = 0xFFF;
+	inline constexpr int FMIR_MASK_FLAGS = 0x7000;
+	inline constexpr int FMIR_ALTERNATE_REFLEX = 0x1000;
+	inline constexpr int FMIR_ADJUST_X = 0x2000;
+	inline constexpr int FMIR_ADJUST_Z = 0x4000;
+
+	inline constexpr int MIR_WEST_WALL = 0;
+	inline constexpr int MIR_FLOOR = 1;
+	inline constexpr int MIR_CEILING = 2;
+	inline constexpr int MIR_INVERSE_WEST = 3;
+	inline constexpr int MIR_EAST_WALL = 4;
+	inline constexpr int MIR_SOUTH_WALL = 5;
+	inline constexpr int MIR_NORTH_WALL = 6;
+
+	// comandi tastiera da bloccare o inviare
+	inline constexpr int CMD_ALL = 0xffffffff;    // 0 All keyboard commands
+	inline constexpr int CMD_UP = 0x00000001;			//  1: Up
+	inline constexpr int CMD_DOWN = 0x00000002;			// 2: Down
+	inline constexpr int CMD_LEFT = 0x00000004;			// 3: Left
+	inline constexpr int CMD_RIGHT = 0x00000008;		// 4: Right
+	inline constexpr int CMD_DUCK = 0x20000000;		// 5: Duck
+	inline constexpr int CMD_DASH = 0x40000000;		// 6: Dash
+	inline constexpr int CMD_WALK = 0x00000080;		// 7: Walk
+	inline constexpr int CMD_JUMP = 0x00000010;		// 8: Jump
+	inline constexpr int CMD_ACTION = 0x00000040;		// 9: Action
+	inline constexpr int CMD_DRAW_WEAPON = 0x00000020;  // 10: Draw Weapon
+	inline constexpr int CMD_USE_FLARE = 0x00080000;   // 11: Use Flare
+	inline constexpr int CMD_LOOK = 0x00000200;	// 12: Look
+	inline constexpr int CMD_ROLL = 0x00001000;	//  13: Roll
+	inline constexpr int CMD_INVENTORY = 0x00200100;  //  14: Inventory
+	inline constexpr int CMD_STEP_LEFT = 0x00000480;  // 15: Step Left
+	inline constexpr int CMD_STEP_RIGHT = 0x00000880; // 16: Step Right
+	inline constexpr int CMD_PAUSE = 0x00002000;    //  17: Pause
+	inline constexpr int CMD_SAVE_GAME = 0x00400000;    // 18: Save the game (special)
+	inline constexpr int CMD_LOAD_GAME = 0x00800000;    // 19: Load the game (special)
+	inline constexpr int CMD_WEAPON_KEYS = 0x10000000;		//  20: Select weapon keys
+	inline constexpr int CMD_ENTER = 0x00100000;     // 21: Enter
+
+	// valori FKP  per keypad
+	inline constexpr int FKP_ATTESA = 0;
+	inline constexpr int FKP_ATTENDI_FINE_ESCAPE = 1;
+	inline constexpr int FKP_ANIMAZIONE_TASTO = 2;
+	inline constexpr int FKP_RIMUOVI = 3;
+	inline constexpr int FKP_WAIT_ANIMATION = 4;
+	inline constexpr int FKP_WAIT_END_ANIMATION = 5;
+
+	// flags TKP  Tipo Key Pad da passare a GestioneKeyPad
+	inline constexpr int TKP_ELEVATOR = 1;
+	inline constexpr int TKP_SWITCH = 2;
+
+	// valore di fase per target FTR_
+	// FTR_ 0= nascita / 1 = lampeggio fisso / -1 non attivo
+	inline constexpr int FTR_NASCITA = 0;
+	inline constexpr int FTR_LAMPEGGIO = 1;
+	inline constexpr int FTR_INATTIVO = -1;
+
+	// durata in frame delle diverse fasi
+	inline constexpr int DTAR_NASCITA = (FRAME_SECONDO / 4);
+	inline constexpr int DTAR_LAMPEGGIO_TONDO = (FRAME_SECONDO / 8);
+	inline constexpr int DTAR_LAMPEGGIO_TRIANGOLO = (FRAME_SECONDO / 2);
+	inline constexpr int DTAR_DURATA_TARGET = (FRAME_SECONDO * 7);
+
+	inline constexpr int PTR_BASE_LARA = 0;
+	inline constexpr int PTR_SOPRA_LARA = 1;
+	inline constexpr int PTR_SOTTO_LARA = -1;
+
+	// list of trng services
+	// notes: some of these will be called in implicity way from ther procedures
+	// you can use in more easy way. The following list will be used
+	// only with the native function Service()
+	inline constexpr int SRV_PERFORM_FLIPEFFECT = 0; // you can use the shortcut function: PerformFlipEffect() to use this service
+	inline constexpr int SRV_PERFORM_ACTION = 1; // you can use the shortcut PerformActionTrigger() to use this service
+	inline constexpr int SRV_PERFORM_CONDITION = 2; // you can use the shortcut PerformConditionTrigger() to use this service
+	inline constexpr int SRV_PERFORM_TRIGGERGROUP_ID = 3; // Arg1=IdOfTriggerGroup
+														  // return: -1 = not found Id
+														  // return: 0 = condition is false
+														  // return: 1 = condition is true or it's not a condition trigger group
+	inline constexpr int SRV_PERFORM_EXPORTED_TRIGGER = 4; // you can use shortcut function: PerformExportedTrigger() to use this service
+														   // Arg1= PluginId / Arg2=FirstWord / Arg3=SecondWord / Arg4=ThirdWord
+														   // return 0 = condition is false
+														   // return 1 = condition is true or it's not a conditional trigger
+	inline constexpr int SRV_CREATE_TRIGGERGROUP = 5; // TestDynamic and then a sequence of triple arg, {FirstWord, SecondWord, ThirdWord}
+													  // with END_LIST value at end
+													  // return -1 = error, missing available triggergroups
+													  // return any other value = the id of your triggergroup
+	inline constexpr int SRV_CREATE_ANIMATION = 7; // same fields of Animation command with END_LIST value at end
+												   // AnimIndex, KEY1_ , KEY2_ , FAN_ flags, ENV_ Environment, Distance for Env, Extra, StateId (STATE_...) or (-)AnimationIndex array  (...)
+	inline constexpr int SRV_CREATE_ANIMATIONSLOT = 8; // same field of AnimationSlot command with END_LIST at end
+													   // Slot, ActionType (AXT_...), AnimIndex, Key1, Key2, FAN_ flags, ENV_ Environment, Distance For Env_, Extra, StateId (STATE_...) or (-)AnimationIndex array  (...)
+	inline constexpr int SRV_CREATE_MULTENVCONDITION = 9; // TestDynamic and then same fields of MultEnvCondition= command
+														  // except for Id field that it will be returned from the service and the END_LIST value to type at end of the array
+														  // ENV_ condition, DistanceForEnv, Extra field, array of tripled of {ENV_ Condition, DistanceForEnv, Extra field}
+	inline constexpr int SRV_CREATE_TESTPOSITION = 10; // TestDynamic and then same fields of TestPosition command
+													   // except for Id field that it will be returned from the service
+													   // Flags (TPOS_...), Slot Moveable, XDistanceMin, XDistanceMax, YDistanceMin, YDistanceMax, ZDistanceMin, ZDistanceMax,  HOrientDiffMin, HOrientDiffMax, VOrientDiffMin, VOrientDiffMax, ROrientDiffMin, ROrientDiffMax
+	inline constexpr int SRV_CREATE_ADDEFFECT = 12; // TestDynamic and then same fields of AddEffect command
+													// except for Id field that it will be returned from the service
+													// and the END_LIST value at end
+													// EffectType (ADD_), FlagsEffect (FADD_), JointType (JOINT_), DispX, DispY, DispZ, DurateEmit, DuratePause, Extra param array
+	inline constexpr int SRV_SetReservedDataZone = 13; // You pass the startOffset and number of bytes
+													   // of tomb4 data that you wish set as "used" to other plugin dll
+													   // StartOffset, NBytes
+	inline constexpr int SRV_F_ProporzioneDistanza = 14;  //       (int Incremento, int Distanza);
+	inline constexpr int SRV_F_EseguiTriggerGroup = 15;
+	inline constexpr int SRV_F_DetectedGlobalTriggerEvent = 16;
+	inline constexpr int SRV_F_InviaErroreLog = 17;
+	inline constexpr int SRV_CREATE_PARAM_COMMAND = 18; // creare Parameters=PARAM_.. command of trng owner to have an extra input
+														//for trng triggers requiring parameters from script
+														// Input:  TestDynamic and then the PARAM_ value, then skip the id, and type other arguments
+														// for current parameter. It will return the id of new PARAM command
+														// or -1 if there is an error
+	inline constexpr int SRV_F_TestEnvCondition = 19;
+	inline constexpr int SRV_F_IsBoxSettore = 20;
+	inline constexpr int SRV_F_VerificaTestPosition = 21;
+	inline constexpr int SRV_F_CollideItemConCustom = 22;
+	inline constexpr int SRV_F_IsCollisioneConItems = 23;
+	inline constexpr int SRV_F_InviaLog = 24;
+	inline constexpr int SRV_F_EseguiAnimNemico = 25;
+	inline constexpr int SRV_F_CreateAIRecord = 26;
+	inline constexpr int SRV_F_DeleteAIRecord = 27;
+	inline constexpr int SRV_F_CreateNewMoveable = 28;
+	inline constexpr int SRV_F_DeleteNewMoveable = 29;
+	inline constexpr int SRV_CREATE_COLOR_RGB_COMMAND = 30; // arguments: TestDynamic and then Red, Green, Blue, it will return Id for new colorrgb
+	inline constexpr int SRV_DeleteParamCommand = 31;
+	inline constexpr int SRV_DeleteTriggerGroup = 32;
+	inline constexpr int SRV_DeleteColorRgb = 33;
+	inline constexpr int SRV_DeleteMultEnvCondition = 34;
+	inline constexpr int SRV_DeleteTestPosition = 35;
+	inline constexpr int SRV_DeleteAddEffect = 36;
+	inline constexpr int SRV_F_DisableSaving = 37;
+	inline constexpr int SRV_F_AggiungiItemMosso = 38;
+	inline constexpr int SRV_F_CheckForStartMovePushable = 39;
+	inline constexpr int SRV_F_CheckForEndMovePushable = 40;
+	inline constexpr int SRV_F_ExplosionOnVehicle = 41;
+	inline constexpr int SRV_F_ConvertMicroUnits = 42;
+	inline constexpr int SRV_F_AllocateImage = 43;
+	inline constexpr int SRV_F_FreeImage = 44;
+	inline constexpr int SRV_F_AllocateTombHdc = 45;
+	inline constexpr int SRV_F_FreeTombHdc = 46;
+	inline constexpr int SRV_F_DrawSprite2D = 47;
+	inline constexpr int SRV_F_DrawMesh3D = 48;
+	inline constexpr int SRV_F_DrawObject2D = 49;
+	inline constexpr int SRV_F_PrintText = 50;
+	inline constexpr int SRV_F_ReadDxInput = 51;
+	inline constexpr int SRV_F_SuspendAudioTrack = 52;
+	inline constexpr int SRV_F_ResumeAudioTrack = 53;
+	inline constexpr int SRV_F_CreateWindowsFont = 54;
+	inline constexpr int SRV_F_FreeWindowsFont = 55;
+	inline constexpr int SRV_F_ReadInputBox = 56;
+	inline constexpr int SRV_F_ReadNumVariable = 57;
+	inline constexpr int SRV_F_WriteNumVariable = 58;
+	inline constexpr int SRV_F_ReadTextVariable = 59;
+	inline constexpr int SRV_F_WriteTextVariable = 60;
+	inline constexpr int SRV_F_ReadMemVariable = 61;
+	inline constexpr int SRV_F_WriteMemVariable = 62;
 
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
@@ -1618,7 +2281,7 @@ namespace trng {
 		StrRelocatedMem Old_7FE100;  // 29
 		StrRelocatedMem Old_4AB9B8;  // 30
 		StrRelocatedMem Old_4ABB90; // 31
-		StrRelocatedMem Reserved[80-14]; // sosttiuire -0 con nuove aggiunte (ultima era con indice = 17)
+		StrRelocatedMem Reserved[66]; // sosttiuire -0 con nuove aggiunte (ultima era con indice = 17)
 	};
 
 	struct StrPrefTomb {
@@ -1737,9 +2400,9 @@ namespace trng {
 		short Reserved_38;				// 38
 		short Reserved_3A;				// 3A
 		void *pZonaSavegame;		// 3C	or pCreatureInfo structure for enemies
-		DWORD  CordX;					// 40
-		int  CordY;					// 44
-		DWORD  CordZ;					// 48
+		DWORD CordX;					// 40
+		int CordY;					// 44
+		DWORD CordZ;					// 48
 		short OrientationV;  // 4c
 		short OrientationH;  // 4e
 		short OrientationT;		// 50
@@ -1800,7 +2463,7 @@ namespace trng {
 	struct StrBaseScaleItem {
 		WORD TotScale;
 		StrScaleItem VetScaleItem[MAX_SCALE_ITEM];
-		short VetIdScale[MAX_SCALE_ITEM*10];
+		short VetIdScale[MAX_SCALE_ITEM * 10];
 	};
 
 	struct StrBasevehicles {
@@ -1842,7 +2505,7 @@ namespace trng {
 		WORD StateIdNext;
 		WORD FrameNow;
 		DWORD LaraX;
-		int  LaraY;
+		int LaraY;
 		DWORD LaraZ;
 		short LaraRoom;
 		WORD Orient;
@@ -1887,7 +2550,7 @@ namespace trng {
 	struct StrBaseShowSprite {
 		WORD TotShowSprites;
 		StrShowSprite VetShowSprites[MAX_SHOW_SPRITES];
-		short VetIdShowSprites[MAX_SHOW_SPRITES*10];
+		short VetIdShowSprites[MAX_SHOW_SPRITES * 10];
 	};
 
 	struct StrPointFloat {
@@ -1910,7 +2573,7 @@ namespace trng {
 	struct StrBaseParamTriangles {
 		WORD TotTriangles;
 		StrParamTriangle VetTriangles[MAX_TRIANGLES];
-		short VetIdTriangles[MAX_TRIANGLES*10];
+		short VetIdTriangles[MAX_TRIANGLES * 10];
 	};
 
 	struct StrQuad {
@@ -1923,7 +2586,7 @@ namespace trng {
 	struct StrBaseQuads {
 		WORD TotQuads;
 		StrQuad VetQuads[MAX_QUADS];
-		short VetIdQuads[MAX_QUADS*10];
+		short VetIdQuads[MAX_QUADS * 10];
 	};
 
 	struct StrCircle {
@@ -1937,7 +2600,7 @@ namespace trng {
 	struct StrBaseCircle {
 		WORD TotCircles;
 		StrCircle VetCircle[MAX_CIRCLES];
-		short VetIdCircle[MAX_CIRCLES*10];
+		short VetIdCircle[MAX_CIRCLES * 10];
 	};
 
 	struct StrScriptLaraStartPos {
@@ -2023,7 +2686,7 @@ namespace trng {
 	// dati per gestione di standby
 	struct StrBaseStandBy {
 		int TotStandBY;
-		short VetID[MAX_STANDBY*10];
+		short VetID[MAX_STANDBY * 10];
 		StrScriptStandBy VetStandBy[MAX_STANDBY];
 		int IndiceSetCamera;
 		WORD IdNow;
@@ -2089,7 +2752,7 @@ namespace trng {
 	};
 
 	struct StrRecordFlip {
-		WORD  Numero;  // numero del flipeffect
+		WORD Numero;  // numero del flipeffect
 		WORD Timer; // valore argomento timer
 		WORD Flags; // dati peridentificare in modo univoco questo trigger  SCANF_... scanf flags
 
@@ -2142,7 +2805,6 @@ namespace trng {
 		StrBloccoNumVar NumWar;
 		// variabili di testo
 		StrText80 VetTextVar[4];
-
 
 		// variabili store per savegame
 		union {
@@ -2208,7 +2870,7 @@ namespace trng {
 	struct StrBaseWindowsFonts {
 		int TotFonts;
 		StrWindowsFont VetFonts[MAX_FONTS];
-		short VetID[MAX_FONTS*10];
+		short VetID[MAX_FONTS * 10];
 		bool TestUsaWindowsFont;
 		StrWindowsFont DefWindowsFont; // this is the windowsfont for all prints
 		WORD FlagDWF;
@@ -2272,7 +2934,7 @@ namespace trng {
 	struct StrBaseSwitch {
 		WORD TotSwitch;
 		StrRecordSwitch VetSwitch[MAX_SWITCH];
-		short VetID[MAX_SWITCH*10];
+		short VetID[MAX_SWITCH * 10];
 	};
 
 	struct StrPanelloSavegame {
@@ -2372,7 +3034,7 @@ namespace trng {
 		RectFloat Inc;
 		int TotFrames;
 		bool TestAttivo;
-		StrRecordImage  EffectImage;
+		StrRecordImage EffectImage;
 	};
 
 	struct StrShowImage {
@@ -2424,16 +3086,16 @@ namespace trng {
 	struct StrParamPrintText {
 		StrPrintString Formatting;
 		short IdPrint;
-		short  DurateTime;
-		short  OrgX;
-		short  OrgY;
+		short DurateTime;
+		short OrgX;
+		short OrgY;
 		WORD Dynamic;
 	};
 
 	struct StrBasePrintText {
 		int TotPrintText;
 		StrParamPrintText VetPrint[MAX_PARAM_PRINT_TEXT];
-		short VetID[MAX_PARAM_PRINT_TEXT*10];
+		short VetID[MAX_PARAM_PRINT_TEXT * 10];
 	};
 
 	struct StrBoxCollisione {
@@ -2464,14 +3126,14 @@ namespace trng {
 		short IdTestPosition;
 		WORD Flags;   // TPOS_ flags
 		WORD Slot;    // slot of item to detect or index
-		StrTestPosition  DatiPosition;
+		StrTestPosition DatiPosition;
 		WORD Dynamic;
 	};
 
 	struct StrBaseTestPosition {
 		int TotTestPositions;
 		StrTestPositionCmd VetTestPosition[MAX_TEST_POSITION];
-		short VetId[MAX_TEST_POSITION*10];
+		short VetId[MAX_TEST_POSITION * 10];
 	};
 
 	struct StrScriptImage {
@@ -2486,13 +3148,13 @@ namespace trng {
 	struct StrBaseScriptImages {
 		int TotScriptImages;
 		StrScriptImage VetImages[MAX_IMAGES];
-		short VetID[MAX_IMAGES*10];
+		short VetID[MAX_IMAGES * 10];
 	};
 
 	struct StrBaseSetCamera {
 		int TotSetCamera;
 		StrSetCamera VetSetCamera[MAX_SET_CAMERA];
-		short VetID[MAX_SET_CAMERA*10];
+		short VetID[MAX_SET_CAMERA * 10];
 	};
 
 	struct StrPreloadImage {
@@ -2558,7 +3220,7 @@ namespace trng {
 	struct StrBaseTriggerGroups {
 		int TotTriggerGroups;
 		StrTriggerGroup VetTriggerGroups[MAX_TRIGGER_GROUPS];
-		short VetID[MAX_TRIGGER_GROUPS*10];
+		short VetID[MAX_TRIGGER_GROUPS * 10];
 	};
 
 	struct StrItemGroup {
@@ -2571,7 +3233,7 @@ namespace trng {
 		int TotGroups;
 		StrItemGroup VetItemGroup[MAX_ITEM_GROUPS];
 		short VetRemapFlipActions[256];
-		short VetID[MAX_ITEM_GROUPS*10];
+		short VetID[MAX_ITEM_GROUPS * 10];
 	};
 
 	struct StrColoraItem {
@@ -2587,12 +3249,12 @@ namespace trng {
 	struct StrBaseColoraItem {
 		int TotColoraItem;
 		StrColoraItem VetColoraItem[MAX_COLORA_ITEM];
-		short VetID[MAX_COLORA_ITEM*10];
+		short VetID[MAX_COLORA_ITEM * 10];
 	};
 
 	struct StrLastPosAlign {
 		DWORD CordX;
-		int  CordY;
+		int CordY;
 		DWORD CordZ;
 		short HOrient;
 		short VOrient;
@@ -2675,7 +3337,7 @@ namespace trng {
 	struct StrBaseMove {
 		int TotMove;
 		StrMoveParameters VetMove[MAX_MOVE_PARAM];
-		short VetID[MAX_MOVE_PARAM*10];
+		short VetID[MAX_MOVE_PARAM * 10];
 	};
 
 	struct StrParBar {
@@ -2690,10 +3352,10 @@ namespace trng {
 	// struttura mesh info che in pratica e'
 	// struttura per oggetti statici
 	struct StrMeshInfo {
-		DWORD  x;			// 0
-		int    y;			// 4
-		DWORD  z;			// 8
-		WORD  Orient;		// C
+		DWORD x;			// 0
+		int y;			// 4
+		DWORD z;			// 8
+		WORD Orient;		// C
 		WORD Color;	// E
 		WORD OCB;	// 10 OCB
 		WORD SlotId;		// 12
@@ -2765,7 +3427,7 @@ namespace trng {
 	struct StrBaseRotate {
 		int TotRotate;
 		StrRotateItem VetRotate[MAX_ROTATE_PARAM];
-		short VetID[MAX_ROTATE_PARAM*10];
+		short VetID[MAX_ROTATE_PARAM * 10];
 	};
 
 	struct StrIndiciFont {
@@ -2861,7 +3523,7 @@ namespace trng {
 	struct StrBaseColorRGB {
 		int TotColori;
 		StrColorRGB  VetColori[MAX_COLORI_RGB];
-		short VetID[MAX_COLORI_RGB*10];
+		short VetID[MAX_COLORI_RGB * 10];
 	};
 
 	struct StrImportFile {
@@ -2875,7 +3537,7 @@ namespace trng {
 	struct StrBaseImportFile {
 		int TotFiles;
 		StrImportFile VetFiles[MAX_IMPORT_FILES];
-		short VetID[MAX_IMPORT_FILES*10];
+		short VetID[MAX_IMPORT_FILES * 10];
 	};
 
 	struct StrEnemiesNotAimable {
@@ -2912,20 +3574,20 @@ namespace trng {
 	struct StrProcBassDll {
 		TYPE_BASS_Init BASS_Init;
 		TYPE_BASS_Free BASS_Free;
-		TYPE_BASS_ChannelSlideAttribute  BASS_ChannelSlideAttribute;
+		TYPE_BASS_ChannelSlideAttribute BASS_ChannelSlideAttribute;
 		TYPE_BASS_ChannelSetAttribute BASS_ChannelSetAttribute;
 		TYPE_BASS_StreamCreateFile BASS_StreamCreateFile;
 		TYPE_BASS_ChannelPlay BASS_ChannelPlay;
-		TYPE_BASS_ErrorGetCode 	BASS_ErrorGetCode;
+		TYPE_BASS_ErrorGetCode BASS_ErrorGetCode;
 		TYPE_BASS_Pause BASS_Pause;
 		TYPE_BASS_Start BASS_Start;
 		TYPE_BASS_ChannelFlags BASS_ChannelFlags;
 		TYPE_BASS_ChannelStop BASS_ChannelStop;
 		TYPE_BASS_Stop BASS_Stop;
 		TYPE_BASS_ChannelSetPosition BASS_ChannelSetPosition;
-		TYPE_BASS_ChannelIsActive  BASS_ChannelIsActive;
+		TYPE_BASS_ChannelIsActive BASS_ChannelIsActive;
 		TYPE_BASS_ChannelGetPosition BASS_ChannelGetPosition;
-		TYPE_BASS_StreamGetFilePosition  BASS_StreamGetFilePosition;
+		TYPE_BASS_StreamGetFilePosition BASS_StreamGetFilePosition;
 	};
 
 	struct StrBassHandles {
@@ -2937,7 +3599,7 @@ namespace trng {
 		float VolumeMusica;
 		short OldCdLoop; // Last cd audio track on 0 channel
 		bool TestPresente;
-		HINSTANCE  HandleDll;
+		HINSTANCE HandleDll;
 		StrProcBassDll Proc;
 	};
 
@@ -2978,7 +3640,7 @@ namespace trng {
 	struct StrBaseMovAdvance {
 		int TotMoveAdvance;
 		StrMoveAdvance VetMove[MAX_MOVE_ADVANCE];
-		short VetID[MAX_MOVE_ADVANCE*10];
+		short VetID[MAX_MOVE_ADVANCE * 10];
 	};
 
 	// struttura per salvari tutti i mesh swap effettuati
@@ -3053,8 +3715,8 @@ namespace trng {
 		BYTE FramesRicarica;
 		BYTE SizeShell;
 		WORD DistanceAiming;
-		BYTE  FrameToTakeWeapon;
-		BYTE  FrameToLetWeapon;
+		BYTE FrameToTakeWeapon;
+		BYTE FrameToLetWeapon;
 		WORD Dispersion;
 		short Extra;
 		short VPositionOfWeapon;
@@ -3101,7 +3763,7 @@ namespace trng {
 			StrTwoBytes Bytes;
 		};
 		union {
-			int  VetArg[6];  // 6 numbers of int type (32 signed bits)
+			int VetArg[6];  // 6 numbers of int type (32 signed bits)
 			float VetArgFloat[6];
 			WORD VetArgWord[12];
 			short VetArgShort[12];
@@ -3361,7 +4023,7 @@ namespace trng {
 		WORD Id;
 		WORD Flags;
 		WORD Parameter;
-		int  TotCoppie;
+		int TotCoppie;
 		StrCoppiaPerform VetCoppie[MAX_ORGANIZE_COPPIE];
 	};
 
@@ -3377,7 +4039,7 @@ namespace trng {
 		DWORD CounterGame;  // tempo assoluto di gioco in frame
 		StrScriptOrganizer VetOrganizer[MAX_ORGANIZERS];
 		StrStatusOrganizer VetStatusOrganizer[MAX_ORGANIZERS]; // da salvare in savegame
-		short VetID[MAX_ORGANIZERS*10];
+		short VetID[MAX_ORGANIZERS * 10];
 	};
 
 	struct StrDoppiaWord {
@@ -3401,7 +4063,7 @@ namespace trng {
 	struct StrBaseGlobalTriggers {
 		int TotTriggers;
 		StrGlobalTrigger VetTriggers[MAX_GLOBAL_TRIGGERS];
-		short VetID[MAX_GLOBAL_TRIGGERS*10];
+		short VetID[MAX_GLOBAL_TRIGGERS * 10];
 		bool TestPresoLittleMedipack;
 		bool TestPresoBigMedipack;
 		bool TestSalvatoSavegame;
@@ -3431,19 +4093,19 @@ namespace trng {
 
 	struct StrBaseRemapTailInfo {
 		WORD TotTails;
-		StrRemapTailInfo VetRemapTail[MAX_TAIL_INFOS*2];
+		StrRemapTailInfo VetRemapTail[MAX_TAIL_INFOS * 2];
 	};
 
 	// dati per animare texture in tomb4
 
 	struct StrAnimUVRotate {
 		float VetOrgY[MAX_TEX_PER_FRAME]; // posizione OrgY originale di texture in pagine 256x256
-		WORD  VetTailIndex[MAX_TEX_PER_FRAME]; // indice tail da modificare
+		WORD VetTailIndex[MAX_TEX_PER_FRAME]; // indice tail da modificare
 
 		int TotTextures;
 		float Height;  // altezza texture (sara' la meta' di originale)
 		int UvRotate; // valore da aggiungere a ScrollPos per movimento
-		int   Maschera; // maschera per valore massimo di posy (0x1f, 0x3f o 0x7f)
+		int Maschera; // maschera per valore massimo di posy (0x1f, 0x3f o 0x7f)
 		DWORD LastTime; // tickcount di ultima esecuzione
 		DWORD DelayTime;  // numero di tick oltre il quale si deve eseguire un altro
 						  // scroll se 0, eseguire sempre
@@ -3470,12 +4132,12 @@ namespace trng {
 		DWORD LastTime;
 		DWORD DelayTime;
 		bool TestStop;
-		int  TotTextures;
+		int TotTextures;
 		WORD TipoAnim;
 		WORD VetTailIndex[MAX_TEX_PER_FRAME];  // indici originali
 		WORD VetChangedPos[MAX_TEX_PER_FRAME]; // indici d'ordine dopo modifiche
 		StrTexInfoTr4 VetTexInfoRecords[MAX_TEX_PER_FRAME]; // valori originali dei tex info
-		int  FrameToSet;  // usato solo per p-frame animazione
+		int FrameToSet;  // usato solo per p-frame animazione
 		int IndiceToSet;  // indice (da 0..) della texture da sostituire.
 						  // se -1 farlo con tutte le texture.
 		int IndiceScrollRiver;
@@ -3505,7 +4167,7 @@ namespace trng {
 	struct StrBaseScriptEnvCondition {
 		int TotScriptEnvCondition;
 		StrScriptEnvMultCondition VetScriptEndCondition[MAX_ENV_SCRIPT_CONDITIONS];
-		short VetID[MAX_ENV_SCRIPT_CONDITIONS*10];
+		short VetID[MAX_ENV_SCRIPT_CONDITIONS * 10];
 	};
 
 	struct StrTexSequence {
@@ -3520,7 +4182,7 @@ namespace trng {
 	struct StrBaseTexSequence {
 		int TotSequenze;
 		StrTexSequence VetSequenze[MAX_TEX_SEQUENCE];
-		short VetID[MAX_TEX_SEQUENCE*10];
+		short VetID[MAX_TEX_SEQUENCE * 10];
 	};
 
 	struct StrEquipItem {
@@ -3586,11 +4248,11 @@ namespace trng {
 		Tipo_CollGridTr4 *pCollsionSectors; // 08
 		StrLigthTr4 *pLights;           // 0c
 		StrMeshInfo *Ptr_StaticMesh;  // 10
-		int  OriginX;                 // 14
-		int  OrgYMistery;           // 18 roba per superfice acqua
-		int  OriginZ;                 // 1C
-		int  OrigYBottom;           // 20
-		int  OrigYTop;              // 24
+		int OriginX;                 // 14
+		int OrgYMistery;           // 18 roba per superfice acqua
+		int OriginZ;                 // 1C
+		int OrigYBottom;           // 20
+		int OrigYTop;              // 24
 		WORD Z_SizeSectors;         // 28
 		WORD X_SizeSectors;         // 2A
 		DWORD ColorIntensityLight;  // 2C
@@ -3600,21 +4262,21 @@ namespace trng {
 		char FlipMapIndex;    // 35
 		char IndexTabWater;			// 36
 		BYTE TestFlagsBound;        // 37
-		short  SizeXScreenOther;           // 38
+		short SizeXScreenOther;           // 38
 		short rm_Mistery3A;			// 3A
-		short  SizeYScreenOther;		    // 3C
+		short SizeYScreenOther;		    // 3C
 		short rm_Mistery3E;			// 3E
-		short  rm_Mistery40;			// 40
+		short rm_Mistery40;			// 40
 		short SizeXScreen;			// 42
-		short  rm_Mistery44; 			// 44
-		short  SizeYScreen;		// 46
+		short rm_Mistery44; 			// 44
+		short SizeYScreen;		// 46
 		short FirstItemIndex;		// 48
 		short FirstEffect;		// 4A
-		short  AlternateRoom;		// 4C  -1 se non c'e' o e' stanza flippata?
-		WORD  FlagsRoom;		    // 4E
-		int  VerticesAmount;			// 50
-		int  VerticesWaterAmount;				// 54  solo centrali e mobili
-		int  VerticesDryAmount;				// 58  numero dei vertici non acqua
+		short AlternateRoom;		// 4C  -1 se non c'e' o e' stanza flippata?
+		WORD FlagsRoom;		    // 4E
+		int VerticesAmount;			// 50
+		int VerticesWaterAmount;				// 54  solo centrali e mobili
+		int VerticesDryAmount;				// 58  numero dei vertici non acqua
 		void* pDirect3dVertexBuffer; // 5C  vertici passati per creare la stanza
 		void* pRectangles;			// 60
 		float floatOrigX;			// 64
@@ -3624,10 +4286,10 @@ namespace trng {
 		void *pTriAndQuads;		// 74
 		void *pQuadVertices;  //78
 		void *pTriVertices;  // 7C
-		int  rm_Mistero80; 			// 80
+		int rm_Mistero80; 			// 80
 		Tipo_VerticeRoom *pVetVerticiFloat;    // 84
-		int  TrianglesAmount; 			// 88
-		int  RectanglesAmount;			// 8C
+		int TrianglesAmount; 			// 88
+		int RectanglesAmount;			// 8C
 		void *pLightObjects;		// 90  directx object created with light data
 	};
 
@@ -3683,27 +4345,27 @@ namespace trng {
 	};
 
 	struct StrSlot {
-		WORD  TotMesh;		// 0
-		WORD  IndexFirstMesh;	// 2
-		int   IndexFirstTree;	// 4
-		int   IndexFirstFrame;  // 8
+		WORD TotMesh;		// 0
+		WORD IndexFirstMesh;	// 2
+		int IndexFirstTree;	// 4
+		int IndexFirstFrame;  // 8
 		void *pProcInitialise;	// 0C
 		void *pProcControl;		// 10
 		void *pProcFloor;		// 14
 		void *pProcCeiling;		// 18
 		void *pProcDraw;		// 1C
 		void *pProcCollision;   // 20
-		WORD  DistanceForMIP;      // 24
-		WORD  IndexFirstAnim;   // 26
+		WORD DistanceForMIP;      // 24
+		WORD IndexFirstAnim;   // 26
 		short Vitality;			// 28
 		WORD DistanceDetectLara;		// 2A
 		WORD ss_Unknown3;		// 2C
 		WORD FootStep;			// 2E
-		WORD  TestGuard;		// 30
+		WORD TestGuard;		// 30
 		WORD Flags;				// 32  (FSLOT_ flags)
 		void *pProcDrawExtras;	// 34
-		int  ShatterableMeshes;		// 38
-		int  ss_Unknown5;		// 3C
+		int ShatterableMeshes;		// 38
+		int ss_Unknown5;		// 3C
 	};
 
 	struct StrBaseHandle {
@@ -3714,21 +4376,21 @@ namespace trng {
 	// struttura singolo record animation
 	struct StrAnimationTr4 {
 		DWORD FrameOffset;		// 0x00
-		BYTE  FrameRate;		// 0x04
-		BYTE  FrameSize;		// 0x05
-		WORD  StateId;			// 0x06
-		int   Speed;			// 0x08  (speed multiplied by 65536)
-		int   Accel;			// 0x0C  (accel multiplied by 65536)
-		int   SpeedSide;		// 0x10  (speed multiplied by 65536)
-		int   AccelSide;		// 0x14  (accel multiplied by 65536)
-		WORD  FrameStart;		// 0x18
-		WORD  FrameEnd;			// 0x1A
-		WORD  NextAnimation;	// 0x1C
-		WORD  NextFrame;		// 0x1E
-		WORD  NumStateChanges;	// 0x20
-		WORD  StateChangeOffset; // 0x22
-		WORD  NunAnimCommands;	// 0x24
-		WORD  AnimCommand;		// 0x26
+		BYTE FrameRate;		// 0x04
+		BYTE FrameSize;		// 0x05
+		WORD StateId;			// 0x06
+		int Speed;			// 0x08  (speed multiplied by 65536)
+		int Accel;			// 0x0C  (accel multiplied by 65536)
+		int SpeedSide;		// 0x10  (speed multiplied by 65536)
+		int AccelSide;		// 0x14  (accel multiplied by 65536)
+		WORD FrameStart;		// 0x18
+		WORD FrameEnd;			// 0x1A
+		WORD NextAnimation;	// 0x1C
+		WORD NextFrame;		// 0x1E
+		WORD NumStateChanges;	// 0x20
+		WORD StateChangeOffset; // 0x22
+		WORD NunAnimCommands;	// 0x24
+		WORD AnimCommand;		// 0x26
 	};
 
 	// size = 0x1c
@@ -3747,7 +4409,7 @@ namespace trng {
 
 	// super mega struttura per dati collisione
 	struct StrCollisionLara {
-		StrDatiCollSettore  VetInfoSettori[6];  // 0x000
+		StrDatiCollSettore VetInfoSettori[6];  // 0x000
 		int LaraSizeX;		// 0x048
 		int LaraBottomY;		// 0x04C
 		int LaraTopY;			// 0x050
@@ -3788,7 +4450,7 @@ namespace trng {
 		WORD SlotAI;  // valore di slot id
 		WORD RoomIndex;
 		DWORD CordX;
-		int  CordY;
+		int CordY;
 		DWORD CordZ;
 		WORD Ocb;
 		WORD Buttons;
@@ -3797,7 +4459,7 @@ namespace trng {
 
 	struct StrCameraTr4 {
 		DWORD CordX;		// 0X00
-		int  CordY;			// 0X04
+		int CordY;			// 0X04
 		DWORD CordZ;		// 0X08
 		WORD Room;			// 0X0c
 		WORD Flags;			// 0X0e
@@ -3859,7 +4521,7 @@ namespace trng {
 		WORD OrientZ;      // 0x0A
 		WORD Flags;    	// 0x0C
 		WORD IndiceStringa;    // 0x0E
-		int  Mistero;    // 0x10 passato a drawinventoryitemme
+		int Mistero;    // 0x10 passato a drawinventoryitemme
 	};
 
 	// record di 7FE890h    ;Ptr_VetBoxInfos
@@ -3875,7 +4537,7 @@ namespace trng {
 	// struttura per record pesci (e simile a quella di scarabei
 	struct StrFish {
 		int CordX;		// 00
-		int   CordY;		// 04
+		int CordY;		// 04
 		int CordZ;		// 08
 		short OrientV;		// 0C
 		short OrientH;		// 0E
@@ -3898,15 +4560,15 @@ namespace trng {
 
 	// structure inside tomb raider about sfx infos
 	struct StrZonaSound {
-		DWORD  Volume;
-		DWORD  FrequenzaHigh;    // <= 32767
-		DWORD  CameraAngle;      // (horient?)
-		DWORD  FrequenzaLow;     // >6000
-		int    IndiceRel;      // (restituito da VetSoundIndices[SfxIndex] )
-		DWORD  CameraAngle2;      // (sembra uguale a cameraAngle)
-		DWORD  CordX;
-		int    CordY;
-		DWORD  CordZ;
+		DWORD Volume;
+		DWORD FrequenzaHigh;    // <= 32767
+		DWORD CameraAngle;      // (horient?)
+		DWORD FrequenzaLow;     // >6000
+		int IndiceRel;      // (restituito da VetSoundIndices[SfxIndex] )
+		DWORD CameraAngle2;      // (sembra uguale a cameraAngle)
+		DWORD CordX;
+		int CordY;
+		DWORD CordZ;
 	};
 
 	// contiene alcuni valori globali di tomb4 che vengono usati spesso
@@ -3956,7 +4618,7 @@ namespace trng {
 		short *pSizeScreenY;
 		short *pRowCharHeight;
 		int *pEarthQuake;
-		HWND  *pWindowHandle;
+		HWND *pWindowHandle;
 		BYTE *pLevelNow;
 		WORD *pScriptLevelFlags;
 		BYTE *pScriptMainFlags;
@@ -4062,16 +4724,16 @@ namespace trng {
 		DWORD RecSizeStruct;
 		DWORD VetOffset[MAX_OFFSET_HARD_BREAK];
 		DWORD VetCount[MAX_OFFSET_HARD_BREAK];
-		int  VetLastValue[MAX_OFFSET_HARD_BREAK];
+		int VetLastValue[MAX_OFFSET_HARD_BREAK];
 		int TotOffset;
 	};
 
 	struct StrTexParziali {
-		WORD  IndiceRange; // indice range
-		WORD  IndiceFull; // indice della texture full di cui fa parte questo frammento
+		WORD IndiceRange; // indice range
+		WORD IndiceFull; // indice della texture full di cui fa parte questo frammento
 		WORD IndiceFrammento;
-		WORD  OffX;
-		WORD  OffY;
+		WORD OffX;
+		WORD OffY;
 	};
 
 	struct StrBaseParziali {
@@ -4084,7 +4746,7 @@ namespace trng {
 	struct StrTargetDetector {
 		short Fase;  // FTR_ 0= nascita / 1 = lampeggio fisso / -1 non attivo
 		short DifY;  // distanza da floor sotto lara
-		WORD  Orient; // orient rispetto a lara nord
+		WORD Orient; // orient rispetto a lara nord
 		short DifX;   // distanza su cord x in metri da lara
 		short DifZ;   // distanza su cordz
 		int Distanza3d; // distanza 3d in metri (valore assoluto)
@@ -4145,14 +4807,14 @@ namespace trng {
 		short DispZ;
 		WORD DurateEmit;
 		WORD DuratePause;
-		int  TotExtra;
+		int TotExtra;
 		WORD VetExtra[MAX_EXTRA_EFFECT];
 		WORD Dynamic;
 	};
 
 	struct StrBaseEffects {
 		int TotEffects;
-		short VetID[MAX_ADD_EFFECTS*10];
+		short VetID[MAX_ADD_EFFECTS * 10];
 		StrAddEffect VetEffects[MAX_ADD_EFFECTS];
 	};
 
@@ -4211,9 +4873,9 @@ namespace trng {
 		WORD OrientingV;
 		WORD FlagInvisibile;
 		DWORD CordX;
-		int   CordY;
+		int CordY;
 		DWORD CordZ;
-		WORD  Room;
+		WORD Room;
 	};
 
 	struct StrBaseSalvaCords {
@@ -4223,7 +4885,7 @@ namespace trng {
 	};
 
 	struct StrDatiXRain {
-		int  LastRoomCamera;
+		int LastRoomCamera;
 		float Rain_Float_1;
 		float Rain_Float_2;
 		float Rain_Float_4;
@@ -4234,7 +4896,7 @@ namespace trng {
 		WORD Min_Rain;
 		WORD Flags; // FR_ ...
 		short SoundSFX;
-		int  LastIntensita;
+		int LastIntensita;
 		DWORD SplashRain;
 	};
 
@@ -4246,8 +4908,8 @@ namespace trng {
 	};
 
 	struct StrExtraInfoRoom {
-		BYTE  WaterIntensity; // usato per pioggia e neve
-		BYTE  Reserved[7]; // altri 8 byte da usare in futuro
+		BYTE WaterIntensity; // usato per pioggia e neve
+		BYTE Reserved[7]; // altri 8 byte da usare in futuro
 	};
 
 	struct StrExtraLangugage {
@@ -4271,7 +4933,7 @@ namespace trng {
 
 	struct StrScriptLevel {
 		WORD LevelFlags; // valori fngl_
-		StrIndiciAssign  AssignSlot;
+		StrIndiciAssign AssignSlot;
 	};
 
 	struct StrRecordPoint {
@@ -4285,11 +4947,11 @@ namespace trng {
 
 	struct StrRecordDGN {
 		void *pIndirizzo;  //
-		int  OldValue; // per confronto con precedente scansione
+		int OldValue; // per confronto con precedente scansione
 		int CodiceCostante; // se e' una variabile mnemonica qui c'e' OFF_...
 		WORD FlagsType;  // (mascherato a byte, word, long o struct)
 		DWORD StructOffset;  // offset da inizio struttura
-		int  Indice; // indice di vettore (usati solo se pointer)
+		int Indice; // indice di vettore (usati solo se pointer)
 		WORD MaxIndice;  // (se si  deve stampare la serie di un vettore)
 		WORD SizeStruct;  // (se e' un vettore di strutture questa e' la dmensione)
 		bool TestPoint;  // se true allora e' una POINT
@@ -4328,9 +4990,9 @@ namespace trng {
 		int TotCicli;  // numero di cicli scanditi
 		WORD FlagsDgx; // DGX_.. cosa mostrare e cosa no
 		WORD DgxExtra; // eventuale parametro extra
-		StrRecordDGN  VetWatch[MAX_WATCH];
-		StrLogItem  LogItem;
-		StrDgxInfoSlot  InfoSlot;
+		StrRecordDGN VetWatch[MAX_WATCH];
+		StrLogItem LogItem;
+		StrDgxInfoSlot InfoSlot;
 		short LivelloExtractSFX; // estrarre sfx di livello
 		int TotTiming;
 		DWORD LastTiming;
@@ -4359,8 +5021,8 @@ namespace trng {
 	// nel corso del gioco
 	// 32 word + 32 dword
 	struct StrDatiVariabili {
-		WORD  ValoreCold;
-		WORD  FlagProgressoCold;
+		WORD ValoreCold;
+		WORD FlagProgressoCold;
 		WORD ValoreDamage;
 		WORD FlagProgressoDamage;
 		int KeysToStop;
@@ -4381,7 +5043,7 @@ namespace trng {
 		short CdSingleMain;
 		DWORD Canale1StartPos;
 		float FloatFogStart;
-		BOOL  NonUsato;
+		BOOL NonUsato;
 		DWORD Unused;
 		short IndicePushSpinto;
 		WORD ParBarGiri;
@@ -4409,14 +5071,14 @@ namespace trng {
 	};
 
 	struct StrRecordEnemyScript {
-		WORD  SlotId;
-		WORD  FlagsNEF;  // NEF_...
-		WORD  Health;
-		short  Damage;  // danno arrecato a lara
-		WORD  TombFlags;  //TCF_ in campo flags di slot
+		WORD SlotId;
+		WORD FlagsNEF;  // NEF_...
+		WORD Health;
+		short Damage;  // danno arrecato a lara
+		WORD TombFlags;  //TCF_ in campo flags di slot
 		short Extra; // word extra per setting particolari
-		int  TotDamage; // numero di argomenti extra
-		short  VetDamage[6];  // eventuali valori extra damage o segnali particolari
+		int TotDamage; // numero di argomenti extra
+		short VetDamage[6];  // eventuali valori extra damage o segnali particolari
 	};
 
 	struct StrBaseEnemyScript {
@@ -4426,13 +5088,13 @@ namespace trng {
 
 	struct StrAnimScript {
 		short AnimIndex;
-		WORD  Key1;
-		WORD  Key2;
-		WORD  Flags;  // FAN_ flags
-		WORD  Environment;  // ENV_ costanti
+		WORD Key1;
+		WORD Key2;
+		WORD Flags;  // FAN_ flags
+		WORD Environment;  // ENV_ costanti
 		short DistanceEnv; // distanza per environment
-		WORD  Extra;
-		int  TotStateId;
+		WORD Extra;
+		int TotStateId;
 		short VetStateId[32];
 	};
 
@@ -4460,7 +5122,7 @@ namespace trng {
 		WORD TotMirror;
 		RecordMirror VetMirror[MAX_MIRRORS];
 		WORD MirrorType;
-		int  CordMirror;
+		int CordMirror;
 		int MinCordMirror;
 		int MaxCordMirror;
 		int IndiceNow;
@@ -4504,7 +5166,7 @@ namespace trng {
 
 	struct StrScriptElevator {
 		WORD IndiceElevatore;
-		int  FirstFloorY;   // cordy originale di ascensore e primo piano.
+		int FirstFloorY;   // cordy originale di ascensore e primo piano.
 		WORD ClickDistance;
 		WORD TotFloors;
 		WORD Flags;  // EF_... flags
@@ -4529,7 +5191,7 @@ namespace trng {
 
 	// struttura con dati dinamici di ascensore da salvare in savegame
 	struct StrElevator {
-		int  IncY;  // praticamente velocita', positiva o negativa
+		int IncY;  // praticamente velocita', positiva o negativa
 		int OrgYTarget; // coordinata y da raggiungere
 		BYTE Status;  // EST_ .. in attesa, in movimento, in pausa, in partenza
 		BYTE FloorNow; // 0 = primo piano
@@ -4562,7 +5224,7 @@ namespace trng {
 
 	struct StrKeyPad {
 		bool TestAttivo;
-		int  Fase;  // FKP  valori
+		int Fase;  // FKP  valori
 		int IndiceTasto;
 		int IndiceTastoOld;
 		WORD Slot;
@@ -4638,7 +5300,7 @@ namespace trng {
 	struct StrBaseLightning {
 		int TotParamLgtn;
 		StrRecordParamLgtn VetRecordLgtn[MAX_PARAM_LIGHTNING];
-		short VetId[MAX_PARAM_LIGHTNING*10];
+		short VetId[MAX_PARAM_LIGHTNING * 10];
 	};
 
 	struct StrBaseImgMonoScreen {
@@ -4680,7 +5342,7 @@ namespace trng {
 	struct StrBaseParamWText {
 		int TotParamWText;
 		StrParamWText VetParamWText[MAX_PARAM_WTEXT];
-		short VetIds[MAX_PARAM_WTEXT*10];
+		short VetIds[MAX_PARAM_WTEXT * 10];
 	};
 
 	struct StrRecNewError {
@@ -4714,7 +5376,7 @@ namespace trng {
 	struct StrBaseMyRect {
 		int TotMyRect;
 		StrMyRect VetMyRect[MAX_MY_RECT];
-		short VetId[MAX_MY_RECT*10];
+		short VetId[MAX_MY_RECT * 10];
 	};
 
 	struct StrMyInputBox {
@@ -4728,8 +5390,8 @@ namespace trng {
 	};
 
 	struct StrExtraCode {
-		BYTE  VetScanCodes[3];
-		BYTE  ValAscii;
+		BYTE VetScanCodes[3];
+		BYTE ValAscii;
 		WORD TotScanCodes;
 	};
 
@@ -4739,7 +5401,7 @@ namespace trng {
 		StrMyInputBox *pInputBoxNow; // pointer to current Input Box
 		int TotExtraCodes;
 		StrExtraCode VetExtraCodes[MAX_EXTRA_SCAN_CODES];
-		short VetId[MAX_INPUT_BOX*10];
+		short VetId[MAX_INPUT_BOX * 10];
 	};
 
 	struct StrTiming {
@@ -4787,9 +5449,9 @@ namespace trng {
 		BYTE IdSprite1;				// 2e
 		BYTE IdSprite2;				// 2f
 		WORD Trasparency;			// 30
-		DWORD  CordX;					// 40
-		int  CordY;					// 44
-		DWORD  CordZ;					// 48
+		DWORD CordX;					// 40
+		int CordY;					// 44
+		DWORD CordZ;					// 48
 		short OrientationV;  // 4c
 		short OrientationH;  // 4e
 		short OrientationT;		// 50
@@ -4939,7 +5601,7 @@ namespace trng {
 	struct StrBaseSwapAnim {
 		int TotSwapAnim;
 		StrSwapAnim VetSwapAnim[MAX_SWAP_ANIM];
-		short VetId[MAX_SWAP_ANIM*10];
+		short VetId[MAX_SWAP_ANIM * 10];
 	};
 
 	struct StrMemSwapAnim {
@@ -4998,15 +5660,15 @@ namespace trng {
 		int SpeechTotSyll; // totale syllable, movimento da apri e chiudi o viceversa
 		DWORD FrameEndSpeech; // frame when complete current speech command
 
-		int  OrientHTurnNow;
-		int	 OrientHTurnInc;
-		int  OrientHTurnEnd;
+		int OrientHTurnNow;
+		int OrientHTurnInc;
+		int OrientHTurnEnd;
 		int OrientHLastCommand;
 		int OrientHTimes;
 		DWORD FrameEndHTurn;  // frame when complete current horizontal turn head (shake)
 
-		int  OrientVTurnNow;
-		int  OrientVTurnInc;
+		int OrientVTurnNow;
+		int OrientVTurnInc;
 		int OrientVTurnEnd;
 		int OrientVLastCommand;
 		int OrientVTimes;
@@ -5017,7 +5679,7 @@ namespace trng {
 	struct StrBaseSpeechActor {
 		int TotSpeechActor;
 		StrSpeechActor VetSpeechActor[MAX_SPEECH_PARAM];
-		short VetId[MAX_SPEECH_PARAM*10];
+		short VetId[MAX_SPEECH_PARAM * 10];
 		StrPlaySpeech VetPlay[MAX_ACTOR_SPEECHING];
 	};
 
@@ -5134,7 +5796,7 @@ namespace trng {
 		bool TestObjectIsNotLara; // usato in TestTriggers per attiva con oggetti trigger normale
 		StrBaseFloodRooms BaseFloodRooms;
 		StrBaseFreeze BaseFreeze;
-		WORD  HangForbidden;  // 0 se e' permesso, altrimnti bit NO_HANG_....
+		WORD HangForbidden;  // 0 se e' permesso, altrimnti bit NO_HANG_....
 		WORD HangCounter; // se 0 azzera a inizio ciclo, altrimenti decremnta
 		int DebugModeCounter; // se > 0 mostra debug
 		int TotBigNumbers;
@@ -5145,7 +5807,7 @@ namespace trng {
 		StrRecordFlip VetScanFlipEffects[64];
 		StrBaseVarAll *pBaseVariableTRNG;
 		StrBaseEventiNow BaseEventiNow;
-		WORD  TotItemNoCollisions;
+		WORD TotItemNoCollisions;
 		short VetItemNoCollisions[MAX_COLL_DISABLED];
 		StrSuoni Suoni;
 		bool TestFogRange; // c'era un comando fogrange in lviello
@@ -5222,7 +5884,7 @@ namespace trng {
 		StrFontBaseSetting BaseFontBinary;
 		StrBasePushables BasePushables;
 		StrBaseColorRGB BaseColoriRGB;
-		StrCercaStatic VetRemapStatics[6000+1];
+		StrCercaStatic VetRemapStatics[6001];
 		int TotScanFlipEffects;
 		StrBaseImportFile BaseImportedFiles;
 		StrEnemiesNotAimable BaseEnemiesNotAimable;
@@ -5254,11 +5916,10 @@ namespace trng {
 		DWORD StatusNG;  // flags SNG_...
 		StrBaseGlobalTriggers *pBaseGlobalTriggers;
 
-
 		int TestNoDamageRollingBallIndex; // disattiva danni a lara con rolling ball
 										  // di valore indice
-		StrBaseSalvaCollisioni  BaseSalvaCollisioni;
-		StrBaseSalvaCollisioni  BaseSalvaOldCollisioni;
+		StrBaseSalvaCollisioni BaseSalvaCollisioni;
+		StrBaseSalvaCollisioni BaseSalvaOldCollisioni;
 		bool TestDiagnosticaNow;  // attivato quando in watch.txt c'e'
 								  // when = ON_FLAG_ATTIVO
 		void *pAdrDiagnostica; // punta a memoria da controllare
@@ -5272,7 +5933,7 @@ namespace trng {
 		int OperazioneCount; // numero di tick prima di eseguire operazione
 		StrBaseRemapTailInfo BaseRemapTail;
 		StrBaseAnimTr4 BaseAnimTr4;
-		StrBaseScriptEnvCondition  *pBaseEnvConditions;
+		StrBaseScriptEnvCondition *pBaseEnvConditions;
 		WORD TotPedane;
 		StrBaseTexSequence BaseTexSequence;
 		StrItemTr4 *VetPlatforms[1024];
@@ -5385,7 +6046,7 @@ namespace trng {
 		short *pVehicleIndex;
 		DWORD CordX;
 		char *pMascheraSavegame;
-		int  CordY;
+		int CordY;
 		bool TestSuspendObjectShowing;
 		WORD SlotSwitchKeyPad;
 		DWORD CordZ;
@@ -5400,8 +6061,8 @@ namespace trng {
 		StrBaseImgBackGround BaseImgBinocular;
 		StrBaseImgBackGround BaseImgLaserSight;
 		COLORREF VetTextColors[9];  // colors used for print string with windowsfont (index to FC_ color constants)
-		short  ColorWhiteStep;  // signed incrfement to change color FC_BIANCO_MOD (1), from white and black slowly
-		short  ColorGradientNow; // from 0 to 255 to use for any gradient of pulsing white
+		short ColorWhiteStep;  // signed incrfement to change color FC_BIANCO_MOD (1), from white and black slowly
+		short ColorGradientNow; // from 0 to 255 to use for any gradient of pulsing white
 		StrOffsetRanges VetStringOffsets[POFF_COUNTER]; // ranges of origin code for system strings
 		int TotStringOffset;  // number of ranges of above vector
 		StrBaseParamWText BaseParamWText;
@@ -5431,7 +6092,7 @@ namespace trng {
 		SalvaSliderInput SliderSfx;
 		StrAnchoredBoat BoatAnchored;
 		DWORD LastTimeBinoculars; // to stop inventory when exiting from binoculars
-		char *pMexLastTGCaller; // text about who called last time triggergroup() procedure (for diagnostic)
+		const char *pMexLastTGCaller; // text about who called last time triggergroup() procedure (for diagnostic)
 		StrItemTr4 *pItemAdrToIgnoreLOF;  // Adr structure to ignore in the objectonlos2() procedure (or NULL=0)
 		StrRecording *pBaseDemo;  // to record or play demo
 		StrMyDirectInput BaseDirectInputMine; // to temporize fake direct input outside of common game
@@ -5496,6 +6157,8 @@ namespace trng {
 		DWORD SizeNewMemory;
 	};
 
+	typedef void (__cdecl * TYPE_SalvaInBuffer) (void *pZona, int TotBytes);
+
 	struct StrMemAllocata {
 		void *pBaseMem;
 		int ThreadId;
@@ -5510,9 +6173,9 @@ namespace trng {
 
 	struct StrSalvaVettoriRemap {
 		short VetObjRemap[6000];
-		int  TotRooms;
+		int TotRooms;
 		short VetRoomRemap[400];
-		bool  TestAttivo;
+		bool TestAttivo;
 		char NomeFileTom[256];
 	};
 
@@ -5568,7 +6231,7 @@ namespace trng {
 		WORD *pData;
 		DWORD SizeData;
 		DWORD StartDataIndex;
-		WORD  Type;
+		WORD Type;
 	};
 
 	struct StrLastScriptDat {
@@ -5595,6 +6258,59 @@ namespace trng {
 	struct StrEndNgHeader {
 		DWORD EndCheck;  // it should be number 0x454C474E ( "NGLE")
 		DWORD SizeNgHeader; // size of whole extra ng header
+	};
+
+	struct StrListaWav {
+		char Testo[64];
+	};
+
+	struct StrSalvaOldDebug {
+		WORD OldFlagsDgx;
+		WORD OldCounter;
+	};
+
+	struct StrOrient {
+		short OrientV;
+		short OrientH;
+		short OrientR;
+	};
+
+	// function protypes used only with trng plugins
+	typedef bool (WINAPI *TYPE_RequireCallBack)(WORD ID_Plugin, int CBValue, int CBType, int Index, void *pProc);
+
+	// data to apply asm patch on tomb4 exe
+	struct StrPatchInfo {
+		DWORD PluginId;
+		DWORD StartOffset;
+		DWORD ProcStart;  // only for relocator patch, it keeps the real start offset of relocated procedure
+		DWORD ProcEnd;  // only for relocator patch, it keeps the ending offset of relocated procedure
+		int TotItems;
+		void *pVetItems;
+		int PatchType;  // TYPP_
+		int ErrorCode;  // APPC_
+		int NewValue;  // per parametric constant e call (nuovo valore assegnato)
+	};
+
+	typedef int (WINAPI *TYPE_SetNewPatch)(StrPatchInfo *pDataPatch, bool TestWarnings);
+
+	typedef int (WINAPI *TYPE_Service)(DWORD ID_Plugin, DWORD SRV_Value, va_list pArgs);
+
+	// received when your plugin registers itself with trng
+	struct StrTrngInfos {
+		int IdMyPlugin;							// 00 (received) id of your plugin to use for each trng service
+		StrGlobaliTomb4 *pGlobTomb4;			// 04 (received) address of StrGlobaliTomb4 in trng
+		TYPE_RequireCallBack RequireCallBack;	// 08 (received) proc to require callback
+		TYPE_SetNewPatch SetNewPatch;			// 0C (received) proc to set patch on tomb4.exe
+		TYPE_Service Service;					// 10 (received) proc to require trng service
+		void *pDirectCallBack;                  // 14 (sent) proc used from trng to call directly plugin code
+		DWORD AdrTomb4Patcher;					// 18 (sent) Tomb4 offset of DWORD where to store che address of dll function MainPatcher
+		void *pAdrDllPatcher;					// 1C (sent) Dll address of your MainPatcher function
+		int TestDebugMode;						// 20 (sent) to set 1 if debug version, 0 if release version
+		DWORD MainPluginFlags;					// 24 (sent) MPS_ values set in Plugin= script command from user
+		int TotPlugins;							// 28 total amout of loaded plugins (enclosed yours and tomb_nextgeneration.dll)
+		char **pVetPluginNames;					// 2C vector with all plugin names (in format Plugin_Name )
+		char *pMyPluginName;					// 30  the name of your plugin, only temporarily, then you find your
+												//		plugin name in global variable TexMyPluginName[]
 	};
 #pragma pack(pop)
 }
