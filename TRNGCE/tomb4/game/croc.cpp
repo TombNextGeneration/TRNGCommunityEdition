@@ -13,6 +13,7 @@ namespace tomb4
 {
 	LOCUST_STRUCT (&Locusts)[64] = *reinterpret_cast<decltype(&Locusts)>(0x80F8E0);
 	char &LocustDamage = *reinterpret_cast<decltype(&LocustDamage)>(0x403BAF);
+	long &next_locust = *reinterpret_cast<decltype(&next_locust)>(0x4BF1C0);
 #define LocustDamage (-LocustDamage)
 
 	void UpdateLocusts()

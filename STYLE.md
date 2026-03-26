@@ -15,7 +15,7 @@
 - The first line of a header file should be `#pragma once`.
 - The first line of a source file should include its associated header file.
 
-## Declarations
+## Definitions
 
 - All public definitions of a source file should be declared in its associated header file.
 - All internal definitions should be `static`.

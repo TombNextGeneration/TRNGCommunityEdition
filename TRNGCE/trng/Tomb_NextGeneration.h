@@ -283,6 +283,16 @@ namespace trng {
 	void ShowDetector(void);
 	void CambiaMascheraSaveGame(void);
 	void RipristinaMascheraSaveGame(void);
+	void RiempiDatiVariabili(void);
+	void FormattaHeaderSavegame(WORD **pVettoreWords, int *pNumeroWords, bool TestCompleto, bool TestSoloLara);
+	void CopiaInHeader(WORD NGTag, DWORD TotItem, DWORD SizeSingleItem, void *pDato, WORD **p2VetExtra, int *pNWords);
+	void TrovaTimerOggetti(void);
+	void PreparaSavegameInfos(void);
+	void TrovaStaticsAlterati(void);
+	int TrovaIndiceMainRoom(int IndiceRoom);
+	short *CreaDatiDiari(WORD *pTotShorts);
+	BYTE *PreparaDatiKayak(void);
+	StrDatiVariabili * EstraiDatiVariabili(bool TestSoloLara);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

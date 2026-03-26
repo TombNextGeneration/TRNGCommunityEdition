@@ -13,6 +13,7 @@ namespace tomb4
 	inline struct { volatile long active; volatile long ended; ulong handle; ulong address; } &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
 
 	bool LoadObjects();
+	bool LoadCinematic();
 }
 
 void Inject_File(bool replace);

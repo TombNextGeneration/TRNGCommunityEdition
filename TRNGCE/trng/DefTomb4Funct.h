@@ -193,4 +193,8 @@ namespace trng {
 	// for cbGlobalTrigger
 	// it has to return a RGT_ value  (Return for Global Trigger)
 	typedef int (__cdecl *CALL_GLOBAL_TRIGGER) (int GT_Value, StrGlobalTrigger *pGlobalTrigger);
+
+	// for callback CB_SAVING_GAME
+	// SavingType  SAVT_
+	typedef DWORD (__cdecl *CALL_SAVING_GAME) (BYTE **pAdrZone, int SavingType);
 }

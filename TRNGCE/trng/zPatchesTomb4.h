@@ -77,6 +77,7 @@ namespace trng {
 	void CalcolaOrientMirror(StrOrient *pOrient, bool TestLara, bool TestAlternate);
 	void VerificaTargetDetector(void);
 	bool CalcolaFPS(DWORD FrameNow);
+	void SalvataggioHubNg(void);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

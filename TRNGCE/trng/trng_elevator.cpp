@@ -2,6 +2,9 @@
 #include "../inject.h"
 #include "structures.h"
 #include "Tomb_NextGeneration.h"
+#define malloc ((void *(*)(size_t)) 0x10135531)
+#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
+#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	// when there are elevator= command in the script, the twoblockplatform object will be redirected

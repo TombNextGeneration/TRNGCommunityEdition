@@ -35,6 +35,9 @@
 #include "../tomb4/game/delstuff.h"
 #include "../tomb4/specific/function_stubs.h"
 #include "../tomb4/game/bike.h"
+#define malloc ((void *(*)(size_t)) 0x10135531)
+#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
+#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -2925,6 +2928,87 @@ namespace trng {
 		pFps->LastFps = -1;
 		return true;
 	}
+
+	// chiamata quando c'e' u ntrigger finish per salvare in basehub ng
+	// i dati di livello attuale sotto forma di header savegame
+	void SalvataggioHubNg(void)
+	{
+		StrBaseNG_Hub *pHub;
+		int i;
+		WORD NLivello;
+		int Indice;
+		int TotaleWords;
+
+		NLivello = *GlobTomb4.pAdr->pLevelNow;
+
+		// verifica global trigger prima di salvatraggio vriabili
+		VerificaSingleGlobalTrigger(GT_BEFORE_SAVING_VARIABLES, NLivello, false);
+
+		pHub = &GlobTomb4.BaseHub_NG;
+		Indice = -1;
+		// prima vedere se gia' c'era un record per questo livello
+		for (i = 0; i < pHub->TotHub; i++) {
+			if (pHub->VetNG[i].NumeroLivello == NLivello) {
+				Indice = i;
+				break;
+			}
+
+		}
+		if (Indice == -1) {
+			// non e' stato trovato
+			// ora cercare un record vuoto
+			if (pHub->TotHub <= 0) {
+				Indice = 0;
+				pHub->TotHub++;
+			} else {
+				i = pHub->TotHub;
+				if (i >= 10) {
+					// siamo gia' pieni.
+					// allora sovrascrivere un record gia' presente
+					i = pHub->LastIndex + 1;
+					if (i >= 10)
+						i = 0;
+					Indice = i;
+				} else {
+					Indice = i;
+					pHub->TotHub++;
+				}
+			}
+		}
+		pHub->LastIndex = (WORD) Indice;
+		// liberare memoria
+		if (pHub->VetNG[Indice].pVetWords) {
+			FreeMine(pHub->VetNG[Indice].pVetWords);
+			pHub->VetNG[Indice].pVetWords = NULL;
+		}
+
+		// adesso creare vettore header ng per livello attuale
+
+		pHub->VetNG[Indice].NumeroLivello = NLivello;
+		pHub->VetNG[Indice].pVetWords = NULL;
+		pHub->VetNG[Indice].TotWords = 0;
+
+		TotaleWords = 0;
+		// prepara i dati variabili da salvare
+		RiempiDatiVariabili();
+		// salva dati di livello per Nlivello
+		FormattaHeaderSavegame(&pHub->VetNG[Indice].pVetWords, &TotaleWords, false, false);
+
+		sprintf_s(BufferLog, "Prepared HUB For Level = %d", NLivello);
+		InviaLog(BufferLog);
+
+		pHub->VetNG[Indice].TotWords = (WORD) TotaleWords;
+
+		// ora salvare anche dati di lara
+		if (pHub->LaraHUB.pNGArray)
+			FreeMine(pHub->LaraHUB.pNGArray);
+		pHub->LaraHUB.pNGArray = NULL;
+		pHub->LaraHUB.NWords = 0;
+		TotaleWords = 0;
+
+		FormattaHeaderSavegame(&pHub->LaraHUB.pNGArray, &TotaleWords, false, true);
+		pHub->LaraHUB.NWords = TotaleWords;
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -2987,4 +3071,5 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100C3809, (unsigned int)trng::CalcolaOrientMirror, replace);
 	ProcessInject(0x100B7DDA, (unsigned int)trng::VerificaTargetDetector, replace);
 	ProcessInject(0x100CC9DD, (unsigned int)trng::CalcolaFPS, replace);
+	ProcessInject(0x100CD9A4, (unsigned int)trng::SalvataggioHubNg, replace);
 }

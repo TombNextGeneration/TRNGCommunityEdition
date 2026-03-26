@@ -42,7 +42,9 @@
 #include "trng_keypad.h"
 #include "../tomb4/game/savegame.h"
 #include "../tomb4/specific/gamemain.h"
+#include "../tomb4/game/croc.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
+#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
@@ -424,7 +426,7 @@ namespace trng {
 		// salvare i valori originali di flags
 
 		pWord = (WORD *) tomb4::options_table; // pVetFlagsInventoryItems
-		memcpy(&GlobTomb4.VetSalvaFlagItems[0], pWord, 120 * 2);
+		memcpy(&GlobTomb4.VetSalvaFlagItems[0], pWord, 240);
 
 		// inizializza (elimina) log fmv
 		InitFmvLog("START TOMB4", true);
@@ -1609,7 +1611,7 @@ namespace trng {
 		// azzera conbine items ai valori standard
 		GlobTomb4.pAdr->pVetNewCombine[23].pProcedura = NULL;
 		pWord = (WORD *) tomb4::options_table; // pVetFlagsInventoryItems
-		memcpy(pWord, &GlobTomb4.VetSalvaFlagItems[0], 120 * 2);
+		memcpy(pWord, &GlobTomb4.VetSalvaFlagItems[0], 240);
 		GlobTomb4.TotCombinabili = 0;
 
 		GlobTomb4.pScriptLevelNow->AssignSlot.IndiceAnimRubberBoat = -1;
@@ -15261,6 +15263,1424 @@ Concludi:
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// Copia da globali sparsi  di vari struttrure in GlobTomb4.DatiVariabili
+	// questa procedura va sempre chiamata prima FormattaHeaderSavegame
+	void RiempiDatiVariabili(void)
+	{
+		StrCanaleBass *pCanale;
+		StrBassHandles *pBass;
+
+		InviaLog("GlobalData -> VariableData");
+
+		// prima caricare in struttura dativariabili i vari valori
+		// dalle strutture sorgenti
+		GlobTomb4.pDatiVariabili->FlagProgressoCold = GlobTomb4.DamageColdWater.FlagProgresso;
+
+		GlobTomb4.pDatiVariabili->ValoreCold = (WORD) GlobTomb4.DamageColdWater.DamValue;
+
+		GlobTomb4.pDatiVariabili->FlagProgressoDamage = GlobTomb4.DamageRoom.FlagProgresso;
+		GlobTomb4.pDatiVariabili->ValoreDamage = (WORD) GlobTomb4.DamageRoom.DamValue;
+		GlobTomb4.pDatiVariabili->KeysToStop = GlobTomb4.KeysToStop;
+		GlobTomb4.pDatiVariabili->StatusNG = GlobTomb4.StatusNG;
+
+		GlobTomb4.pDatiVariabili->TestDisableFeatures = GlobTomb4.TestDisableFeatures;
+		GlobTomb4.pDatiVariabili->CounterGame = GlobTomb4.pBaseOrganizer->CounterGame;
+
+		GlobTomb4.pDatiVariabili->FlagLivelloNow = *GlobTomb4.pAdr->pScriptLevelFlags;
+
+		GlobTomb4.pDatiVariabili->SpeedLayer1 = *GlobTomb4.pAdr->pSpeedLayer1;
+
+		GlobTomb4.pDatiVariabili->SpeedLayer2 = *GlobTomb4.pAdr->pSpeedLayer2;
+
+		GlobTomb4.pDatiVariabili->ColoreLayer1 = *GlobTomb4.pAdr->pColorLayer1;
+
+		GlobTomb4.pDatiVariabili->ColoreLayer2 = *GlobTomb4.pAdr->pColorLayer2;
+
+		GlobTomb4.pDatiVariabili->LevelNGFlags = GlobTomb4.pScriptLevelNow->LevelFlags;
+
+		GlobTomb4.pDatiVariabili->FloatFogStart = GlobTomb4.BaseFog.FloatFogStart;
+
+		GlobTomb4.pDatiVariabili->FogEnd = GlobTomb4.BaseFog.NowEndFog;
+		GlobTomb4.pDatiVariabili->TestHardFog = GlobTomb4.BaseFog.TestHardFogEnabled;
+		GlobTomb4.pDatiVariabili->SalvaVolumetric = *GlobTomb4.pAdr->pSetting_Volumetric;
+		GlobTomb4.pDatiVariabili->FogBulbMaxDistance = GlobTomb4.BaseFog.NowFogBulbDistance;
+
+		GlobTomb4.pDatiVariabili->FloatFogStart  = GlobTomb4.BaseFog.FloatFogStart ;
+
+		// copiare i dati colori
+		GlobTomb4.pDatiVariabili->FogColors[0] = tomb4::gfFog.b;
+		GlobTomb4.pDatiVariabili->FogColors[1] = tomb4::gfFog.g;
+		GlobTomb4.pDatiVariabili->FogColors[2] = tomb4::gfFog.r;
+		GlobTomb4.pDatiVariabili->FogColors[3] = tomb4::gfFog.a;
+
+		// vedere se c'e' un suono cd sul canale secondario che e'
+		// di tipo looped o single
+		GlobTomb4.pDatiVariabili->CdLoopSecondario = -1;
+		GlobTomb4.pDatiVariabili->CdSingleSecondario = -1;
+		GlobTomb4.pDatiVariabili->CdSingleMain = -1;
+		GlobTomb4.pDatiVariabili->CdLoopMain = -1;
+
+		GlobTomb4.pDatiVariabili->Canale1StartPos = 0;
+		GlobTomb4.pDatiVariabili->Canale2StartPos = 0;
+
+		// ----- salvataggio roba per audio -----------
+		pBass = &GlobTomb4.BaseBassHandles;
+
+		// analisi per primario
+		pCanale = &pBass->VetCanali[0];
+
+		if (pCanale->Canale != 0 && pBass->Proc.BASS_ChannelIsActive(pCanale->Canale) != 0) {
+
+			// salvare il punto di partenza
+
+			GlobTomb4.pDatiVariabili->Canale1StartPos = (DWORD) pBass->Proc.BASS_ChannelGetPosition(pCanale->Canale, BASS_POS_BYTE);
+
+			if (pCanale->Loop) {
+				// looped
+				GlobTomb4.pDatiVariabili->CdLoopMain = pCanale->NumeroCd;
+
+			} else {
+				// single
+
+				GlobTomb4.pDatiVariabili->CdSingleMain = pCanale->NumeroCd;
+
+				switch (GlobTomb4.pBaseCustomize->TipoCDM) {
+				case CDM_NO_SAVE:
+					GlobTomb4.pDatiVariabili->CdSingleMain = -1;
+					GlobTomb4.pDatiVariabili->Canale1StartPos = 0;
+					break;
+				case CDM_RESTORE_FROM_BEGIN:
+					GlobTomb4.pDatiVariabili->Canale1StartPos = 0;
+					break;
+				}
+			}
+
+		} else {
+			// non e' attivo
+			pCanale->Canale = 0;
+		}
+
+		// se c'era audio sospeso, salvare numero cd salvato da ripristinare invece di quello corrente
+		if (GlobTomb4.AudioSospeso.CountSuspend) {
+			GlobTomb4.pDatiVariabili->CdLoopMain = (short) GlobTomb4.AudioSospeso.VetSospeso[0].NumeroCD;
+		}
+		// analisi per secondario
+		pCanale = &pBass->VetCanali[1];
+
+		if (pCanale->Canale != 0 && pBass->Proc.BASS_ChannelIsActive(pCanale->Canale) != 0) {
+
+			// salvare il punto di partenza
+
+			GlobTomb4.pDatiVariabili->Canale2StartPos = (DWORD) pBass->Proc.BASS_ChannelGetPosition(pCanale->Canale, BASS_POS_BYTE);
+
+			if (pCanale->Loop) {
+				// looped
+
+				GlobTomb4.pDatiVariabili->CdLoopSecondario = pCanale->NumeroCd;
+
+			} else {
+				// single
+
+				GlobTomb4.pDatiVariabili->CdSingleSecondario = pCanale->NumeroCd;
+
+				switch (GlobTomb4.pBaseCustomize->TipoCDM) {
+				case CDM_NO_SAVE:
+					GlobTomb4.pDatiVariabili->CdSingleSecondario = -1;
+					GlobTomb4.pDatiVariabili->Canale2StartPos = 0;
+					break;
+				case CDM_RESTORE_FROM_BEGIN:
+					GlobTomb4.pDatiVariabili->Canale2StartPos = 0;
+					break;
+				}
+			}
+		} else {
+			pCanale->Canale = 0;
+		}
+
+		GlobTomb4.pDatiVariabili->IndicePushSpinto = GlobTomb4.BasePushables.IndicePushSpinto;
+
+		GlobTomb4.pDatiVariabili->ParBarFrames = GlobTomb4.ParallelBar.TotFrames;
+		GlobTomb4.pDatiVariabili->ParBarGiri = (WORD) GlobTomb4.ParallelBar.GiriCompleti;
+
+		// --- dati per immagine popup -------
+		GlobTomb4.pDatiVariabili->TestPopUp = 0;
+		if (GlobTomb4.BaseImages.TestPopUp == true) {
+
+			GlobTomb4.pDatiVariabili->TestPopUp = 1;
+
+			GlobTomb4.pDatiVariabili->PopUpIndiceImageCmd = GlobTomb4.BaseImages.PopUp.IdImageCmd;
+			GlobTomb4.pDatiVariabili->PopUpContatore = GlobTomb4.BaseImages.PopUp.Contatore;
+		}
+
+		// mostra detector
+		if (GlobTomb4.BaseDetector.TestMostra) {
+			GlobTomb4.pDatiVariabili->TestMostraDetector = 1;
+		} else {
+			GlobTomb4.pDatiVariabili->TestMostraDetector = 0;
+		}
+	}
+
+	// formatta in pVettoreWords tutti i dati per savegame
+	// eventualmente rialloca puntatore a word pVettoreWords e pNumeroWords
+	// se testcompleto = false registra il vettore anche in BaseHub_ng
+	// nota: se testcompleto = false, consulta anche TestSoloLara
+	// per sapere se deve registrare dati solo di lara (=true) o solo specific
+	// del livello (=false)
+	void FormattaHeaderSavegame(WORD **pVettoreWords, int *pNumeroWords, bool TestCompleto, bool TestSoloLara)
+	{
+		static StrRecordLocuste *pVetLocuste = (StrRecordLocuste*) tomb4::Locusts;
+		static WORD *pTotLocuste = (WORD *) &tomb4::next_locust;
+
+		WORD *pVetExtra;
+		int NWords;
+		BYTE NumeroLivello;
+		StrCutsceneCamera *pCut;
+		StrMiniNG_Header *pRecHub;
+		int VetInt[2];
+		WORD VetSlotFlags[500];
+		WORD VetOcbItems[1024];
+		CALL_SAVING_GAME pCallSaving;
+		BYTE *pDataPlugin;
+		DWORD SizeDataPlugin;
+		int j;
+		StrFish *pFish;
+		StrSalvaFish VetFishTemp[128];
+		WORD TotTriggerDisabled;
+		WORD VetTriggerDisabled[MAX_TRIGGER_GROUPS];
+		StrSalvaFish *pFishTemp;
+		WORD TotFishTemp;
+		int IndiceRoom;
+		bool TestCopia;
+		WORD Tot;
+		StrDatiVariabili *pDatiVar;
+		WORD TotShorts;
+		short *pShort;
+		StrProgressiveAction *pAzione;
+		StrProgressiveAction *pVetTempAzioni;
+		WORD TotTempAzioni;
+		StrSalvaCords *pCord;
+		StrBaseNG_Hub *pHub;
+		StrItemTr4 *pItem;
+		int i;
+		StrBaseSalvaCords *pSalva;
+		WORD TotPFrames;
+		WORD VetIndici[MAX_GLOBAL_TRIGGERS];
+		BYTE VetIntensita[512];
+		int TotIndici;
+		BYTE *pByte;
+		WORD VetRoomFlags[512];
+		WORD TotRoomFlags;
+		DWORD SizeMem;
+		WORD TotBytes;
+		WORD NumeroWords;
+		WORD TotItems;
+		StrScriptElevator *pElevatore;
+		StrElevator *pAscensore;
+		StrBaseAnimTr4 *pBaseAnim;
+		WORD *pWord;
+
+		NWords = *pNumeroWords;
+		pVetExtra = *pVettoreWords;
+
+		NumeroLivello = *GlobTomb4.pAdr->pLevelNow;
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara)) {
+			// ROBA LARA
+			// -------  salvare GlobTomb4.BaseFMV.VetFmvEseguiti  ----------------
+			// vettore fisso di 128 bytes
+			// calcolare quanto word sono necessarie
+			CopiaInHeader(NGTAG_OLD_FMV, NO_ARRAY, MAX_FMV, &GlobTomb4.BaseFMV.VetFmvEseguiti[0], &pVetExtra, &NWords);
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// ------ salvare old flipeffects -------------
+			// calcolare dimensione di record attuali di old flipeffect
+			if (GlobTomb4.TotOldFlipEffects > 0) {
+
+				CopiaInHeader(NGTAG_OLD_EFFECTS, GlobTomb4.TotOldFlipEffects, sizeof(StrOldTrigger), &GlobTomb4.VetOldFlipEffects[0], &pVetExtra, &NWords);
+			}
+		}
+
+		for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+			pCallSaving = (CALL_SAVING_GAME) MyGlobPrivate.DataBase.pVetPlugins[i].VetDirectCB[CB_SAVING_GAME];
+			if (pCallSaving != NULL) {
+				// salvare dati per plugin (callback)
+				if (TestCompleto == true) {
+					SizeDataPlugin = pCallSaving(&pDataPlugin, SAVT_LOCAL_DATA | SAVT_GLOBAL_DATA);  // salva dati locali
+					CopiaInHeader(NGTAG_PLUGIN_DATA, NO_ARRAY, SizeDataPlugin, pDataPlugin, &pVetExtra, &NWords);
+
+				} else {
+
+					// test completo = false
+
+					if (TestSoloLara == false) {
+						// locale
+						SizeDataPlugin = pCallSaving(&pDataPlugin, SAVT_LOCAL_DATA);  // salva dati locali
+						CopiaInHeader(NGTAG_PLUGIN_DATA, NO_ARRAY, SizeDataPlugin, pDataPlugin, &pVetExtra, &NWords);
+					} else {
+
+						// globale
+						SizeDataPlugin = pCallSaving(&pDataPlugin, SAVT_GLOBAL_DATA);  // salva dati globali
+						CopiaInHeader(NGTAG_PLUGIN_DATA, NO_ARRAY, SizeDataPlugin, pDataPlugin, &pVetExtra, &NWords);
+					}
+				}
+
+				// annunciare salvataggio
+				pCallSaving(NULL, SAVT_COMPLETED);
+			}
+
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+			// ------ salvare old Actions -------------
+			// calcolare dimensione di record attuali di old actions
+			if (GlobTomb4.TotOldActions > 0) {
+				// void CopiaInHeader(WORD NGTag, DWORD TotItem,
+				//	   DWORD SizeSingleItem, void *pDato,
+				//	   WORD *pVetExtra, int *pNWords)
+				CopiaInHeader(NGTAG_OLD_ACTIONS, GlobTomb4.TotOldActions, sizeof(StrOldTrigger), &GlobTomb4.VetOldActions[0], &pVetExtra, &NWords);
+			}
+
+			// -------- salvsare dati di timer id alcuni oggetti -----------
+			TrovaTimerOggetti();
+			Tot = GlobTomb4.BaseTimerOggetti.TotOggetti;
+			if (Tot) {
+
+				SizeMem = NWords * 2 + 10;
+
+				TotBytes = sizeof(StrTimerOggetti) * Tot;
+				NumeroWords = TotBytes / 2 + 3 + (sizeof(StrHeaderTimer) / 2);
+
+				SizeMem += NumeroWords * 2 + 10;
+
+				pVetExtra = (WORD*) realloc(pVetExtra, SizeMem);
+
+				pVetExtra[NWords++] = NumeroWords;
+				pVetExtra[NWords++] = NGTAG_SALVA_TIMER_OGGETTI;
+				pVetExtra[NWords++] = Tot;
+
+				memcpy(&pVetExtra[NWords], &GlobTomb4.BaseTimerOggetti.Header, sizeof(StrHeaderTimer));
+				NWords += (sizeof(StrHeaderTimer) / 2);
+
+				memcpy(&pVetExtra[NWords], &GlobTomb4.BaseTimerOggetti.VetOggetti[0], TotBytes);
+				NWords += (TotBytes / 2);
+			}
+		}
+
+		// --------- salvare dati savegame infos usate per ricerca savegame ----
+		if (TestCompleto) {
+
+			PreparaSavegameInfos();
+			CopiaInHeader(NGTAG_SAVEGAME_INFOS, NO_ARRAY, sizeof(StrSavegameInfos), &GlobTomb4.BaseSaveGameInfos, &pVetExtra, &NWords);
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// -------- salvare dati di statics che sono stati alterati -----
+			TrovaStaticsAlterati();
+			if (GlobTomb4.BaseSalvaStatic.TotStatics) {
+				// salvare tutti i dati per statics
+				// void CopiaInHeader(WORD NGTag, DWORD TotItem,
+				//	   DWORD SizeSingleItem, void *pDato,
+				//	   WORD *pVetExtra, int *pNWords)
+				CopiaInHeader(NGTAG_SALVA_STATICS, GlobTomb4.BaseSalvaStatic.TotStatics, sizeof(StrSalvaStatic), &GlobTomb4.BaseSalvaStatic.VetStatics[0], &pVetExtra, &NWords);
+			}
+
+			// ------- salvare push climb status per pushable blocks ------
+
+			if (GlobTomb4.BasePushables.BaseClimbPushable.TotPush > 0) {
+
+				// salvare tutti i dati per statics
+				// void CopiaInHeader(WORD NGTag, DWORD TotItem,
+				//	   DWORD SizeSingleItem, void *pDato,
+				//	   WORD *pVetExtra, int *pNWords)
+				CopiaInHeader(NGTAG_PUSH_CLIMB, GlobTomb4.BasePushables.BaseClimbPushable.TotPush, sizeof(StrRecordClimbPush), &GlobTomb4.BasePushables.BaseClimbPushable.VetPush[0], &pVetExtra, &NWords);
+			}
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// ------ salvare old condition -------------
+			// calcolare dimensione di record attuali di old condition
+			if (GlobTomb4.TotOldConditions > 0) {
+
+				CopiaInHeader(NGTAG_OLD_CONDITION, GlobTomb4.TotOldConditions, sizeof(StrOldTrigger), &GlobTomb4.VetOldCondizioni[0], &pVetExtra, &NWords);
+			}
+			// ------- salvare vettore di stanze mirror disabilitate
+			if (GlobTomb4.TotDisabledMirrors > 0) {
+				CopiaInHeader(NGTAG_MIRRORS, GlobTomb4.TotDisabledMirrors, sizeof(WORD), &GlobTomb4.VetDisabledMirrors[0], &pVetExtra, &NWords);
+			}
+
+			// ------- salva flags room -----------------------
+			if (MyGlobPrivate.TestNG_NoScript == false) {
+
+				TotRoomFlags = *GlobTomb4.pAdr->pTotRooms;
+				// salvare solo i flag che e' possibile modificare
+				for (i = 0; i < TotRoomFlags; i++) {
+					IndiceRoom = TrovaIndiceMainRoom(i);
+					if (IndiceRoom != -1) {
+						VetRoomFlags[i] = GlobTomb4.pAdr->pVetRooms[IndiceRoom].FlagsRoom & 0x1C35;
+					} else {
+						VetRoomFlags[i] = SCRIPT_IGNORE;
+					}
+				}
+
+				CopiaInHeader(NGTAG_ROOM_FLAGS, TotRoomFlags, sizeof(WORD), &VetRoomFlags[0], &pVetExtra, &NWords);
+			}
+
+			// ------ Salva intensita rain e snow -------------------
+			TotIndici = *GlobTomb4.pAdr->pTotRooms;
+			for (i = 0; i < TotIndici; i++) {
+				VetIntensita[i] = GlobTomb4.VetExtraInfoRoom[i].WaterIntensity;
+			}
+
+			CopiaInHeader(NGTAG_WEATHER_INTENSITY, TotIndici, sizeof(BYTE), &VetIntensita, &pVetExtra, &NWords);
+
+			// -------- salva animation swapping --------------------
+
+			if (GlobTomb4.pBaseMemSwapAnim->TotMemSwap) {
+				CopiaInHeader(NGTAG_ANIM_SWAPPING, GlobTomb4.pBaseMemSwapAnim->TotMemSwap, sizeof(StrMemSwapAnim), &GlobTomb4.pBaseMemSwapAnim->VetMemSwapAnim[0], &pVetExtra, &NWords);
+			}
+
+			// -------- salva extra AI record creati dinamicamente ----------------
+
+			TotIndici = *GlobTomb4.pAdr->pTotAIData - BaseGlobMisc.TotOldAIRecords;
+			if (TotIndici) {
+				// se sono stati creati record AI salvare solo quelli nuovi
+				i = BaseGlobMisc.TotOldAIRecords;
+
+				CopiaInHeader(NGTAG_EXTRA_AI_RECORDS, TotIndici, sizeof(StrAIDataTr4), &GlobTomb4.pAdr->pVetAIData[i], &pVetExtra, &NWords);
+			}
+
+			// --------- salva dati cutscene camera e actors ------------------------
+
+			pCut = &GlobTomb4.pBaseCutscene->BaseCamera;
+			if (pCut->TestAttiva == true) {
+				// salvare dati di leading actor and extra actor:
+				VetInt[0] = GlobTomb4.pBaseCutscene->LeadingActorIndex;
+				VetInt[1] = GlobTomb4.pBaseCutscene->ExtraActorIndex;
+				CopiaInHeader(NGTAG_ACTORS_INDICES, 2, sizeof(int), &VetInt[0], &pVetExtra, &NWords);
+				// salvare dati di cutscene camera
+				pCut->CameraNow = *pCut->pCamera;
+				CopiaInHeader(NGTAG_CUTSCENE_CAMERA, NO_ARRAY, sizeof(StrCutsceneCamera), pCut, &pVetExtra, &NWords);
+			}
+
+			// --------- salvare campi OCB di tutti i moveable ----------------------
+			Tot = (WORD) *GlobTomb4.pAdr->pTotItems;
+			for (i = 0; i < Tot; i++) {
+				VetOcbItems[i] = GlobTomb4.pAdr->pVetItems[i].OcbCode;
+			}
+
+			CopiaInHeader(NGTAG_OCB_ITEMS, Tot, 2, &VetOcbItems[0], &pVetExtra, &NWords);
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara)) {
+			// ROBA LARA
+
+			// ------ salva dati globali di tutti i diari
+			pShort = CreaDatiDiari(&TotShorts);
+
+			CopiaInHeader(NGTAG_DIARY_DATA, TotShorts, 2, pShort, &pVetExtra, &NWords);
+			free(pShort);
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// -----  salva status per organizer ----------------
+			TotIndici = GlobTomb4.pBaseOrganizer->TotOrganizer;
+
+			if (TotIndici) {
+
+				CopiaInHeader(NGTAG_STATUS_ORGANIZER, TotIndici, sizeof(StrStatusOrganizer), &GlobTomb4.pBaseOrganizer->VetStatusOrganizer[0], &pVetExtra, &NWords);
+			}
+
+			// ------- salva indici di ranges p-frame ----------------
+			// contare i range p-frame
+			TotPFrames = 0;
+
+			for (i = 0; i < GlobTomb4.BaseAnimTr4.TotFrameRanges; i++) {
+				if (GlobTomb4.BaseAnimTr4.VetFrameRanges[i].TipoAnim == FAN_P_FRAMES) {
+					VetIndici[TotPFrames++] = (WORD) i;
+				}
+			}
+
+			if (TotPFrames) {
+				SizeMem = NWords * 2 + 20;
+				// salvare un vettore di 16 word per ogni range p-frame
+				TotBytes = TotPFrames * sizeof(WORD) * MAX_TEX_PER_FRAME;
+
+				NumeroWords = 2 + 1 + TotBytes / 2;
+
+				SizeMem += NumeroWords * 2 + 10;
+				pWord = (WORD*) realloc(pVetExtra, SizeMem);
+				if (pWord == NULL) {
+					free(pVetExtra);
+					return;
+				}
+				pVetExtra = pWord;
+				pVetExtra[NWords++] = NumeroWords;
+				pVetExtra[NWords++] = NGTAG_INDICI_PFRAME;
+				pVetExtra[NWords++] = TotPFrames;
+
+				for (j = 0; j < TotPFrames; j++) {
+					i = VetIndici[j];
+					memcpy(&pVetExtra[NWords], GlobTomb4.BaseAnimTr4.VetFrameRanges[i].VetChangedPos, MAX_TEX_PER_FRAME * 2);
+
+					NWords += MAX_TEX_PER_FRAME;
+				}
+			}
+
+			// ---- salva status di textuer animate --------------
+			//NGTAG_STATUS_ANIM_RANGES
+
+			SizeMem = NWords * 2 + 100;
+
+			pBaseAnim = &GlobTomb4.BaseAnimTr4;
+
+			TotIndici = pBaseAnim->TotFrameRanges + pBaseAnim->TotUvRanges;
+			if (TotIndici) {
+				j = 0;
+				for (i = 0; i < pBaseAnim->TotUvRanges; i++) {
+					VetIndici[j] = 0;
+					if (pBaseAnim->VetUVRanges[i].TestStop == true) {
+						VetIndici[j] |= SAR_TEST_STOP;
+					}
+					if (pBaseAnim->VetUVRanges[i].UvRotate < 0) {
+						VetIndici[j] |= SAR_UV_NEGATIVE;
+					}
+					j++;
+				}
+
+				for (i = 0; i < pBaseAnim->TotFrameRanges; i++) {
+					VetIndici[j] = 0;
+					if (pBaseAnim->VetFrameRanges[i].TestStop == true) {
+						VetIndici[j] |= SAR_TEST_STOP;
+					}
+					j++;
+				}
+				// salvare un vettore di 16 word per ogni range p-frame
+				TotBytes = (WORD) (TotIndici * sizeof(WORD));
+
+				NumeroWords = 2 + 1 + TotBytes / 2;
+
+				SizeMem += NumeroWords * 2 + 10;
+				pWord = (WORD*) realloc(pVetExtra, SizeMem);
+				if (pWord == NULL) {
+					free(pVetExtra);
+					return;
+				}
+				pVetExtra = pWord;
+				pVetExtra[NWords++] = NumeroWords;
+				pVetExtra[NWords++] = NGTAG_STATUS_ANIM_RANGES;
+				pVetExtra[NWords++] = (WORD) TotIndici;
+
+				memcpy(&pVetExtra[NWords], VetIndici, TotBytes);
+				NWords += (TotBytes / 2);
+			}
+
+			// ---- salvare dati di adapting frame view
+
+			if (GlobTomb4.BaseTurbo.Flags & TRB_ADAPTIVE_FARVIEW) {
+				CopiaInHeader(NGTAG_ADAPTIVE_FARVIEW, NO_ARRAY, sizeof(StrAdaptiveFarView), &GlobTomb4.BaseAdaptiveFar, &pVetExtra, &NWords);
+			}
+
+			// ---- salva orientamento animating e visibilita' ---------
+
+			pSalva = &GlobTomb4.BaseSalvaCoordinate;
+			// scrivere in pSalva tutte le coordinate e flag
+			// di ogni moveable mosso
+			for (i = 0; i < pSalva->TotSalvati; i++) {
+				pItem = &GlobTomb4.pAdr->pVetItems[pSalva->VetIndici[i]];
+				pCord = &pSalva->VetSalvati[i];
+
+				pCord->CordX = pItem->CordX;
+				pCord->CordY = pItem->CordY;
+				pCord->CordZ = pItem->CordZ;
+				pCord->FlagInvisibile = (WORD) pItem->FlagsMain & 4;
+				pCord->OrientingH = pItem->OrientationH;
+				pCord->OrientingV = pItem->OrientationV;
+				pCord->Room = pItem->Room;
+			}
+
+			if (pSalva->TotSalvati > 0) {
+				SizeMem = NWords * 2 + 100;
+
+				// salvare gli orientamenti per oggetti item
+				// caslcolare il numero di word necessarie
+				TotBytes = pSalva->TotSalvati * sizeof(StrSalvaCords);
+				NumeroWords = 2 + 1 + TotBytes / 2 + pSalva->TotSalvati;
+				SizeMem += NumeroWords * 2 + 10;
+				pWord = (WORD*) realloc(pVetExtra, SizeMem);
+				if (pWord == NULL) {
+					free(pVetExtra);
+					return;
+				}
+				pVetExtra = pWord;
+
+				pVetExtra[NWords++] = NumeroWords;
+				pVetExtra[NWords++] = NGTAG_SALVA_COORDINATE;
+				pVetExtra[NWords++] = pSalva->TotSalvati;
+				// prima salvare il vettore di indice degli item
+				for (i = 0; i < pSalva->TotSalvati; i++) {
+					pVetExtra[NWords++] = pSalva->VetIndici[i];
+				}
+
+				memcpy(&pVetExtra[NWords], pSalva->VetSalvati, TotBytes);
+				NWords += (TotBytes / 2);
+			}
+		}
+
+		// -------- SALVARE AZIONI ------------------------------
+		// qui per azioni progressive c'e' un grande lavoro
+		// devo salvare gruppi diversi di azione a seconda della situazione
+
+		if (GlobTomb4.TotProgressiveActions > 0) {
+
+			if (TestCompleto) {
+				// se completo, salvarle tutte
+				CopiaInHeader(NGTAG_PROGR_ACTIONS, GlobTomb4.TotProgressiveActions, sizeof(StrProgressiveAction), &GlobTomb4.VetProgressiveActions[0], &pVetExtra, &NWords);
+			} else {
+
+				// NON completo, fare analisi diverse a seconda
+				// se lara o livello
+				TotTempAzioni = 0;
+				pVetTempAzioni = (StrProgressiveAction *) malloc(sizeof(StrProgressiveAction) * GlobTomb4.TotProgressiveActions);
+				// ora copiare in pVetTempAzioni le azioni giuste
+				// a seconda se TestSoloLara o meno
+				for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+					pAzione = &GlobTomb4.VetProgressiveActions[i];
+					TestCopia = false;
+					switch (pAzione->ActionType) {
+						// lista LARA (globale)
+					case AZ_BLOCK_DISABLE_KEY:
+					case AZ_BLOCK_SENDING_KEY:
+					case AZ_HIDE_SCREEN:
+					case AZ_LARA_TRANSPARENT:
+					case AZ_LARA_INVULNERABLE:
+						if (TestSoloLara == true)
+							TestCopia = true;
+						break;
+					default:
+						// tutti gli altri considerarli di tipo level
+						// lista LEVEL (locale)
+
+						if (TestSoloLara == false)
+							TestCopia = true;
+						break;
+					}
+
+					if (TestCopia) {
+						pVetTempAzioni[TotTempAzioni++] = *pAzione;
+					}
+				}
+
+				// ora salvare il vettore temporaneo
+				if (TotTempAzioni) {
+
+					CopiaInHeader(NGTAG_PROGR_ACTIONS, TotTempAzioni, sizeof(StrProgressiveAction), pVetTempAzioni, &pVetExtra, &NWords);
+				}
+				free(pVetTempAzioni);
+			}
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// ---------- SALVARE DISABLED GLOB TRIGGERS ------------
+
+			// memorizzare lo status di tutti i globaltriggers
+
+			TotIndici = 0;
+			for (i = 0; i < GlobTomb4.pBaseGlobalTriggers->TotTriggers; i++) {
+				VetIndici[TotIndici++] = GlobTomb4.pBaseGlobalTriggers->VetTriggers[i].Flags;
+
+			}
+			if (TotIndici) {
+				CopiaInHeader(NGTAG_STATUS_GTRIGGERS, TotIndici, sizeof(WORD), &VetIndici[0], &pVetExtra, &NWords);
+			}
+
+			// --------- SALVARE DATI ELEVATORE ---------------
+			if (GlobTomb4.BaseElevator.TotElelevators > 0) {
+
+				// inserire le cordy di tutti i frame per ogni ascensore
+				for (i = 0; i < GlobTomb4.BaseElevator.TotElelevators; i++) {
+					pElevatore = &GlobTomb4.BaseElevator.VetScriptElevators[i];
+					pAscensore = &GlobTomb4.BaseElevator.VetAscensori[i];
+
+					// salvare coordinata y di ascensore
+					pAscensore->CordYElevator = pElevatore->pItem->CordY;
+					// e firstfloory
+					pAscensore->FirstFloorY = pElevatore->FirstFloorY;
+
+					for (j = 0; j < pElevatore->TotFrameItems; j++) {
+						pAscensore->VetCordYFrame[j] = GlobTomb4.pAdr->pVetItems[pElevatore->VetFrameItems[j]].CordY;
+					}
+				}
+
+				CopiaInHeader(NGTAG_ELEVATORS, GlobTomb4.BaseElevator.TotElelevators, sizeof(StrElevator), &GlobTomb4.BaseElevator.VetAscensori[0], &pVetExtra, &NWords);
+			}
+		}
+
+		if (TestCompleto || (TestCompleto == false && TestSoloLara == false)) {
+			// ROBA LIVELLO
+
+			// --------- salvare dati printstring attuali ----------
+			CopiaInHeader(NGTAG_PRINT_STRING, NO_ARRAY, sizeof(StrPrintString), &GlobTomb4.PrintString, &pVetExtra, &NWords);
+
+			// --------- salvare dati SwapMesh ----------------
+			TotItems = GlobTomb4.BaseMeshSwap.TotMeshSwap;
+			if (TotItems) {
+				CopiaInHeader(NGTAG_SWAP_MESH, TotItems, sizeof(StrFlipSwapMesh), &GlobTomb4.BaseMeshSwap.VetMeshSwap[0], &pVetExtra, &NWords);
+			}
+
+			// --------- salvare dati flipmesh ------------------
+			TotItems = (WORD) GlobTomb4.BaseFlipMesh.TotFlipMesh;
+			if (TotItems) {
+
+				CopiaInHeader(NGTAG_FLIP_MESH, TotItems, sizeof(StrFlipMesh), &GlobTomb4.BaseFlipMesh.VetFlipMesh[0], &pVetExtra, &NWords);
+			}
+		}
+		// ------- salvare variabili trng ------------------
+		if (TestCompleto == true || TestSoloLara == true) {
+			// salvare dati globali
+			CopiaInHeader(NGTAG_VAR_GLOBAL_TRNG, NO_ARRAY, sizeof(StrVariabiliGlobTRNG), &GlobTomb4.pBaseVariableTRNG->Globals, &pVetExtra, &NWords);
+
+			// ----  salvare vettore slot flags  ---------------------
+			for (i = 0; i < 500; i++) {
+				VetSlotFlags[i] = GlobTomb4.pAdr->pVetSlot[i].Flags;
+			}
+
+			CopiaInHeader(NGTAG_SLOT_FLAGS_ARRAY, 500, 2, &VetSlotFlags[0], &pVetExtra, &NWords);
+		}
+
+		if (TestCompleto == true || TestSoloLara == false) {
+			// salvare dati locali (per livello)
+			CopiaInHeader(NGTAG_VAR_LOCAL_TRNG, NO_ARRAY, sizeof(StrBloccoNumVar), &GlobTomb4.pBaseVariableTRNG->Locals, &pVetExtra, &NWords);
+		}
+		if (TestCompleto == true || TestSoloLara == false) {
+			// vedre se vanno salvati dsati extra di kayak
+			// accade solo se lara e' su kayak in questo momento
+			pByte = PreparaDatiKayak();
+			if (pByte != NULL) {
+				CopiaInHeader(NGTAG_KAYAK_EXTRA_DATA, NO_ARRAY, 0x2e, pByte, &pVetExtra, &NWords);
+			}
+		}
+
+		if (TestCompleto == true || TestSoloLara == false) {
+			// salvare eventuali assignslot
+			// nota: uesto viene solo salvato e no ricaricato
+			// perche' serve solo a omniexplorer e non al gicoo in se
+			// che avra' empre disponibili questi valori
+			if (GlobTomb4.BaseAssignSlot.TotNewAssign > 0) {
+				CopiaInHeader(NGTAG_ASSIGNED_SLOT, GlobTomb4.BaseAssignSlot.TotNewAssign, sizeof(StrRecordAssSlot), &GlobTomb4.BaseAssignSlot.VetNewAssign[0], &pVetExtra, &NWords);
+			}
+		}
+
+		// ------- salvare dati item frozen -----------------
+		if (TestCompleto == true || TestSoloLara == false) {
+			CopiaInHeader(NGTAG_FROZEN_ITEMS, GlobTomb4.BaseFreeze.TotFreeze, sizeof(StrRecordFreeze), &GlobTomb4.BaseFreeze.VetFreeze[0], &pVetExtra, &NWords);
+		}
+
+		// -------- salvare dati di fish --------------------
+
+		if (TestCompleto == true || TestSoloLara == false) {
+			// prima trovare tutti i record
+			TotFishTemp = 0;
+			for (i = 0; i < 128; i++) {
+				pFish = &GlobTomb4.pAdr->pVetFish[i];
+
+				if (pFish->TipoUsato == 2) {
+					pFishTemp = &VetFishTemp[TotFishTemp];
+					TotFishTemp++;
+
+					pFishTemp->CordX = (WORD) (pFish->CordX >> 1);
+					pFishTemp->CordY = (short) (pFish->CordY >> 1);
+					pFishTemp->CordZ = (WORD) (pFish->CordZ >> 1);
+					pFishTemp->FlagFish = pFish->FlagFish;
+					pFishTemp->IndiceNow = (BYTE) i;
+					pFishTemp->IndicePivot = pFish->IndicePivot;
+					pFishTemp->OrientH = (char) pFish->OrientH;
+					pFishTemp->OrientV = (char) pFish->OrientV;
+					pFishTemp->Room = pFish->Room;
+					pFishTemp->TipoFase = pFish->TipoFase;
+					pFishTemp->SpeedH = pFish->SpeedH;
+					pFishTemp->SpeedV = (char) pFish->SpeedV;
+				}
+
+			}
+
+			if (TotFishTemp) {
+				CopiaInHeader(NGTAG_FISH, TotFishTemp, sizeof(StrSalvaFish), &VetFishTemp[0], &pVetExtra, &NWords);
+			}
+		}
+
+		// ------ salvare dati item no collision -------
+		if (TestCompleto == true || TestSoloLara == false) {
+			CopiaInHeader(NGTAG_NO_COLL_ITEMS, GlobTomb4.TotItemNoCollisions, sizeof(short), &GlobTomb4.VetItemNoCollisions[0], &pVetExtra, &NWords);
+		}
+
+		// ----- salvare flag di tutti i TriggerGroup  ------
+		if (TestCompleto == true || TestSoloLara == false) {
+			TotTriggerDisabled = 0;
+
+			for (i = 0; i < GlobTomb4.pBaseTriggerGroups->TotTriggerGroups; i++) {
+
+				// salvare status di triggergroup (prima tripletta)
+				VetTriggerDisabled[TotTriggerDisabled++] = GlobTomb4.pBaseTriggerGroups->VetTriggerGroups[i].VetTriggers[0].Flags;
+
+			}
+			if (TotTriggerDisabled) {
+				CopiaInHeader(NGTAG_STATUS_TRIGGER_GROUP, TotTriggerDisabled, 2, &VetTriggerDisabled[0], &pVetExtra, &NWords);
+			}
+		}
+		// -------- savare dati eventali per locuste -------
+		// NGTAG_SAVE_LOCUST
+		if (GlobTomb4.pBaseCustomize->TestSaveLocust && (TestCompleto == true || TestSoloLara == false)) {
+
+			// salva in dati livello
+			CopiaInHeader(NGTAG_SAVE_LOCUST, *pTotLocuste, sizeof(StrRecordLocuste), pVetLocuste, &pVetExtra, &NWords);
+		}
+
+		// ------- SALVARE DatiVariabili ---------------------
+
+		// registrare i dati variabili, come dati globali o solo come
+		// hub lara  o hub livello singolo
+		// NOTA: tutti i dati devono essere gia' stati copiati
+		// nella struttura DatiVariabili usando la procedura
+		// RiempiDatiVariabili
+
+		if (TestCompleto == true || TestSoloLara == false) {
+			// registra dati totale o per livello
+			if (TestCompleto) {
+				pDatiVar = GlobTomb4.pDatiVariabili;
+			} else {
+				pDatiVar = EstraiDatiVariabili(TestSoloLara);
+			}
+			CopiaInHeader(NGTAG_VARIABLE_DATA, NO_ARRAY, sizeof(StrDatiVariabili), pDatiVar, &pVetExtra, &NWords);
+		}
+		if (TestCompleto == false && TestSoloLara == true) {
+			// registra dati variabili per lara
+			pDatiVar = EstraiDatiVariabili(TestSoloLara);
+
+			CopiaInHeader(NGTAG_VAR_DATA_LARA, NO_ARRAY, sizeof(StrDatiVariabili), pDatiVar, &pVetExtra, &NWords);
+		}
+
+		// ----- salvataggio eventuale mini shot ------------
+		if (GlobTomb4.ScreenShot.TestSalvaMiniShot == true && GlobTomb4.ScreenShot.pMemMiniShot != NULL && TestCompleto == true) {
+
+			CopiaInHeader(NGTAG_MINI_SHOT, NO_ARRAY, GlobTomb4.ScreenShot.SizeMemMiniShot, GlobTomb4.ScreenShot.pMemMiniShot, &pVetExtra, &NWords);
+		}
+
+		if (TestCompleto == true) {
+			// salvare anche la lista di tutti gli altri header hub per ng
+			// prima calcolare il numero totale di bytes
+			// 3 word per contenere il NGTAG_ e una dword come dimensione
+
+			TotBytes = (2 + 1) * 2;
+			TotBytes += sizeof(StrBaseNG_Hub) - sizeof(StrExtractNG);
+			// adesso pero' devo togliere i puntatori al vettore word
+			// perche' quello non lo salvo quindi 4 bytes di ogni puntatore * 10
+			TotBytes -= 4 * 10;
+
+			// e ora la cosa piu' complicata
+			// deve aggingere la memoria usata di tutti i record
+			pHub = &GlobTomb4.BaseHub_NG;
+
+			for (i = 0; i < 10; i++) {
+				TotBytes += pHub->VetNG[i].TotWords * 2;
+			}
+
+			NumeroWords = TotBytes / 2;
+
+			// ora aumentare delle word necessarie per lara hub
+			// sempre 1 (di numero word)
+			NumeroWords++;
+			// piu' quelle del numero di word
+			NumeroWords += (WORD) pHub->LaraHUB.NWords;
+
+			TotBytes = NumeroWords * 2;
+
+			// ok, ora aumentare la memoria
+			SizeMem = NWords * 2 + TotBytes;
+			// aumentare un po' per sicurezza
+			SizeMem += 10;
+
+			pWord = (WORD*) realloc(pVetExtra, SizeMem);
+			if (pWord == NULL) {
+				free(pVetExtra);
+				return;
+			}
+			pVetExtra = pWord;
+
+			// salvare dimensione in formato dword
+			pVetExtra[NWords++] = (WORD) 0x8000;
+			pVetExtra[NWords++] = (WORD) (NumeroWords & 0xffff);
+
+			pVetExtra[NWords++] = NGTAG_NG_HUB_HEADERS;
+
+			// WORD TotHub
+			pVetExtra[NWords++] = pHub->TotHub;
+
+			// WORD LastIndex
+			pVetExtra[NWords++] = pHub->LastIndex;
+
+			// piazzare qui totword per lara
+			pVetExtra[NWords++] = (WORD) pHub->LaraHUB.NWords;
+			// copiare dati header lara solo se e' presente
+			if (pHub->LaraHUB.NWords) {
+				memcpy(&pVetExtra[NWords], pHub->LaraHUB.pNGArray, pHub->LaraHUB.NWords * 2);
+				NWords += pHub->LaraHUB.NWords;
+			}
+
+			// ok, ora copiare in sequezna tutti i dati
+			// delle sezioni allocate
+			// nota: ricordarsi di liberare la memoria prima di caricare questo ng
+			for (i = 0; i < 10; i++) {
+				pRecHub = &pHub->VetNG[i];
+
+				// WORD NumeroLivello
+				pVetExtra[NWords++] = pRecHub->NumeroLivello;
+
+				// WORD TotWords
+				pVetExtra[NWords++] = pRecHub->TotWords;
+
+				// WORD VetWords
+				NumeroWords = pRecHub->TotWords;
+				if (NumeroWords) {
+					memcpy(&pVetExtra[NWords], pRecHub->pVetWords, sizeof(WORD) * NumeroWords);
+				}
+
+				NWords += NumeroWords;
+			}
+		}
+
+		// se non e' di tipo completo aggiungere anche le due word azzerate
+		// di fine sequenza
+		if (TestCompleto == false) {
+			SizeMem = NWords * 2 + 10;
+			pWord = (WORD*) realloc(pVetExtra, SizeMem);
+			if (pWord == NULL) {
+				free(pVetExtra);
+				return;
+			}
+			pVetExtra = pWord;
+
+			pVetExtra[NWords++] = NGTAG_END_SEQUENCE;
+			pVetExtra[NWords++] = NGTAG_END_SEQUENCE;
+		}
+
+		*pVettoreWords = pVetExtra;
+		*pNumeroWords = NWords;
+	}
+
+	// usata per in SalvaNGHeader per standardizzar
+	// il savataggio di ogni record NGTag
+	// NGTag e' il valore NGTAG_...qualcosa
+	// TotItem e' il numero di elementi di un eventuale vettore
+	//		 attenzione se non c'e' un vettore inserire in questo campo
+	//		 la costante NO_ARRAY che verra' riconosciuta come mancanza di vettore
+	//		 se invece metti un valore valido anche questo verra' salvato come
+	//      una word a se stante
+	// SizeSingleItem  la dimensione di un singolo record o di tutti i dati
+	//		se TotItem = NO_ARRAY
+	// pDato   il puntatore ai dati da salvare, di solito e' il primo record
+	//		di un vettore, o puo' essere il puntatore di un'intera struttura
+	// pVetExtra   vettore che contiene tutti i dati dell'header
+	//		verra' ridimensionato per ospitare anche questi dati
+	// pNWords = numero di word attualmente presenti in pVetExtra
+
+	void CopiaInHeader(WORD NGTag, DWORD TotItem, DWORD SizeSingleItem, void *pDato, WORD **p2VetExtra, int *pNWords)
+	{
+		WORD TotRecord;
+		int IndiceWords;
+		DWORD TotBytes;
+		DWORD NumeroWords;
+		DWORD SizeMem;
+		WORD *pVetExtra;
+
+		pVetExtra = *p2VetExtra;
+
+		IndiceWords = *pNWords;
+
+		SizeMem = IndiceWords * 2 + 100;
+
+		if (TotItem == NO_ARRAY) {
+			TotRecord = 1;
+			TotBytes = SizeSingleItem;
+
+			NumeroWords = 2 + (TotBytes / 2);
+
+			if (TotBytes & 1) {
+				sprintf_s(BufferLog, "WARNING: in CopiaInHeader(): Size of structure for Tag=0x%X is not even (%d)", NGTag, TotBytes);
+				InviaLog(BufferLog);
+				NumeroWords++;
+			}
+			if (NumeroWords > 0x7fff) {
+				// ci vorranno due words quindi aumentare di 1 le words
+				NumeroWords++;
+			}
+
+			SizeMem += NumeroWords * 2;
+			if (IndiceWords) {
+				pVetExtra = (WORD *) realloc(pVetExtra, SizeMem);
+			} else {
+				// e' azzerato, allocare adesso
+				pVetExtra = (WORD *) malloc(SizeMem);
+			}
+			if (pVetExtra == NULL)
+				return;
+
+			if (NumeroWords > 0x7fff) {
+				// e' una dword
+				pVetExtra[IndiceWords++] = (WORD) ((NumeroWords >> 16) | 0x8000);
+				pVetExtra[IndiceWords++] = (WORD) (NumeroWords & 0xffff);
+
+			} else {
+				pVetExtra[IndiceWords++] = (WORD) NumeroWords;
+			}
+
+			pVetExtra[IndiceWords++] = NGTag;
+
+			memcpy(&pVetExtra[IndiceWords], pDato, TotBytes);
+
+			IndiceWords += (TotBytes / 2);
+			if (TotBytes & 0x01)
+				IndiceWords++;
+
+		} else {
+
+			TotRecord = (WORD) TotItem;
+			TotBytes = SizeSingleItem * TotRecord;
+
+			if (TotBytes & 1)
+				TotBytes++;
+
+			NumeroWords = 3 + (TotBytes / 2);
+
+			if (NumeroWords > 0x7fff) {
+				NumeroWords++;
+			}
+
+			SizeMem += NumeroWords * 2;
+
+			if (IndiceWords) {
+#pragma warning(suppress: 6308)
+				pVetExtra = (WORD *) realloc(pVetExtra, SizeMem);
+			} else {
+				// e' azzerato, allocare adesso
+				pVetExtra = (WORD *) malloc(SizeMem);
+			}
+			if (pVetExtra == NULL)
+				return;
+			if (NumeroWords > 0x7fff) {
+				pVetExtra[IndiceWords++] = (WORD) ((NumeroWords >> 16) | 0x8000);
+				pVetExtra[IndiceWords++] = (WORD) (NumeroWords & 0xffff);
+			} else {
+				pVetExtra[IndiceWords++] = (WORD) NumeroWords;
+			}
+
+#pragma warning(suppress: 6386)
+			pVetExtra[IndiceWords++] = NGTag;
+			pVetExtra[IndiceWords++] = TotRecord;
+
+			memcpy(&pVetExtra[IndiceWords], pDato, TotBytes);
+
+			IndiceWords += (TotBytes / 2);
+		}
+
+		*pNWords = IndiceWords;
+		*p2VetExtra = pVetExtra;
+	}
+
+	// viene chiamata prima di salvare savwegame.
+	// trova tutti i valori timer di certi oggetti (pwer ora solo flame emitter)
+	void TrovaTimerOggetti(void)
+	{
+		StrItemTr4 *pItem;
+		int i;
+		StrTimerOggetti *pTimer;
+		WORD *pValOscilla;
+		DWORD *pQuindicesimi;
+		WORD Tot;
+
+		pValOscilla = &tomb4::GlobalCounter;
+		pQuindicesimi = (DWORD *) &tomb4::wibble;
+		Tot = 0;
+
+		GlobTomb4.BaseTimerOggetti.Header.ContaQuindicesimi = *pQuindicesimi;
+		GlobTomb4.BaseTimerOggetti.Header.ValOscilla = *pValOscilla;
+
+		for (i = 0; i < *GlobTomb4.pAdr->pTotItems; i++) {
+			pItem = &GlobTomb4.pAdr->pVetItems[i];
+			// se flame emiterr 1,2,3
+			if (pItem->SlotID >= 143 && pItem->SlotID <= 145) {
+
+				pTimer = &GlobTomb4.BaseTimerOggetti.VetOggetti[Tot];
+
+				pTimer->ItemIndex = (WORD) i;
+				pTimer->Campo34 = pItem->Reserved_34;
+				pTimer->Campo36 = pItem->Reserved_36;
+				pTimer->Campo38 = pItem->Reserved_38;
+				pTimer->Campo3A = pItem->Reserved_3A;
+
+				Tot++;
+				if (Tot >= MAX_TIMER_OGGETTI)
+					break;
+			}
+		}
+
+		GlobTomb4.BaseTimerOggetti.TotOggetti = Tot;
+	}
+
+	// inserisce in GlobTomb4.BaseSaveGameInfos
+	// tutti i valori richiesti
+	void PreparaSavegameInfos(void)
+	{
+		static DWORD *pDistanza = &tomb4::savegame.Game.Distance; // Savegame_1ED_DistanzaPercorsa:
+
+		StrSavegameInfos *pInfos;
+		WORD Flags;
+		int IndiceRoom;
+		BYTE *pSegreti;  // Savegame_1FB_Segreti
+
+		pSegreti = &tomb4::savegame.Game.Secrets;
+		pInfos = &GlobTomb4.BaseSaveGameInfos;
+
+		pInfos->Flags = 0;
+		pInfos->Veicolo = VEC_NONE;
+		Flags = 0;
+
+		// --------- impostare flags ----------------
+		// flags FSAV_BLINDED
+		if (GlobTomb4.Settings & SET_BLIND_SAVEGAMES)
+			Flags |= FSAV_BLINDED;
+
+		// FSAV_LARA_FLARE
+		if (IsLaraHolding(HOLD_FLARE) == true)
+			Flags |= FSAV_LARA_FLARE;
+
+		// FSAV_LARA_OFF_TORCH
+		if (IsLaraHolding(HOLD_OUT_TORCH) == true)
+			Flags |= FSAV_LARA_OFF_TORCH;
+
+		// FSAV_LARA_BURNING_TORCH
+		if (IsLaraHolding(HOLD_FIRED_TORCH) == true)
+			Flags |= FSAV_LARA_BURNING_TORCH;
+
+		if (MyGlobPrivate.TestNG_NoScript == true)
+			Flags |= FSAV_OLD_FORMAT;
+
+		pInfos->Flags = Flags;
+
+		// ----------------
+
+		// range shatter
+		pInfos->ShatterInizio = GlobTomb4.pBaseCustomize->ShatterInizio;
+		pInfos->ShatterFine = GlobTomb4.pBaseCustomize->ShatterFine;
+
+		pInfos->LaraStateId = GlobTomb4.pAdr->pLara->StateIdCurrent;
+		pInfos->LaraVitality = GlobTomb4.pAdr->pLara->Health;
+
+		// --- analisi veicolo ------
+		pInfos->Veicolo = VEC_NONE;
+
+		if (IsLaraHolding(HOLD_JEEP) == true)
+			pInfos->Veicolo = VEC_JEEP;
+		if (IsLaraHolding(HOLD_SIDECAR) == true)
+			pInfos->Veicolo = VEC_SIDECAR;
+		if (IsLaraHolding(HOLD_RUBBER_BOAT) == true)
+			pInfos->Veicolo = VEC_RUBBER_BOAT;
+		if (IsLaraHolding(HOLD_MOTOR_BOAT) == true)
+			pInfos->Veicolo = VEC_MOTOR_BOAT;
+
+		if (pInfos->Veicolo == VEC_NONE && *GlobTomb4.pVehicleIndex != -1) {
+			// c'e' un veicolo ma non e' stato riconosciuto
+			pInfos->Veicolo = VEC_UNKNOWN;
+		}
+		// ------- copiare prima parte dati savegame ---------
+		memcpy(&pInfos->Copy_057_0F3[0], &tomb4::savegame.Lara, 0x9d);
+
+		memcpy(&pInfos->Copy_169_1AC[0], &tomb4::savegame.Lara.pistols_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[1], &tomb4::savegame.Lara.uzis_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[2], &tomb4::savegame.Lara.shotgun_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[3], &tomb4::savegame.Lara.crossbow_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[4], &tomb4::savegame.Lara.grenade_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[5], &tomb4::savegame.Lara.sixshooter_type_carried, 1);
+		memcpy(&pInfos->Copy_169_1AC[6], &tomb4::savegame.Lara.lasersight, 1);
+		memcpy(&pInfos->Copy_169_1AC[7], &tomb4::savegame.Lara.binoculars, 1);
+		memcpy(&pInfos->Copy_169_1AC[8], &tomb4::savegame.Lara.crowbar, 1);
+		memcpy(&pInfos->Copy_169_1AC[9], &tomb4::savegame.Lara.mechanical_scarab, 1);
+		memcpy(&pInfos->Copy_169_1AC[10], &tomb4::savegame.Lara.small_water_skin, 1);
+		memcpy(&pInfos->Copy_169_1AC[11], &tomb4::savegame.Lara.big_water_skin, 1);
+		memcpy(&pInfos->Copy_169_1AC[12], &tomb4::savegame.Lara.examine1, 1);
+		memcpy(&pInfos->Copy_169_1AC[13], &tomb4::savegame.Lara.examine2, 1);
+		memcpy(&pInfos->Copy_169_1AC[14], &tomb4::savegame.Lara.examine3, 1);
+		memcpy(&pInfos->Copy_169_1AC[15], &tomb4::savegame.Lara.puzzleitems[0], 12);
+		memcpy(&pInfos->Copy_169_1AC[27], &tomb4::savegame.Lara.puzzleitemscombo, 2);
+		memcpy(&pInfos->Copy_169_1AC[29], &tomb4::savegame.Lara.keyitems, 2);
+		memcpy(&pInfos->Copy_169_1AC[31], &tomb4::savegame.Lara.keyitemscombo, 2);
+		memcpy(&pInfos->Copy_169_1AC[33], &tomb4::savegame.Lara.pickupitems, 2);
+		memcpy(&pInfos->Copy_169_1AC[35], &tomb4::savegame.Lara.pickupitemscombo, 2);
+		memcpy(&pInfos->Copy_169_1AC[37], &tomb4::savegame.Lara.questitems, 2);
+		memcpy(&pInfos->Copy_169_1AC[39], &tomb4::savegame.Lara.num_small_medipack, 2);
+		memcpy(&pInfos->Copy_169_1AC[41], &tomb4::savegame.Lara.num_large_medipack, 2);
+		memcpy(&pInfos->Copy_169_1AC[43], &tomb4::savegame.Lara.num_flares, 2);
+		memcpy(&pInfos->Copy_169_1AC[45], &tomb4::savegame.Lara.num_pistols_ammo, 2);
+		memcpy(&pInfos->Copy_169_1AC[47], &tomb4::savegame.Lara.num_uzi_ammo, 2);
+		memcpy(&pInfos->Copy_169_1AC[49], &tomb4::savegame.Lara.num_revolver_ammo, 2);
+		memcpy(&pInfos->Copy_169_1AC[51], &tomb4::savegame.Lara.num_shotgun_ammo1, 2);
+		memcpy(&pInfos->Copy_169_1AC[53], &tomb4::savegame.Lara.num_shotgun_ammo2, 2);
+		memcpy(&pInfos->Copy_169_1AC[55], &tomb4::savegame.Lara.num_grenade_ammo1, 2);
+		memcpy(&pInfos->Copy_169_1AC[57], &tomb4::savegame.Lara.num_grenade_ammo2, 2);
+		memcpy(&pInfos->Copy_169_1AC[59], &tomb4::savegame.Lara.num_grenade_ammo3, 2);
+		memcpy(&pInfos->Copy_169_1AC[61], &tomb4::savegame.Lara.num_crossbow_ammo1, 2);
+		memcpy(&pInfos->Copy_169_1AC[63], &tomb4::savegame.Lara.num_crossbow_ammo2, 2);
+		memcpy(&pInfos->Copy_169_1AC[65], &tomb4::savegame.Lara.num_crossbow_ammo3, 2);
+		memcpy(&pInfos->Copy_169_1AC[67], &tomb4::savegame.Lara.beetle_uses, 1);
+
+		pInfos->SegretiTrovati_1FB = *pSegreti;
+
+		pInfos->Distanza = *pDistanza;
+
+		// --- salvare flags di room di lara -----
+		IndiceRoom = GlobTomb4.pAdr->pLara->Room;
+
+		pInfos->FlagsRoom = GlobTomb4.pAdr->pVetRooms[IndiceRoom].FlagsRoom;
+
+		pInfos->OffsetLara = OffsetPosLara + 0x220;
+	}
+
+	// chiamata prima di salvare ng headr di savegame
+	// localizza tutti gli statics che sono stati alterati
+	// e rimpie con questi dati GlobTomb4.BaseSalvaStatic
+	void TrovaStaticsAlterati(void)
+	{
+		StrSalvaStatic *pRec;
+		int i;
+		int j;
+		int Tot;
+		StrMeshInfo *pMesh;
+		StrRoomTr4 *pRoom;
+
+		Tot = 0;
+
+		for (i = 0; i < *GlobTomb4.pAdr->pTotRooms; i++) {
+			pRoom = &GlobTomb4.pAdr->pVetRooms[i];
+
+			for (j = 0; j < pRoom->TotStaticMesh; j++) {
+				pMesh = &pRoom->Ptr_StaticMesh[j];
+
+				if ((pMesh->OCB & OCBS_SALVARE) == OCBS_SALVARE || (pMesh->OCB & OCBS_ATTIVO) == 0) {
+					// se modificati da miei trigger o distrutti perche' shatter
+					// salvarne i dati
+					pRec = &GlobTomb4.BaseSalvaStatic.VetStatics[Tot];
+					Tot++;
+
+					pRec->Indici.IndiceRoom = (WORD) i;
+					pRec->Indici.IndiceStatic = (short) j;
+					pRec->Flags = pMesh->OCB;
+					pRec->OrgX = pMesh->x;
+					pRec->OrgY = pMesh->y;
+					pRec->OrgZ = pMesh->z;
+					pRec->Orient = pMesh->Orient;
+					pRec->Colore = pMesh->Color;
+				}
+			}
+		}
+
+		GlobTomb4.BaseSalvaStatic.TotStatics = (WORD) Tot;
+	}
+
+	// riceve in input l'indice di una stanza e restituisce l'indice effettivo
+	// della stanza principale nel caso che in quel momento ci fosse
+	// lastanza flippata
+	// se invece la stanza indiceroom e' proprio una stanza flippata allora
+	// restituisce -1
+	int TrovaIndiceMainRoom(int IndiceRoom)
+	{
+		StrRoomTr4 *pRoom;
+		int IndiceMappa;
+
+		if (GlobTomb4.FlipMapRooms.VetRoomMain[IndiceRoom] != -1) {
+
+			// e' stato scelto un indice corrispondente
+			// corrispondente alla posizione di una stanza flippata
+			// impedire qualunque accesso
+			return -1;
+		}
+		// ora so che questa NON e' una stanza flippata nascosta
+		// vedere pero' se e' una stanza con flipmap
+		pRoom = &GlobTomb4.pAdr->pVetRooms[IndiceRoom];
+		if (pRoom->AlternateRoom == -1) {
+			// non e' una stanza con flipmap
+			// tutto ok, usare indice normale
+			return IndiceRoom;
+		}
+		// e' una stanza con flipmap
+		// ora controllarese e' stata flippata per cui nella posizione di
+		// stanza main ora c'e' quella flippata
+		IndiceMappa = pRoom->FlipMapIndex;
+
+		if (GlobTomb4.pAdr->Remap.pVetEnabledFlipMaps[IndiceMappa]) {
+			// si, e' stata spostata, quindi il vero indice della stanza
+			// principale e' quello dell'alternate room
+			return pRoom->AlternateRoom;
+		}
+		// non e' stata attivata quindi usare indice normale
+		return IndiceRoom;
+	}
+
+	// restituise la siere di short con i dati
+	// di tutti i diari attivi al momento del salvataggio
+	// formato:
+	//  TotDiari
+	//      IdPrimoDiario
+	//        TotStringhe diario
+	//            Indici strinhe del primo diario
+	//      IdSecondoDiario
+	//        TotStringhe
+	//            Indice strinhe
+	// nota: il valore restituto e' una zona memoria allocata dinamicamente
+	//		e dovra' essere liberata dalla procedura chiamante
+	short *CreaDatiDiari(WORD *pTotShorts)
+	{
+		StrVetDiari *pBase;
+		int i;
+		WORD Tot;
+		short *pShort;
+		int j;
+
+		// calcolare numero di word
+		pBase = &GlobTomb4.BaseDiari;
+		Tot = 1; // per numero di diari
+		for (i = 0; i < pBase->TotDiari; i++) {
+			Tot += pBase->VetBaseDiario[i].TotStringhe;  // numero stringhe
+			Tot += 2;  // piu' word di id e word di totstringhe
+
+		}
+		pShort = (short *) malloc(Tot * 2);
+		if (pShort == NULL) {
+			*pTotShorts = 0;
+			return NULL;
+		}
+
+		// ora salvare tutto
+		Tot = 0;
+		pShort[Tot++] = (short) pBase->TotDiari;
+
+		for (i = 0; i < pBase->TotDiari; i++) {
+#pragma warning(suppress: 6386)
+			pShort[Tot++] = pBase->VetBaseDiario[i].ID_Diario;
+			pShort[Tot++] = pBase->VetBaseDiario[i].TotStringhe;
+
+			for (j = 0; j < pBase->VetBaseDiario[i].TotStringhe; j++) {
+				pShort[Tot++] = pBase->VetBaseDiario[i].VetStringhe[j];
+			}
+
+		}
+
+		*pTotShorts = Tot;
+		return pShort;
+	}
+
+	// se lara sta sul kayak resitutisce l'extra record del kayak
+	BYTE *PreparaDatiKayak(void)
+	{
+		int i;
+		StrItemTr4 *pItem;
+
+		i = *GlobTomb4.pAdr->pVehicleIndex;
+		if (i == -1)
+			return NULL;
+		pItem = &GlobTomb4.pAdr->pVetItems[i];
+
+		if (pItem->SlotID != 492)
+			return NULL;
+
+		// ok, lara e' sul kayak
+		return (BYTE *) pItem->pZonaSavegame;
+	}
+
+	// chiamata prima di salvare header saveame per hub livello o per hub lara
+	// restituisce il puntatore ad una strutura variabile che contiene
+	// solo i dati richiesti. Se TestSoloLara=true (hub lara), se invece
+	// testsololara=false (hub level)
+	// nota: evita di alterare i valori in GlobTomnb4.DatiVariabili
+	// ma sovrascrive i valori in GlobTomb4.DatiVarLara se e' richiesto hub lara
+	StrDatiVariabili * EstraiDatiVariabili(bool TestSoloLara)
+	{
+		static StrDatiVariabili TempDati;
+
+		StrDatiVariabili *pDati;
+		StrDatiVariabili *pSrc;
+		int i;
+
+		pSrc = GlobTomb4.pDatiVariabili;
+
+		if (TestSoloLara) {
+			// copiare solo quelli per lara
+			pDati = GlobTomb4.pDatiVarLara;
+
+			pDati->KeysToStop = pSrc->KeysToStop;
+			pDati->StatusNG = pSrc->StatusNG & (SNG_INFINITE_AIR | SNG_DISABLE_WEAPONS | SNG_HIDE_HOLSTERS | SNG_IMMORTAL_LARA);
+
+			pDati->TestDisableFeatures = pSrc->TestDisableFeatures;
+			pDati->CounterGame = pSrc->CounterGame;
+
+		} else {
+			// restituire solo i dati di livello
+
+			pDati = &TempDati;
+
+			pDati->CdLoopSecondario = pSrc->CdLoopSecondario;
+			pDati->CdSingleSecondario = pSrc->CdSingleSecondario;
+			pDati->Canale2StartPos = pSrc->Canale2StartPos;
+			pDati->CdLoopMain = pSrc->CdLoopMain;
+			pDati->CdSingleMain = pSrc->CdSingleMain;
+			pDati->Canale1StartPos = pSrc->Canale1StartPos;
+			pDati->ValoreCold = pSrc->ValoreCold;
+			pDati->FlagProgressoCold = pSrc->FlagProgressoCold;
+
+			pDati->FogEnd = pSrc->FogEnd;
+			pDati->TestHardFog = pSrc->TestHardFog;
+			// salvare dati colori
+			for (i = 0; i < 4; i++) {
+				pDati->FogColors[i] = pSrc->FogColors[i];
+			}
+
+			pDati->ValoreDamage = pSrc->ValoreDamage;
+			pDati->FlagProgressoDamage = pSrc->FlagProgressoDamage;
+
+			pDati->FlagLivelloNow = pSrc->FlagLivelloNow;
+			pDati->ColoreLayer1 = pSrc->ColoreLayer1;
+			pDati->ColoreLayer2 = pSrc->ColoreLayer2;
+			pDati->SpeedLayer1 = pSrc->SpeedLayer1;
+			pDati->SpeedLayer2 = pSrc->SpeedLayer2;
+
+			pDati->LevelNGFlags = pSrc->LevelNGFlags;
+
+			pDati->FloatFogStart = pSrc->FloatFogStart;
+
+			pDati->IndicePushSpinto = pSrc->IndicePushSpinto;
+			pDati->ParBarGiri = pSrc->ParBarGiri;
+			pDati->ParBarFrames = pSrc->ParBarFrames;
+
+			pDati->TestPopUp = pSrc->TestPopUp;
+			pDati->PopUpContatore = pSrc->PopUpContatore;
+			pDati->PopUpIndiceImageCmd = pSrc->PopUpIndiceImageCmd;
+			pDati->SalvaVolumetric = pSrc->SalvaVolumetric;
+			pDati->FogDistanceNow = pSrc->FogDistanceNow;
+		}
+
+		return pDati;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -15488,4 +16908,14 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10082B0B, (unsigned int)trng::ShowDetector, replace);
 	ProcessInject(0x10082BA4, (unsigned int)trng::CambiaMascheraSaveGame, false);
 	ProcessInject(0x10082BFA, (unsigned int)trng::RipristinaMascheraSaveGame, false);
+	ProcessInject(0x10066686, (unsigned int)trng::RiempiDatiVariabili, replace);
+	ProcessInject(0x10066AF8, (unsigned int)trng::FormattaHeaderSavegame, replace);
+	ProcessInject(0x10065D22, (unsigned int)trng::CopiaInHeader, replace);
+	ProcessInject(0x10065C08, (unsigned int)trng::TrovaTimerOggetti, replace);
+	ProcessInject(0x100660AE, (unsigned int)trng::PreparaSavegameInfos, replace);
+	ProcessInject(0x10065ACF, (unsigned int)trng::TrovaStaticsAlterati, replace);
+	ProcessInject(0x1005C40C, (unsigned int)trng::TrovaIndiceMainRoom, replace);
+	ProcessInject(0x10066304, (unsigned int)trng::CreaDatiDiari, replace);
+	ProcessInject(0x10066AA4, (unsigned int)trng::PreparaDatiKayak, replace);
+	ProcessInject(0x1006648A, (unsigned int)trng::EstraiDatiVariabili, replace);
 }
