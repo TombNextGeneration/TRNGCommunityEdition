@@ -15,11 +15,11 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: microsoft/setup-msbuild@v2
+      - uses: actions/checkout@v6
+      - uses: microsoft/setup-msbuild@v3
       - run: |
           msbuild /t:Rebuild /p:Configuration=${{ inputs.configuration }} TRNGCommunityEdition.sln
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         id: artifact
         with:
           name: TRNGCE
