@@ -1726,7 +1726,7 @@ namespace trng {
 				}
 				StrHex[j] = 0;
 
-				if (sscanf_s(StrHex, "%X", &Codice) != 1) {
+				if (sscanf_s(StrHex, "%X", &Codice) == 1) {
 					TestReplaced = true;
 
 					TestPlaceFolder = true;
@@ -1867,7 +1867,7 @@ namespace trng {
 				}
 				StrHex[j] = 0;
 
-				if (sscanf_s(StrHex, "%X", &Codice) != 1) {
+				if (sscanf_s(StrHex, "%X", &Codice) == 1) {
 					TestReplaced = true;
 
 					TestPlaceFolder = true;
