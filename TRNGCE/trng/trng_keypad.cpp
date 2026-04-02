@@ -4,6 +4,9 @@
 #include "../tomb4/game/control.h"
 #include "../tomb4/game/sound.h"
 #include "zPatchesTomb4.h"
+#define malloc ((void *(*)(size_t)) 0x10135531)
+#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
+#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	int GestioneKeyPad(int TipoKeyPad, WORD OcbCode, WORD Slot)

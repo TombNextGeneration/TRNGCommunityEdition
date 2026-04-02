@@ -12,4 +12,4 @@ Describe the bug/feature as precisely as you can and include images and videos i
 ## Pull requests
 
 You can submit any pull request to this project.
-Read the [GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow) to learn how to collaborate.
+Read the [GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow) to learn how to collaborate and browse the [style guide](STYLE.md) to know our code conventions.

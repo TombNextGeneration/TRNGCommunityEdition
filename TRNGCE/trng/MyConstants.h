@@ -165,4 +165,11 @@ namespace trng {
 	inline constexpr int PLUG_FROM_SCRIPT = 1;   // quelli memorizzati per comandi script customize e parameter
 	inline constexpr int PLUG_FROM_NGLE = 2;    // quelli memorizzati nel floor data preso da file .tr4
 	inline constexpr int PLUG_FROM_TRNG = 3;  // quelli scansditi e collegati in modo dinamico all'avvio di tomb4
+
+	// flag per savegame info salvate in header savegame
+	inline constexpr int FSAV_BLINDED = 0x0001;
+	inline constexpr int FSAV_LARA_FLARE = 0x0002;
+	inline constexpr int FSAV_LARA_OFF_TORCH = 0x0004;
+	inline constexpr int FSAV_LARA_BURNING_TORCH = 0x0008;
+	inline constexpr int FSAV_OLD_FORMAT = 0x0010;
 }

@@ -190,9 +190,24 @@ namespace tomb4
 
 		return 1;
 	}
+
+	bool LoadCinematic()
+	{
+		// sostituisce loadsizedemodata per vedere se si usa tabella suoni
+		// estesa
+		trng::GlobTomb4.TotSizeDemoData = *(short*)FileData;
+		if (trng::GlobTomb4.TotSizeDemoData)
+		{
+			// tabella estesa: forzare flag
+			trng::GlobTomb4.FlagsLevelTr4 |= trng::FLT_EXTRA_SOUND_TABLE;
+		}
+		FileData += sizeof(short);
+		return 1;
+	}
 }
 
 void Inject_File(bool replace)
 {
 	ProcessInject(0x473090, (unsigned int)tomb4::LoadObjects, replace);
+	ProcessInject(0x474450, (unsigned int)tomb4::LoadCinematic, replace);
 }

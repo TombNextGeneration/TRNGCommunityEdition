@@ -512,10 +512,41 @@ namespace tomb4
 
 	void sgSaveLevel()
 	{
-		__try { throw __func__; } __finally {}
+		long level_index;
+
+		level_index = OpenSaveGame(gfCurrentLevel, 1);
+		SaveLevelData(0);
+		SaveLaraData();
+		SaveHubData(level_index);
+
+		// chiamata quando c'e' trigger finish prima di caricare nuovo livello
+		// ha lo scopo di salvare l'header ng tipo savegame corrispondente al
+		// livello attuale in basehubng
+		trng::SalvataggioHubNg();
+
+		// adesso posso azzerare fog_color
+		gfFog.b = 0;
+		gfFog.g = 0;
+		gfFog.r = 0;
+		gfFog.a = 0;
 	}
 
 	void sgSaveGame()
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	long OpenSaveGame(uchar current_level, long saving)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void SaveLaraData()
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void SaveHubData(long index)
 	{
 		__try { throw __func__; } __finally {}
 	}
@@ -527,6 +558,9 @@ void Inject_Savegame(bool replace)
 	ProcessInject(0x45A3C0, (unsigned int)tomb4::WriteSG, replace);
 	ProcessInject(0x45B150, (unsigned int)tomb4::ReadSG, replace);
 	ProcessInject(0x4594E0, (unsigned int)tomb4::sgInitialiseHub, false);
-	ProcessInject(0x45B190, (unsigned int)tomb4::sgSaveLevel, false);
+	ProcessInject(0x45B190, (unsigned int)tomb4::sgSaveLevel, replace);
 	ProcessInject(0x4596C0, (unsigned int)tomb4::sgSaveGame, false);
+	ProcessInject(0x459740, (unsigned int)tomb4::OpenSaveGame, false);
+	ProcessInject(0x459590, (unsigned int)tomb4::SaveLaraData, false);
+	ProcessInject(0x459840, (unsigned int)tomb4::SaveHubData, false);
 }

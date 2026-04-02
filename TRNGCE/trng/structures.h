@@ -2239,6 +2239,36 @@ namespace trng {
 	inline constexpr int SRV_F_ReadMemVariable = 61;
 	inline constexpr int SRV_F_WriteMemVariable = 62;
 
+	inline constexpr int NO_ARRAY = 0x10000;
+
+	inline constexpr int SAVT_LOCAL_DATA = 0x0001;  // require to save only local data
+	inline constexpr int SAVT_GLOBAL_DATA = 0x0002; // require to save only global data
+	inline constexpr int SAVT_COMPLETED = 0x00800;   // signal only to have completed the saving, now our callback can free temporary memory to store data to save
+
+	// Flag ANimated texture
+	inline constexpr int FAN_MASK_FPS_UV = 0x1F00;
+	inline constexpr int FAN_MASK_UVROTATE = 0x00FF;
+	inline constexpr int FAN_MASK_DELAY = 0x1FFF;
+	inline constexpr int FAN_MASK_ANIM = 0xE000;
+	inline constexpr int FAN_FRAMES = 0x0000;
+	inline constexpr int FAN_P_FRAMES = 0x4000;
+	inline constexpr int FAN_FULL_ROTATE = 0x8000;
+	inline constexpr int FAN_RIVER_ROTATE = 0xA000; // 0x8000 + 0x2000
+	inline constexpr int FAN_HALF_ROTATE = 0xC000;
+	inline constexpr int FAN_ANY_ROTATE = 0x8000;
+
+	// flag status anim range
+	inline constexpr int SAR_TEST_STOP = 0x1;
+	inline constexpr int SAR_UV_NEGATIVE = 0x2;
+
+	// costanti per indicare il tipo di veicoo guidato da lara
+	inline constexpr int VEC_NONE = -1;  // nessun veicolo
+	inline constexpr int VEC_JEEP = 0;
+	inline constexpr int VEC_SIDECAR = 1;
+	inline constexpr int VEC_RUBBER_BOAT = 2;
+	inline constexpr int VEC_MOTOR_BOAT = 3;
+	inline constexpr int VEC_UNKNOWN = 100;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -6311,6 +6341,25 @@ namespace trng {
 		char **pVetPluginNames;					// 2C vector with all plugin names (in format Plugin_Name )
 		char *pMyPluginName;					// 30  the name of your plugin, only temporarily, then you find your
 												//		plugin name in global variable TexMyPluginName[]
+	};
+
+	struct StrSalvaFish {
+		WORD CordX;  // diviso 2
+		short CordY;   // diviso 2
+		WORD CordZ;   // diviso 2
+		short OrientH;
+		short OrientV;
+		BYTE IndicePivot;
+		BYTE IndiceNow;  // indice originario per questo fish
+		BYTE Room;
+		BYTE FlagFish;
+		short SpeedH;
+		char SpeedV;
+		BYTE TipoFase;
+	};
+
+	struct StrRecordLocuste {
+		BYTE Zona[30];
 	};
 #pragma pack(pop)
 }
