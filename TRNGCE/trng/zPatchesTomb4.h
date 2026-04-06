@@ -18,6 +18,8 @@ namespace trng {
 	extern int &SalvaCall;
 	extern DWORD &MyOutResult;
 	extern StrSalvaOldDebug (&VetSalvaOldDebug)[30];
+	extern DWORD &LastReturnDX;
+	extern DWORD &ColorSlide;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -78,6 +80,15 @@ namespace trng {
 	void VerificaTargetDetector(void);
 	bool CalcolaFPS(DWORD FrameNow);
 	void SalvataggioHubNg(void);
+	void AnalisiErroreDirectX(const char *pMexErrore, DWORD AdrRitorno);
+	void InitDopoLoadGame(void);
+	void RipristinaDatiStatici(void);
+	void RipristinaTimerOggetti(void);
+	void AggiornaMoveLara(void);
+	BYTE TrovaRoomXYZ(StrMovePosition *pPos);
+	void RipristinaSettings(void);
+	void LiberaPlugins(void);
+	void CallSlide(int CordX, int CordY, int SizeX, int SizeY, int Percentuale, DWORD Colore, DWORD ColoreFade);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

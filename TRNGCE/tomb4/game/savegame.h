@@ -14,6 +14,9 @@ namespace tomb4
 	long OpenSaveGame(uchar current_level, long saving);
 	void SaveLaraData();
 	void SaveHubData(long index);
+	void sgRestoreGame();
+	void RestoreLevelData(long FullSave);
+	void RestoreLaraData(long FullSave);
 }
 
 void Inject_Savegame(bool replace);

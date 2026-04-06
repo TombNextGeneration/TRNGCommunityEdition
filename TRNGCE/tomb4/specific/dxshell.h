@@ -9,6 +9,9 @@ namespace tomb4
 
 	long DXAttempt(HRESULT r);
 	void DXReadKeyboard(char* KeyMap);
+	const char* DXGetErrorString(HRESULT hr);
+	void DXFreeInfo(DXINFO* dxinfo);
+	void DXClose();
 }
 
 void Inject_Dxshell(bool replace);

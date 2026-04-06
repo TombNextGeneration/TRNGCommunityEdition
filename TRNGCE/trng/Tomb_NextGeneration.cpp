@@ -16681,6 +16681,245 @@ Concludi:
 
 		return pDati;
 	}
+
+	// imposta globali per mostrare immagini popup
+	void AvviaPopUpImage(WORD IdImageCmd, StrScriptImage *pImage, WORD Contatore)
+	{
+		StrShowImage *pBase;
+		StrPopUp *pPop;
+		int NImage;
+		RECT MioRect;
+		RECT *pZonaRect;
+		bool TestTrasparent;
+		bool TestRestore;
+
+		NImage = pImage->NumeroImage;
+
+		// se e' gia' attiva un'immagine pop up: ignorare tutto
+		if (GlobTomb4.BaseImages.TestPopUp == true)
+			return;
+
+		// ora caricare immagine, copiarla in modo ridimensionato in temphdc
+		// e quindi rilasciare immagine e tomb
+
+		if (pImage->Flags & IF_FULL_SCREEN) {
+			MioRect.left = 0;
+			MioRect.top = 0;
+			MioRect.right = *GlobTomb4.pAdr->pSizeScreenX;
+			MioRect.bottom = *GlobTomb4.pAdr->pSizeScreenY;
+			pZonaRect = &MioRect;
+		} else {
+
+			pZonaRect = CalcolaMicroUnits(&pImage->RectZona);
+		}
+
+		pPop = &GlobTomb4.BaseImages.PopUp;
+		pPop->Contatore = Contatore;
+		pPop->NImage = (WORD) NImage;
+		pPop->Zona = *pZonaRect;
+		pPop->IdImageCmd = IdImageCmd;
+
+		if (pImage->Flags & IF_TRANSPARENCE)
+			TestTrasparent = true;
+		else
+			TestTrasparent = false;
+
+		pPop->TestTrasparente = TestTrasparent;
+
+		if (pImage->Flags & IF_OVER_FLYBY)
+			pPop->TestSopraFlyBy = true;
+		else
+			pPop->TestSopraFlyBy = false;
+
+		if (pImage->Flags & IF_OVER_FIXED_CAMERA)
+			pPop->TestSopraFixed = true;
+		else
+			pPop->TestSopraFixed = false;
+
+		// ora allocare hdc tombe e creare un hdc temporaneo
+		if (AllocaHdcTomb(&GlobTomb4.BaseImages, false, false) == false)
+			return;
+
+		if (AllocaImmagine(pImage->NumeroImage, &GlobTomb4.BaseImages.ImageLittle, -1, -1) == false) {
+
+			LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+
+			return;
+		}
+
+		PreparaEffetti(pImage, pZonaRect, &TestRestore);
+
+		// ok, ora copiare ridimensionadndo l'immagine caricata
+		// e piazzandola in hdc temp
+		// poi togliere tutta l'altra roba salva l'hdc temp che va mantenuto
+
+		pBase = &GlobTomb4.BaseImages;
+
+		// creare l'immagine per effetti
+		AllocaImmagine(-1, &pBase->Effetto.EffectImage, -1, -1);
+
+		SetStretchBltMode(pBase->Effetto.EffectImage.MemHdc, COLORONCOLOR);
+		StretchBlt(pBase->Effetto.EffectImage.MemHdc, 0, 0, pPop->Zona.right, pPop->Zona.bottom, pBase->ImageLittle.MemHdc, 0, 0, pBase->ImageLittle.SizeX, pBase->ImageLittle.SizeY, SRCCOPY);
+
+		pBase->Effetto.EffectImage.SizeX = pPop->Zona.right;
+		pBase->Effetto.EffectImage.SizeY = pPop->Zona.bottom;
+
+		// ora liberare tutto, tranne hdc di immagine effetto
+		LiberaImmagine(&GlobTomb4.BaseImages.ImageLittle);
+		LiberaHdcTomb(&GlobTomb4.BaseImages, false);
+		GlobTomb4.BaseImages.TestPopUp = true;
+
+		if (pImage->Flags & IF_PLAY_AUDIO_TRACK) {
+			GlobTomb4.BaseBassHandles.CanaleNow = 1;
+			if (pImage->Flags & IF_LOOP_AUDIO_TRACK) {
+				tomb4::S_CDPlay(pImage->AudioTrack, 1);
+			} else {
+				tomb4::S_CDPlay(pImage->AudioTrack, 0);
+			}
+		}
+	}
+
+	// riceve in input rect con coordinate in micro units (pZona)
+	// e restituisce i valori in pixel riferiti a schermo attuale
+	RECT *CalcolaMicroUnits(RECT *pZona)
+	{
+		static RECT MioRect;
+
+		MioRect.left = (int) RapportoFloatSchermo(*GlobTomb4.pAdr->pSizeScreenX, 1000.0f, (float) pZona->left);
+
+		MioRect.top = (int) RapportoFloatSchermo(*GlobTomb4.pAdr->pSizeScreenY, 1000.0f, (float) pZona->top);
+
+		MioRect.right = (int) RapportoFloatSchermo(*GlobTomb4.pAdr->pSizeScreenX, 1000.0f, (float) pZona->right);
+
+		MioRect.bottom = (int) RapportoFloatSchermo(*GlobTomb4.pAdr->pSizeScreenY, 1000.0f, (float) pZona->bottom);
+
+		return &MioRect;
+	}
+
+	// inserisce in Effetto i dati di inizio e fine immagine
+	// e gliincrmeenti da applicare ad ogni frame
+	// totframe e' il numero totale di frame richiesta per l'intera operazione
+	// piu' piccolo sara' il numero e mggiore sara' la velocita' dell'effetto
+	// i dati sono sempre nei valori globali
+
+	// nota: se pTestRestore viene impostato a true vuol
+	// dire che e' necessario ripristinare precedenr eposizone di immagine
+
+	void PreparaEffetti(StrScriptImage *pImage, RECT *pFine, bool *pTestRestore)
+	{
+		StrShowImage *pBase;
+		StrEffettoImage *pEffetto;
+		float OrgX, OrgY;
+		int TotFrames;
+
+		TotFrames = pImage->EffectTime;
+		if (TotFrames == 0)
+			TotFrames = 1;
+
+		pBase = &GlobTomb4.BaseImages;
+		pEffetto = &pBase->Effetto;
+
+		pEffetto->TestAttivo = false;
+
+		// prima impostare i valori finali del'immagine
+		// che in pratica sono quelli attuali
+
+		pEffetto->Fine.OrgX = (float) pFine->left;
+		pEffetto->Fine.OrgY = (float) pFine->top;
+		pEffetto->Fine.SizeX = (float) pFine->right;
+		pEffetto->Fine.SizeY = (float) pFine->bottom;
+		*pTestRestore = false;
+
+		// se c'e' cross fade, non consentire altri effetti
+		if (pImage->Flags & IF_EFFECT_CROSS_FADE)
+			return;
+
+		if (pImage->Flags & IF_EFFECT_ZOOM) {
+			pEffetto->TestAttivo = true;
+			// ora calcolare quale sara' il punto d'inizio
+			//diciamo che l'immagine in partenza deve essere 10 volte piu' piccola
+
+			pEffetto->Inizio.SizeX = (float) pEffetto->Fine.SizeX / 10;
+			pEffetto->Inizio.SizeY = (float) pEffetto->Fine.SizeY / 10;
+
+			// ora devo calcolare la coordinata iniziale
+			// devo partire dal centro dell'immagine in posizione finale
+			OrgX = pEffetto->Fine.OrgX + (pEffetto->Fine.SizeX / 2);
+			OrgY = pEffetto->Fine.OrgY + (pEffetto->Fine.SizeY / 2);
+
+			// adesso aumentare a questi orgx orgxy la meta' della dimensione
+			// iniziale
+			OrgX -= (pEffetto->Inizio.SizeX / 2);
+			OrgY -= (pEffetto->Inizio.SizeY / 2);
+
+			pEffetto->Inizio.OrgX = OrgX;
+			pEffetto->Inizio.OrgY = OrgY;
+		}
+
+		if (pImage->Flags & IF_EFFECT_FROM_TOP) {
+			pEffetto->TestAttivo = true;
+			if ((pImage->Flags & IF_FULL_SCREEN) == 0)
+				*pTestRestore = true;
+
+			// ora calcolare posizione iniziale in modo che tutta l'immagine
+			// sia fuori dallo schermo
+			pEffetto->Inizio = pEffetto->Fine;
+
+			// diminuire orgy di dimensione immagine
+			pEffetto->Inizio.OrgY = -pEffetto->Inizio.SizeY;
+		}
+
+		if (pImage->Flags & IF_EFFECT_FROM_BOTTOM) {
+			pEffetto->TestAttivo = true;
+			if ((pImage->Flags & IF_FULL_SCREEN) == 0)
+				*pTestRestore = true;
+
+			// ora calcolare posizione iniziale in modo che tutta l'immagine
+			// sia fuori dallo schermo
+			pEffetto->Inizio = pEffetto->Fine;
+
+			// diminuire orgy di dimensione immagine
+			pEffetto->Inizio.OrgY = *GlobTomb4.pAdr->pSizeScreenY;
+		}
+
+		if (pImage->Flags & IF_EFFECT_FROM_LEFT) {
+			pEffetto->TestAttivo = true;
+			if ((pImage->Flags & IF_FULL_SCREEN) == 0)
+				*pTestRestore = true;
+
+			// ora calcolare posizione iniziale in modo che tutta l'immagine
+			// sia fuori dallo schermo
+			pEffetto->Inizio = pEffetto->Fine;
+
+			pEffetto->Inizio.OrgX = -pEffetto->Fine.SizeX;
+		}
+
+		if (pImage->Flags & IF_EFFECT_FROM_RIGHT) {
+			pEffetto->TestAttivo = true;
+			if ((pImage->Flags & IF_FULL_SCREEN) == 0)
+				*pTestRestore = true;
+
+			// ora calcolare posizione iniziale in modo che tutta l'immagine
+			// sia fuori dallo schermo
+			pEffetto->Inizio = pEffetto->Fine;
+
+			pEffetto->Inizio.OrgX = *GlobTomb4.pAdr->pSizeScreenX;
+		}
+
+		if (pEffetto->TestAttivo == true) {
+			if (pImage->Flags & IF_TRANSPARENCE)
+				*pTestRestore = true;
+
+			// ok, ora calcolare con il numero di passaggi TotFrames
+			// gli incrementi
+			pEffetto->Inc.OrgX = (pEffetto->Fine.OrgX - pEffetto->Inizio.OrgX) / TotFrames;
+			pEffetto->Inc.OrgY = (pEffetto->Fine.OrgY - pEffetto->Inizio.OrgY) / TotFrames;
+
+			pEffetto->Inc.SizeX = (pEffetto->Fine.SizeX - pEffetto->Inizio.SizeX) / TotFrames;
+			pEffetto->Inc.SizeY = (pEffetto->Fine.SizeY - pEffetto->Inizio.SizeY) / TotFrames;
+			pEffetto->TotFrames = TotFrames;
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -16918,4 +17157,7 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10066304, (unsigned int)trng::CreaDatiDiari, replace);
 	ProcessInject(0x10066AA4, (unsigned int)trng::PreparaDatiKayak, replace);
 	ProcessInject(0x1006648A, (unsigned int)trng::EstraiDatiVariabili, replace);
+	ProcessInject(0x1005D339, (unsigned int)trng::AvviaPopUpImage, replace);
+	ProcessInject(0x100757CB, (unsigned int)trng::CalcolaMicroUnits, replace);
+	ProcessInject(0x1005D00B, (unsigned int)trng::PreparaEffetti, replace);
 }

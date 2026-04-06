@@ -2,6 +2,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winternl.h>
+#include <intrin.h>
 #include "tomb4/game/croc.h"
 #include "tomb4/game/sound.h"
 #include "tomb4/game/draw.h"
@@ -64,6 +65,10 @@
 #include "plugin/flycheat/trng.h"
 #include "plugin/particlesystem/trng/trng.h"
 #include "plugin/particlesystem/Plugin_ParticleSystem.h"
+#include "tomb4/specific/winmain.h"
+#include "tomb4/specific/registry.h"
+#include "tomb4/specific/function_table.h"
+#include "tomb4/game/health.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -584,6 +589,10 @@ static void Inject(bool replace) {
 	Inject_Plugin_FlyCheat_trng(GetModuleHandle("Plugin_FlyCheat.dll"), replace);
 	Inject_Plugin_Particlesystem_trng(GetModuleHandle("Plugin_ParticleSystem.dll"), replace);
 	Inject_Plugin_Particlesystem(GetModuleHandle("Plugin_ParticleSystem.dll"), replace);
+	Inject_Winmain(replace);
+	Inject_Registry(replace);
+	Inject_FunctionTable(replace);
+	Inject_Health(replace);
 }
 
 static LPSTR __stdcall CallInject() {
@@ -613,6 +622,10 @@ static LPSTR __stdcall CallInject() {
 	return GetCommandLineA();
 }
 
+static void Break() {
+	__debugbreak();
+}
+
 void ProcessInject(unsigned int from, unsigned int to, bool replace) {
 	if (replace)
 		ProcessInjectJump(from, to);
@@ -622,8 +635,9 @@ void ProcessInject(unsigned int from, unsigned int to, bool replace) {
 
 void ModuleProcessInject(void *module, const char *name, unsigned int to, bool replace) {
 	if (!module)
-		return;
-	ProcessInject((unsigned int) GetProcAddress((HMODULE) module, name), to, replace);
+		ProcessInject((unsigned int) Break, to, false);
+	else
+		ProcessInject((unsigned int) GetProcAddress((HMODULE) module, name), to, replace);
 }
 
 void IndirectReferenceInject(void **reference) {
@@ -633,7 +647,7 @@ void IndirectReferenceInject(void **reference) {
 void ModuleReferenceInject(void **reference, void *module) {
 	void *address;
 
-	address = module ? (void *) GetProcAddress((HMODULE) module, (LPCSTR) *reference) : NULL;
+	address = module ? (void *) GetProcAddress((HMODULE) module, (LPCSTR) *reference) : (void *) 0xCCCCCCCC;
 	ReferenceInject(reference, &address);
 }
 

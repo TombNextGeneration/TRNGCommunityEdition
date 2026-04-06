@@ -159,11 +159,13 @@
     <ClInclude Include="tomb4\game\lara.h" />
     <ClInclude Include="tomb4\game\sound.h" />
     <ClInclude Include="tomb4\game\tomb4fx.h" />
+    <ClInclude Include="tomb4\specific\function_table.h" />
     <ClInclude Include="tomb4\specific\gamemain.h" />
     <ClInclude Include="tomb4\specific\input.h" />
     <ClInclude Include="tomb4\specific\LoadSave.h" />
     <ClInclude Include="tomb4\specific\output.h" />
     <ClInclude Include="tomb4\specific\polyinsert.h" />
+    <ClInclude Include="tomb4\specific\registry.h" />
     <ClInclude Include="tomb4\specific\specificfx.h" />
     <ClInclude Include="tomb4\specific\time.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
@@ -241,11 +243,13 @@
     <ClCompile Include="tomb4\game\lara.cpp" />
     <ClCompile Include="tomb4\game\sound.cpp" />
     <ClCompile Include="tomb4\game\tomb4fx.cpp" />
+    <ClCompile Include="tomb4\specific\function_table.cpp" />
     <ClCompile Include="tomb4\specific\gamemain.cpp" />
     <ClCompile Include="tomb4\specific\input.cpp" />
     <ClCompile Include="tomb4\specific\LoadSave.cpp" />
     <ClCompile Include="tomb4\specific\output.cpp" />
     <ClCompile Include="tomb4\specific\polyinsert.cpp" />
+    <ClCompile Include="tomb4\specific\registry.cpp" />
     <ClCompile Include="tomb4\specific\specificfx.cpp" />
     <ClCompile Include="tomb4\specific\time.cpp" />
     <ClCompile Include="tomb4\specific\winmain.cpp" />

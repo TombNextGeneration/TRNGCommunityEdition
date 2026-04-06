@@ -41,6 +41,7 @@ namespace tomb4
 	extern char &PoisonFlag;
 	extern short* &trigger_index;
 	extern short &FXType;
+	extern short &IsRoomOutsideNo;
 
 	long ControlPhase(long nframes, long demo_mode);
 	void UpdateSky();
@@ -53,6 +54,7 @@ namespace tomb4
 	long GetCeiling(FLOOR_INFO* floor, long x, long y, long z);
 	long GetWaterHeight(long x, long y, long z, short room_number);
 	void FlipMap(long FlipNumber);
+	long IsRoomOutside(long x, long y, long z);
 }
 
 void Inject_Control(bool replace);

@@ -249,6 +249,12 @@
     <ClInclude Include="plugin\particlesystem\Plugin_ParticleSystem.h">
       <Filter>plugin\particlesystem</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\registry.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\function_table.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -467,6 +473,12 @@
     </ClCompile>
     <ClCompile Include="plugin\particlesystem\Plugin_ParticleSystem.cpp">
       <Filter>plugin\particlesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\registry.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\function_table.cpp">
+      <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

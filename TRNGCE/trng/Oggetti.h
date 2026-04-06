@@ -4,6 +4,7 @@
 
 namespace trng {
 	extern char (&ZonaReplace)[32000];
+	extern BYTE &TestAppenaAvviatoGame;
 
 	void ProcMyBridgeFloor(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);
 	void ProcMyBridgeCeiling(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY);

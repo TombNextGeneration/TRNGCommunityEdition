@@ -17,6 +17,7 @@
 
 namespace trng {
 	char (&ZonaReplace)[32000] = *reinterpret_cast<decltype(&ZonaReplace)>(0x10193C68);
+	BYTE &TestAppenaAvviatoGame = *reinterpret_cast<decltype(&TestAppenaAvviatoGame)>(0x10193418);
 
 	// usa sottoprocedura SubBridgeTilt(pBridge, CordX, CordZ)
 	void ProcMyBridgeFloor(StrItemTr4 *pItem, DWORD CordX, int CordY, DWORD CordZ, int *pNewCordY)

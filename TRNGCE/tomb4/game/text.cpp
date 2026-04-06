@@ -11,9 +11,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void PrintString(ushort x, ushort y, uchar col, const char* string, ushort flags)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Text(bool replace)
 {
 	ProcessInject(0x462AE0, (unsigned int)tomb4::UpdatePulseColour, false);
+	ProcessInject(0x462D00, (unsigned int)tomb4::PrintString, false);
 }
