@@ -17,6 +17,10 @@ namespace tomb4
 	long &SFXVolume = *reinterpret_cast<decltype(&SFXVolume)>(0x4B1714);
 	long &SoundQuality = *reinterpret_cast<decltype(&SoundQuality)>(0x4B1718);
 	long &ControlMethod = *reinterpret_cast<decltype(&ControlMethod)>(0x5B7360);
+	long &HealthBarColourLeft = *reinterpret_cast<decltype(&HealthBarColourLeft)>(0x47B5B0);
+	long &HealthBarColourRight = *reinterpret_cast<decltype(&HealthBarColourRight)>(0x47B5BA);
+	uchar &HealthBarHeight = *reinterpret_cast<decltype(&HealthBarHeight)>(0x47B5C3);
+	long &HealthBarWidth = *reinterpret_cast<decltype(&HealthBarWidth)>(0x47B5C5);
 
 	long S_LoadSave(long load_or_save, long mono)
 	{
@@ -44,7 +48,7 @@ namespace tomb4
 			if (lara.poisoned)
 				clr = 0xFFFFFF00;	//yellow
 			else
-				clr = 0xFFFF0000;	//red
+				clr = HealthBarColourLeft;
 
 			x = font_height >> 2;
 			y = x;
@@ -62,10 +66,10 @@ namespace tomb4
 			if (cust->Flags & trng::FBAR_SOUND_BAR_ANIM)
 			{
 				// chiamare slider
-				trng::CallSlide(x, y, 150, 12, pos, 0xFF000000, clr);
+				trng::CallSlide(x, y, HealthBarWidth, HealthBarHeight, pos, HealthBarColourRight, clr);
 			}
 			else
-				DoBar(x, y, 150, 12, pos, 0xFF000000, clr);
+				DoBar(x, y, HealthBarWidth, HealthBarHeight, pos, HealthBarColourRight, clr);
 		}
 	}
 

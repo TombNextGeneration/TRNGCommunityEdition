@@ -1,4 +1,5 @@
 #pragma once
+#include "../types.h"
 
 namespace tomb4
 {
@@ -6,6 +7,10 @@ namespace tomb4
 	extern long &SFXVolume;
 	extern long &SoundQuality;
 	extern long &ControlMethod;
+	extern long &HealthBarColourLeft;
+	extern long &HealthBarColourRight;
+	extern uchar &HealthBarHeight;
+	extern long &HealthBarWidth;
 
 	long S_LoadSave(long load_or_save, long mono);
 	long S_PauseMenu();
