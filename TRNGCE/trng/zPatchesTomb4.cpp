@@ -35,6 +35,7 @@
 #include "../tomb4/game/delstuff.h"
 #include "../tomb4/specific/function_stubs.h"
 #include "../tomb4/game/bike.h"
+#include "../tomb4/game/effect2.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
@@ -56,6 +57,8 @@ namespace trng {
 	int &SalvaCall = *reinterpret_cast<decltype(&SalvaCall)>(0x10679F6C);
 	DWORD &MyOutResult = *reinterpret_cast<decltype(&MyOutResult)>(0x10679F2C);
 	StrSalvaOldDebug (&VetSalvaOldDebug)[30] = *reinterpret_cast<decltype(&VetSalvaOldDebug)>(0x106699EC);
+	DWORD &LastReturnDX = *reinterpret_cast<decltype(&LastReturnDX)>(0x10679BF4);
+	DWORD &ColorSlide = *reinterpret_cast<decltype(&ColorSlide)>(0x106699BC);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -2525,7 +2528,7 @@ namespace trng {
 
 		// se e' stato modificata posizione item fare aggiornamento
 		if (TestMod) {
-					// aggiornare numero stanza
+			// aggiornare numero stanza
 			AggiornaPosizioneItem((short) ItemIndex, pItem->CordX, pItem->CordY, pItem->CordZ, 0);
 		}
 	}
@@ -3009,6 +3012,326 @@ namespace trng {
 		FormattaHeaderSavegame(&pHub->LaraHUB.pNGArray, &TotaleWords, false, true);
 		pHub->LaraHUB.NWords = TotaleWords;
 	}
+
+	// e' chiamata quando c'e' stato un errore directx.
+	// in pMexErrore c'e' il testo del messaggio
+	// salvare informazioni dell'errore nella variabile globale LastErrorDX
+
+	void AnalisiErroreDirectX(const char *pMexErrore, DWORD AdrRitorno)
+	{
+		sprintf_s(BufferLog, "ERROR DIRECT X: %s   CALLED BY: 0x%X", pMexErrore, AdrRitorno);
+		InviaLog(BufferLog);
+
+		strcpy_s(LastErrorDX, pMexErrore);
+		if (GlobTomb4.TestFirstTime == false) {
+			InviaLog(LastErrorDX);
+			GlobTomb4.TestFirstTime = true;
+		}
+	}
+
+	// viene chiamato dopo ultimo aggiornamento seguente a caricamwnto
+	// di savegame
+	// ossia viene chiamato SOLO dopo che e' stato caricato savegame
+	// attezione, questa procedura in realta' puo' essere chiamata
+	// dopo il caricamento standard  di un savegame, ma anche
+	// dopo il caricamnto di un livello basato su un trigger finish di un
+	// precedente livello.
+	// nel caso si tratti di un livello da finish caricare il miniheader ng
+	void InitDopoLoadGame(void)
+	{
+		int i;
+		StrTempRoomFlags *pTemp;
+		int IndiceRoom;
+		WORD Flags;
+		int NumeroCd;
+		StrBaseSalvaCords *pSalva;
+		StrSalvaCords *pAnim;
+		StrBassHandles *pBass;
+		StrItemTr4 *pItem;
+		DWORD ValoreFlag;
+		int Indice;
+		StrScriptImage *pImage;
+
+		if (MyGlobPrivate.TestNG_NoScript == false && GlobTomb4.TestHubLevel == true) {
+
+			pTemp = &GlobTomb4.TempRoomFlags;
+
+			// ripristinare status di flags di ogni room
+			for (i = 0; i < pTemp->TotRooms; i++) {
+				// prima eliminare tutti i flag modificabili
+				IndiceRoom = TrovaIndiceMainRoom(i);
+				if (IndiceRoom != -1 && pTemp->VetRoomFlags[i] != SCRIPT_IGNORE) {
+					Flags = GlobTomb4.pAdr->pVetRooms[IndiceRoom].FlagsRoom & ~0x1C35;
+					Flags |= pTemp->VetRoomFlags[i];
+					GlobTomb4.pAdr->pVetRooms[IndiceRoom].FlagsRoom = Flags;
+				}
+			}
+			pSalva = &GlobTomb4.BaseSalvaCoordinate;
+
+			// reimpostare coordinate di moveable mossi
+			for (i = 0; i < pSalva->TotSalvati; i++) {
+				Indice = pSalva->VetIndici[i];
+
+				pItem = &GlobTomb4.pAdr->pVetItems[Indice];
+				pAnim = &pSalva->VetSalvati[i];
+
+				pItem->OrientationH = pAnim->OrientingH;
+				pItem->OrientationV = pAnim->OrientingV;
+				ValoreFlag = (DWORD) pAnim->FlagInvisibile;
+				if (ValoreFlag) {
+					// era invisibile
+					pItem->FlagsMain |= 6;
+				} else {
+					// renderlo di nuovo visibile
+					pItem->FlagsMain &= ~4;
+				}
+
+				AggiornaPosizioneItem((short) Indice, pAnim->CordX, pAnim->CordY, pAnim->CordZ, -256);
+
+			}
+
+			RipristinaDatiStatici();
+			RipristinaTimerOggetti();
+		}
+
+		// se e' attiva patch per aprire tutte le porte o uccidere tutti
+		// i nemici farlo adesso
+		if (GlobTomb4.StatusNG & SNG_OPEN_ALL_DOORS) {
+			OpenAllDoors();
+			GlobTomb4.StatusNG &= ~SNG_OPEN_ALL_DOORS;
+		}
+
+		if (GlobTomb4.StatusNG & SNG_KILL_ALL_ENEMIES) {
+			// ucidere tutti i nemici
+
+			tomb4::KillActiveBaddies(NULL);
+		}
+
+		if (GlobTomb4.StatusNG & SNG_UPDATE_LARA_POS) {
+
+			AggiornaMoveLara();
+
+			GlobTomb4.StatusNG &= ~SNG_UPDATE_LARA_POS;
+		}
+
+		//rimozione tutte le patch speciali di trlm 2009
+		if (GlobTomb4.StatusNG & SNG_REMOVE_IMMORTAL_LARA) {
+			// rimuove immortalita' ed eventuale trasparenza
+			EsecuzioneFlipeffect(0, 93, 0, SCANF_DIRECT_CALL);
+
+			for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+				if (GlobTomb4.VetProgressiveActions[i].ActionType == AZ_SHOW_FLARE_LIGHT) {
+					GlobTomb4.VetProgressiveActions[i].ActionType = 0;
+				}
+
+			}
+			GlobTomb4.StatusNG &= ~SNG_REMOVE_IMMORTAL_LARA;
+		}
+
+		if (GlobTomb4.BaseBassHandles.TestPresente && GlobTomb4.TestAsSavegame) {
+
+			*GlobTomb4.pAdr->pTestAudioTrackLoop = 0;
+			// ripristina suoni cd
+			pBass = &GlobTomb4.BaseBassHandles;
+			pBass->OldCdLoop = *GlobTomb4.pAdr->pAudioTrackLoop;
+			// canale primario
+			NumeroCd = GlobTomb4.pDatiVariabili->CdLoopMain;
+			if (NumeroCd != -1) {
+				// ripristinare su canale 1 il suono NumeroCd
+				// loopato
+				pBass->CanaleNow = 0x40;
+				pBass->StartOffset = GlobTomb4.pDatiVariabili->Canale1StartPos;
+				tomb4::S_CDPlay(NumeroCd, 1);
+				// ora impostare posizione
+				*GlobTomb4.pAdr->pTestAudioTrackLoop = 1;
+			}
+
+			NumeroCd = GlobTomb4.pDatiVariabili->CdSingleMain;
+			if (NumeroCd != -1) {
+				pBass->CanaleNow = 0x40; // forzare canale 0
+				pBass->StartOffset = GlobTomb4.pDatiVariabili->Canale1StartPos;
+				tomb4::S_CDPlay(NumeroCd, 0);
+			}
+
+			// canale secondario
+			NumeroCd = GlobTomb4.pDatiVariabili->CdLoopSecondario;
+			if (NumeroCd != -1) {
+				// ripristinare su canale 2 il suono NumeroCd
+				// loopato
+				pBass->CanaleNow = 1;
+				pBass->StartOffset = GlobTomb4.pDatiVariabili->Canale2StartPos;
+				tomb4::S_CDPlay(NumeroCd, 1);
+			}
+
+			NumeroCd = GlobTomb4.pDatiVariabili->CdSingleSecondario;
+			if (NumeroCd != -1) {
+				pBass->CanaleNow = 1;
+				pBass->StartOffset = GlobTomb4.pDatiVariabili->Canale2StartPos;
+				tomb4::S_CDPlay(NumeroCd, 0);
+			}
+		}
+
+		if (GlobTomb4.pDatiVariabili->TestPopUp == 1 && GlobTomb4.TestHubLevel) {
+			// bisogna far riprartie immagine popup
+			i = GlobTomb4.pDatiVariabili->PopUpIndiceImageCmd;
+			i = GlobTomb4.pBaseScriptImages->VetID[i];
+			pImage = &GlobTomb4.pBaseScriptImages->VetImages[i];
+
+			AvviaPopUpImage(GlobTomb4.pDatiVariabili->PopUpIndiceImageCmd, pImage, GlobTomb4.pDatiVariabili->PopUpContatore);
+		}
+
+		VerificaSingleGlobalTrigger(GT_AFTER_RELOADING_VARIABLES, *GlobTomb4.pAdr->pLevelNow, false);
+
+		if (GlobTomb4.TestExtraKayak) {
+			i = *GlobTomb4.pAdr->pVehicleIndex;
+
+			if (i == -1) {
+				InviaLog("ERROR: it's present extra data for kayak but it's not set any current vehicle");
+			} else {
+				pItem = &GlobTomb4.pAdr->pVetItems[i];
+				if (pItem->SlotID != 492) {
+					InviaLog("ERROR: it's present extra data for kayak but lara is not on kayak");
+				} else {
+					memcpy(pItem->pZonaSavegame, &GlobTomb4.DatiExtraKayak[0], 0x2e);
+				}
+			}
+		}
+
+		ImpostaTempoUltimoComando();
+	}
+
+	void RipristinaDatiStatici(void)
+	{
+		StrSalvaStatic *pRec;
+		int i;
+		int Tot;
+		StrMeshInfo *pMesh;
+		StrRoomTr4 *pRoom;
+
+		Tot = GlobTomb4.BaseSalvaStatic.TotStatics;
+
+		for (i = 0; i < Tot; i++) {
+			pRec = &GlobTomb4.BaseSalvaStatic.VetStatics[i];
+
+			pRoom = &GlobTomb4.pAdr->pVetRooms[pRec->Indici.IndiceRoom];
+			pMesh = &pRoom->Ptr_StaticMesh[pRec->Indici.IndiceStatic];
+
+			pMesh->OCB = pRec->Flags;
+			pMesh->Orient = pRec->Orient;
+			pMesh->x = pRec->OrgX;
+			pMesh->y = pRec->OrgY;
+			pMesh->z = pRec->OrgZ;
+			pMesh->Color = pRec->Colore;
+		}
+	}
+
+	// ripristina i valori timer di oggetti vari
+	void RipristinaTimerOggetti(void)
+	{
+		StrItemTr4 *pItem;
+		int i;
+		StrTimerOggetti *pTimer;
+		WORD *pValOscilla;
+		DWORD *pQuindicesimi;
+		StrBaseTimerOggetti *pBase;
+
+		pValOscilla = &tomb4::GlobalCounter;
+		pQuindicesimi = (DWORD *) &tomb4::wibble;
+		pBase = &GlobTomb4.BaseTimerOggetti;
+
+		if (pBase->TotOggetti == 0)
+			return;
+
+		*pValOscilla = pBase->Header.ValOscilla;
+		*pQuindicesimi = pBase->Header.ContaQuindicesimi;
+
+		for (i = 0; i < pBase->TotOggetti; i++) {
+
+			pTimer = &GlobTomb4.BaseTimerOggetti.VetOggetti[i];
+
+			pItem = &GlobTomb4.pAdr->pVetItems[pTimer->ItemIndex];
+
+			pItem->Reserved_34 = pTimer->Campo34;
+			pItem->Reserved_36 = pTimer->Campo36;
+			pItem->Reserved_38 = pTimer->Campo38;
+			pItem->Reserved_3A = pTimer->Campo3A;
+		}
+	}
+
+	// aggiorna lara per nuova posizione attuale x,y,z calcolando la nuova
+	// stanza mentre in Lara->Room  c'e' il vecchio numero di stanza
+	void AggiornaMoveLara(void)
+	{
+		BYTE NewRoom;
+		StrItemTr4 *pLara;
+
+		NewRoom = TrovaRoomXYZ((StrMovePosition*) &GlobTomb4.pAdr->pLara->CordX);
+
+		// ora fare i calcoli per scoprire cambio di stanza e aggiornare
+		// come se fosse
+		pLara = GlobTomb4.pAdr->pLara;
+
+		AggiornaPositioneLara(pLara->CordX, pLara->CordY, pLara->CordZ, NewRoom, false);
+	}
+
+	// restituisce il numero di stanza che corrisponde a X,y,z di pPos
+	BYTE TrovaRoomXYZ(StrMovePosition *pPos)
+	{
+		static WORD *pRoomNumber = (WORD *) &tomb4::IsRoomOutsideNo;
+
+		tomb4::IsRoomOutside(pPos->RelX, pPos->RelY, pPos->RelZ);
+		return (BYTE) *pRoomNumber;
+	}
+
+	// chiamata durante WinClose, viene usata per ripristinare valori di
+	// settings prima che vengano salvate nel registro
+	void RipristinaSettings(void)
+	{
+		static BYTE *pSetting_BumpMap = (BYTE *) &tomb4::App.BumpMapping;
+		static int *pSetting_WindowX = (int*) &tomb4::App.dx.rScreen.left;
+		static int *pSetting_WindowY = (int*) &tomb4::App.dx.rScreen.top;
+		static int *FlagsSettingRegistro = (int*) &tomb4::App.StartFlags;
+		static int *pSetting_VMod = (int*) &tomb4::App.DXInfo.nDisplayMode;
+		static BYTE *pFlagsWindow = (BYTE *) &tomb4::App.dx.Flags;
+
+		StrSalvaSettings *pDef;
+		int n;
+
+		if (GlobTomb4.TestSetup)
+			return;
+
+		*pSetting_BumpMap = GlobTomb4.DefSettings.DefBumpMapping;
+		*GlobTomb4.pAdr->pSetting_Volumetric = GlobTomb4.DefSettings.DefVolumetricFX;
+
+		pDef = &GlobTomb4.DefSettings;
+
+		if (pDef->TestCambiate) {
+			*FlagsSettingRegistro = pDef->FlagsSettingRegistro;
+			*pSetting_WindowX = pDef->Setting_WindowX;
+			*pSetting_WindowY = pDef->Setting_WindowY;
+			*pSetting_VMod = pDef->Setting_VMode;
+			n = *pFlagsWindow;
+			n &= ~3;
+			n |= (pDef->FlagsSettingRegistro & 3);
+			*pFlagsWindow = (BYTE) n;
+			pDef->TestCambiate = false;
+		}
+	}
+
+	// rilsciae eventali plugins presenti
+	void LiberaPlugins(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// procedura che riceve in ecx il puntatore a stack dove ci sono tutti
+	// gli argomenti gia' pronti.
+	// aggiunge all'inizio quello speciale per doslide
+	void CallSlide(int CordX, int CordY, int SizeX, int SizeY, int Percentuale, DWORD Colore, DWORD ColoreFade)
+	{
+		// ora mettere tutti gli altri argomnti
+		tomb4::DoSlider(CordX, CordY, SizeX, SizeY, Percentuale, Colore, ColoreFade, ColorSlide);
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -3072,4 +3395,13 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100B7DDA, (unsigned int)trng::VerificaTargetDetector, replace);
 	ProcessInject(0x100CC9DD, (unsigned int)trng::CalcolaFPS, replace);
 	ProcessInject(0x100CD9A4, (unsigned int)trng::SalvataggioHubNg, replace);
+	ProcessInject(0x100B08A7, (unsigned int)trng::AnalisiErroreDirectX, replace);
+	ProcessInject(0x100CB97E, (unsigned int)trng::InitDopoLoadGame, replace);
+	ProcessInject(0x100CB58D, (unsigned int)trng::RipristinaDatiStatici, replace);
+	ProcessInject(0x100CB650, (unsigned int)trng::RipristinaTimerOggetti, replace);
+	ProcessInject(0x100CB7E9, (unsigned int)trng::AggiornaMoveLara, replace);
+	ProcessInject(0x100CB7C0, (unsigned int)trng::TrovaRoomXYZ, replace);
+	ProcessInject(0x100BDF5D, (unsigned int)trng::RipristinaSettings, replace);
+	ProcessInject(0x100D0784, (unsigned int)trng::LiberaPlugins, false);
+//	ProcessInject(0x100D3605, (unsigned int)trng::CallSlide, replace);
 }

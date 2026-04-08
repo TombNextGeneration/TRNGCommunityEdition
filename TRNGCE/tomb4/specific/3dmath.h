@@ -10,6 +10,7 @@ namespace tomb4
 	extern short &phd_winxmax;
 	extern float &FogEnd;
 	extern short (&rcossin_tbl)[8192];
+	extern short &phd_winymax;
 
 	ulong phd_sqrt(ulong num);
 	void phd_GetVectorAngles(long x, long y, long z, short* angles);

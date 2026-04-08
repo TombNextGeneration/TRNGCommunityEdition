@@ -19,6 +19,7 @@
 #include "../../trng/zPatchesTomb4.h"
 #include "../../flep/patches/vehicles.h"
 #include "../../trng/zRoomEditor.h"
+#include "../../trng/Oggetti.h"
 
 namespace tomb4
 {
@@ -550,6 +551,27 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void sgRestoreGame()
+	{
+		OpenSaveGame(savegame.CurrentLevel & 0x7F, 0);
+		GameTimer = savegame.Game.Timer;
+		gfCurrentLevel = savegame.CurrentLevel & 0x7F;
+		RestoreLevelData(1);
+		RestoreLaraData(1);
+		trng::InitDopoLoadGame();
+		trng::TestAppenaAvviatoGame = 1;
+	}
+
+	void RestoreLevelData(long FullSave)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void RestoreLaraData(long FullSave)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Savegame(bool replace)
@@ -563,4 +585,7 @@ void Inject_Savegame(bool replace)
 	ProcessInject(0x459740, (unsigned int)tomb4::OpenSaveGame, false);
 	ProcessInject(0x459590, (unsigned int)tomb4::SaveLaraData, false);
 	ProcessInject(0x459840, (unsigned int)tomb4::SaveHubData, false);
+	ProcessInject(0x45A400, (unsigned int)tomb4::sgRestoreGame, replace);
+	ProcessInject(0x45A5E0, (unsigned int)tomb4::RestoreLevelData, false);
+	ProcessInject(0x45A440, (unsigned int)tomb4::RestoreLaraData, false);
 }

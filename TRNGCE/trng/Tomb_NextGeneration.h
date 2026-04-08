@@ -293,6 +293,9 @@ namespace trng {
 	short *CreaDatiDiari(WORD *pTotShorts);
 	BYTE *PreparaDatiKayak(void);
 	StrDatiVariabili * EstraiDatiVariabili(bool TestSoloLara);
+	void AvviaPopUpImage(WORD IdImageCmd, StrScriptImage *pImage, WORD Contatore);
+	RECT *CalcolaMicroUnits(RECT *pZona);
+	void PreparaEffetti(StrScriptImage *pImage, RECT *pFine, bool *pTestRestore);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

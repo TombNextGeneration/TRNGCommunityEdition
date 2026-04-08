@@ -62,6 +62,11 @@ namespace tomb4
 		}
 	}
 
+	void* game_malloc(long size)
+	{
+		return game_malloc(size, 0);
+	}
+
 	void S_CDLoop()
 	{
 
@@ -75,6 +80,6 @@ void Inject_FunctionStubs(bool replace)
 	ProcessInject(0x48EB70, (unsigned int)tomb4::GetRandomDraw, replace);
 	ProcessInject(0x48EBA0, (unsigned int)tomb4::SeedRandomDraw, replace);
 	ProcessInject(0x499EC0, (unsigned int)tomb4::Log, false);
-	ProcessInject(0x48EBF0, (unsigned int)tomb4::game_malloc, replace);
+//	ProcessInject(0x48EBF0, (unsigned int)tomb4::game_malloc, replace);
 //	ProcessInject(0x425D20, (unsigned int)tomb4::S_CDLoop, replace);
 }

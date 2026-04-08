@@ -1,4 +1,5 @@
 #pragma once
+#include "../types.h"
 
 namespace tomb4
 {
@@ -7,6 +8,7 @@ namespace tomb4
 	extern float &small_font_scale;
 
 	void UpdatePulseColour();
+	void PrintString(ushort x, ushort y, uchar col, const char* string, ushort flags);
 }
 
 void Inject_Text(bool replace);

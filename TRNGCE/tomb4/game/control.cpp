@@ -82,6 +82,7 @@ namespace tomb4
 	char &PoisonFlag = *reinterpret_cast<decltype(&PoisonFlag)>(0x7FD0F4);
 	short* &trigger_index = *reinterpret_cast<decltype(&trigger_index)>(0x7FE128);
 	short &FXType = *reinterpret_cast<decltype(&FXType)>(0x7FE6C0);
+	short &IsRoomOutsideNo = *reinterpret_cast<decltype(&IsRoomOutsideNo)>(0x7FE6C2);
 
 	// consentire uso di mirino laser per arpione sott'acqua
 	// chiamata con jmp
@@ -693,6 +694,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long IsRoomOutside(long x, long y, long z)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -714,4 +720,5 @@ void Inject_Control(bool replace)
 	ProcessInject(0x44AD20, (unsigned int)tomb4::GetCeiling, false);
 	ProcessInject(0x449A50, (unsigned int)tomb4::GetWaterHeight, false);
 	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
+	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
 }

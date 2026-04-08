@@ -10,6 +10,7 @@ namespace tomb4
 	short &phd_winxmax = *reinterpret_cast<decltype(&phd_winxmax)>(0x753BEC);
 	float &FogEnd = *reinterpret_cast<decltype(&FogEnd)>(0x4B249C);
 	short (&rcossin_tbl)[8192] = *reinterpret_cast<decltype(&rcossin_tbl)>(0x4B34D0);
+	short &phd_winymax = *reinterpret_cast<decltype(&phd_winymax)>(0x753C10);
 
 	ulong phd_sqrt(ulong num)
 	{
