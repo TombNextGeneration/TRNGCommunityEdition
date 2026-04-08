@@ -13,7 +13,8 @@ namespace tomb4
 	long GetRandomDraw();
 	void SeedRandomDraw(long seed);
 	void Log(ulong type, const char* s, ...);
-	void* game_malloc(long size, long type = 0);
+	void* game_malloc(long size, long type);
+	void* game_malloc(long size);
 	void S_CDLoop();
 }
 
