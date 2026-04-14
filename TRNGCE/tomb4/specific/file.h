@@ -11,6 +11,7 @@ namespace tomb4
 	extern long &number_cameras;
 	extern short &nAIObjects;
 	inline struct { volatile long active; volatile long ended; ulong handle; ulong address; } &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
+	extern AIOBJECT* &AIObjects;
 
 	bool LoadObjects();
 	bool LoadCinematic();

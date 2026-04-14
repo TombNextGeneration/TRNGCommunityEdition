@@ -24,9 +24,15 @@ namespace tomb4
 
 		return result;
 	}
+
+	void SetFogColor(long r, long g, long b)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_FunctionTable(bool replace)
 {
 	ProcessInject(0x474CE0, (unsigned int)tomb4::HWBeginScene, replace);
+	ProcessInject(0x475090, (unsigned int)tomb4::SetFogColor, false);
 }

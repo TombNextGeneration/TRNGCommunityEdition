@@ -1,4 +1,5 @@
 #include "zPatchesTomb4.h"
+#include <cmath>
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
 #include "../tomb4/game/control.h"
@@ -36,6 +37,10 @@
 #include "../tomb4/specific/function_stubs.h"
 #include "../tomb4/game/bike.h"
 #include "../tomb4/game/effect2.h"
+#include "../tomb4/game/laramisc.h"
+#include "../tomb4/specific/gamemain.h"
+#include "../tomb4/game/croc.h"
+#include "../tomb4/specific/function_table.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
@@ -59,6 +64,9 @@ namespace trng {
 	StrSalvaOldDebug (&VetSalvaOldDebug)[30] = *reinterpret_cast<decltype(&VetSalvaOldDebug)>(0x106699EC);
 	DWORD &LastReturnDX = *reinterpret_cast<decltype(&LastReturnDX)>(0x10679BF4);
 	DWORD &ColorSlide = *reinterpret_cast<decltype(&ColorSlide)>(0x106699BC);
+	bool &TestGiaInitDetector = *reinterpret_cast<decltype(&TestGiaInitDetector)>(0x10682050);
+	// vettori con costanti usate per allineare decoder e keypad  a diverse risoluzioni
+	StrAlignObjData (&VetDataAlign)[18] = *reinterpret_cast<decltype(&VetDataAlign)>(0x10169EE8);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -3332,6 +3340,1327 @@ namespace trng {
 		// ora mettere tutti gli altri argomnti
 		tomb4::DoSlider(CordX, CordY, SizeX, SizeY, Percentuale, Colore, ColoreFade, ColorSlide);
 	}
+
+	// chiamata da SetupGame() che e' chiamata dopo che e' stato
+	// completato il caricamento di un livello (lara e' gia stata inizializzata)
+	void InizializzaStartLivello(void)
+	{
+		int i;
+		bool TestHeader_HUB;
+		int j;
+		short *pSchermoY;
+		int Valore;
+		WORD Slot;
+		int n;
+		StrExtractNG TempHeaderNG;
+
+		pSchermoY = (short *) &tomb4::phd_winheight;
+		GlobTomb4.BaseSalvaCoordinate.TotSalvati = 0;
+
+		GlobTomb4.pBaseCutscene->BaseSaveActors.TotActors = 0;
+
+		GlobTomb4.pDemoTitle->LastInputTime = 0x7fffffff;
+
+		if (GlobTomb4.pDemoTitle->TestLoadAndPlay == false) {
+			TrovaDemoNumeri();
+			n = 0;
+			for (i = 0; i < GlobTomb4.DemoOnDisk; i++) {
+				if (GlobTomb4.DemoOnDiskArray[i] > n) {
+					n = GlobTomb4.DemoOnDiskArray[i];
+				}
+			}
+
+			n++;
+
+			GlobTomb4.DemoNumberLoaded = n;
+			// questo e' nuovo per cui azzerarlo
+			GlobTomb4.pBaseDemo->TotFrames = 0;
+			GlobTomb4.pBaseDemo->Status = RECF_STOP;
+		} else {
+			GlobTomb4.DemoNumberLoaded = GlobTomb4.pDemoTitle->LastIdPlayed;
+		}
+
+		GlobTomb4.BaseFloodRooms.TotFloods = 0;
+		GlobTomb4.pDiagnostica->TotTiming = 0;
+		GlobTomb4.TestDummyBlockForward = false;
+
+		// aggiorna valore di topy per detector di inventario
+		InizializzaAdrGlobali();
+		// aggiorna valore di topy per detector di inventario
+		if (TestGiaInitDetector == false) {
+			InitCordMieiOggetti();
+			TestGiaInitDetector = true;
+		}
+		MySwap.TotMeshSwap = 0;
+
+		GlobTomb4.ItemIndexUsedByLara = -1;
+		GlobTomb4.BaseKayak.TestMistIniziata = false;
+		Valore = (*pSchermoY * -74) / 768;
+		VetDetectorLittle[0] = (short) Valore;
+		AzzeraDatiMediaPoint();
+		GlobTomb4.TestDisableCombatCamera = false;
+
+		GlobTomb4.TestFreezeAll = false;
+		GlobTomb4.DebugModeCounter = 0;
+
+		GlobTomb4.SlowMotionDelay = 0;
+
+		GlobTomb4.BoatSinking.TestAffonda = false;
+		GlobTomb4.BoatSinking.TestGorgo = false;
+
+		//TabellaCaratteriLog();
+		// LogVettoreSlot();
+		// imposta patch per veicolo extra
+		// se c'e' qualcosa in slot di motorbike_lara usa quello
+		// altrimenti usa quello standard vehicleextra
+		if (GlobTomb4.pAdr->pVetSlot[469].IndexFirstAnim == 0) {
+			GlobTomb4.pIndiceFirstAnimBike = &GlobTomb4.pAdr->pVetSlot[33].IndexFirstAnim;
+		} else {
+
+			GlobTomb4.pIndiceFirstAnimBike = &GlobTomb4.pAdr->pVetSlot[469].IndexFirstAnim;
+		}
+
+		for (i = 0; i < 4; i++) {
+			GlobTomb4.CheatNG.FrameCount = 0;
+			GlobTomb4.CheatNG.LastChars[i] = 0;
+		}
+
+		GlobTomb4.BaseVeicoli.TotVeicoli = 0;
+		// memorizzare gli indici dei veicoli
+		for (i = 0; i < *GlobTomb4.pAdr->pTotItems; i++) {
+			Slot = GlobTomb4.pAdr->pVetItems[i].SlotID;
+
+			if (Slot == 32 || Slot == 31) {
+				// se jeep o sidecar
+				j = GlobTomb4.BaseVeicoli.TotVeicoli;
+				GlobTomb4.BaseVeicoli.VetIndiciVeicoli[j] = i;
+				GlobTomb4.BaseVeicoli.TotVeicoli++;
+			}
+
+		}
+		GlobTomb4.ItemIndexLastMoved = -1;
+		GlobTomb4.BasePushables.TestCadutaPushable = false;
+		for (i = 0; i < MAX_ITEMS; i++)
+			GlobTomb4.BasePushables.VetCollisionePushable[i] = CP_NULL;
+
+		InitRollBoats();
+		GlobTomb4.HangCounter = 0;
+		GlobTomb4.pDiagnostica->TotSFXMancanti = 0;
+		GlobTomb4.TotOldFlipEffects = 0;
+		GlobTomb4.TriggerGroupInProgress = -1;
+		GlobTomb4.BaseTimerOggetti.TotOggetti = 0;
+		GlobTomb4.BaseFreeze.TotFreeze = 0;
+		GlobTomb4.TotItemNoCollisions = 0;
+		*GlobTomb4.pAdr->pTestDisableFogBulbs = 0;
+		GlobTomb4.TestSetCamera = false;
+
+		ResettaModificaCodice();
+
+		for (i = 0; i < 128; i++)
+			GlobTomb4.BaseFMV.VetFmvEseguiti[i] = 0;
+
+		// inizializza variabili trng sia globali che locali
+		// se poi ci son odeglihub verranno riempiti in questa procedura
+		memset(GlobTomb4.pBaseVariableTRNG, 0, sizeof(StrBaseVarAll));
+
+		// inizializza tomb4
+		GlobTomb4.TestSuspendObjectShowing = false;
+		GlobTomb4.BaseFPS.LastIndice = -1;
+		GlobTomb4.BaseFPS.LastFps = 30;
+		GlobTomb4.BaseFPS.IndiceNow = 0;
+		GlobTomb4.BaseFPS.FPS = 30;
+		GlobTomb4.BaseFPS.TotCicli = 0;
+
+		GlobTomb4.ParallelBar.TestMostraBarra = false;
+		InizializzaSuoni();
+		GestioneEquipment();
+		GlobTomb4.BaseAdjustAnim.TestAdjust = false;
+		GlobTomb4.BasePushables.BaseClimbPushable.TotPush = 0;
+		GlobTomb4.TotProgressiveActions = 0;
+		GlobTomb4.TotOldActions = 0;
+		GlobTomb4.TotProgressiveActions = 0;
+		GlobTomb4.TotScanFlipEffects = 0;
+		GlobTomb4.TotScanActions = 0;
+		GlobTomb4.TotOldConditions = 0;
+		GlobTomb4.KeysToStop = 0;
+		GlobTomb4.KeysToSend = 0;
+		GlobTomb4.TestNoDamageRollingBallIndex = -1;
+		GlobTomb4.TestChangeTransparencyLara = false;
+		GlobTomb4.StatusNG = SNG_NONE;
+		GlobTomb4.TestDisableFeatures = 0;
+		GlobTomb4.pBaseOrganizer->CounterGame = 0;
+		GlobTomb4.BaseSalvaCoordinate.TotSalvati = 0;
+		GlobTomb4.BasePushables.IndicePushSpinto = -1;
+		GlobTomb4.ScrollingEndIndex = -1;
+		GlobTomb4.ScrollingLastIndex = -1;
+		// inizalizza di nuovo per diagnostica
+		GlobTomb4.pDiagnostica->TestCaricato = false;
+		GlobTomb4.pDiagnostica->LastTime = 0;
+		GlobTomb4.pDiagnostica->TestPrimaEsecuzione = false;
+		GlobTomb4.pDiagnostica->TotRecord = 0;
+		GlobTomb4.TotDisabledMirrors = 0;
+		GlobTomb4.BaseMeshSwap.TotMeshSwap = 0;
+		GlobTomb4.BaseSalvaStatic.TotStatics = 0;
+		GlobTomb4.TestExtraKayak = false;
+		InizializzaFlipMaps();
+
+		// scoprire se tra le barche da rollare c'e' rubberboat o motorboat
+
+		SalvaDimensioneSchermo();
+		TestHeader_HUB = false;
+		GlobTomb4.TestHubLara = false;
+		GlobTomb4.TestHubLevel = false;
+
+		GlobTomb4.TestAsSavegame = false;
+
+		RiempiDatiVariabili();
+
+		// verificare se c'e' da cricare hub per lara
+		if (GlobTomb4.TestSavegameConHeaderNG == false && GlobTomb4.BaseHub_NG.LaraHUB.pNGArray) {
+			// (GLOBAL)
+			// non c'era savegame ufficiale, ma c'e' header hub di lara
+			// scandrlo adesso
+			sprintf_s(BufferLog, "Found HUB NG Lara for level = %d", *GlobTomb4.pAdr->pLevelNow);
+			InviaLog(BufferLog);
+			ScansioneSavegameHeader(&GlobTomb4.BaseHub_NG.LaraHUB, false);
+
+			GlobTomb4.TestHubLara = true;
+		}
+
+		// nel caso NON ci sia stato un savegame, provare a vedere
+		// se c'e' una sezione per questo livello dell'header HUB ng
+		if (GlobTomb4.TestSavegameConHeaderNG == false) {
+			i = TrovaSezioneHeader_Hub();
+			// (LOCAL)
+			if (i != -1) {
+				sprintf_s(BufferLog, "Found HUB Data Level NG for level = %d", *GlobTomb4.pAdr->pLevelNow);
+				InviaLog(BufferLog);
+
+				TempHeaderNG.pNGArray = GlobTomb4.BaseHub_NG.VetNG[i].pVetWords;
+				TempHeaderNG.NWords = GlobTomb4.BaseHub_NG.VetNG[i].TotWords;
+				sprintf_s(BufferLog, "Scanning NG HUB for Level %d", GlobTomb4.BaseHub_NG.VetNG[i].NumeroLivello);
+				InviaLog(BufferLog);
+
+				ScansioneSavegameHeader(&TempHeaderNG, false);
+
+				// Setta alcuni globali dopo caricamento savegame
+				RestoreAfterSavegame();
+				GlobTomb4.TestAsSavegame = true;
+				GlobTomb4.TestHubLevel = true;
+			}
+		}
+
+		if (GlobTomb4.TestHubLara || GlobTomb4.TestHubLevel) {
+			// adesso fare fusione tra dativariabili di hublivello
+			// (che saranno SOLO relativi a livello)
+			// piu' dati hub di lara
+			UnisciDatiVariabili();
+			ImpostaDatiVariabili(GlobTomb4.pDatiVariabili);
+		}
+
+		if (GlobTomb4.TestSavegameConHeaderNG == true) {
+			GlobTomb4.TestAsSavegame = true;
+			GlobTomb4.TestHubLara = true;
+			GlobTomb4.TestHubLevel = true;
+
+			InviaLog("Scanning extra ng header for savegame loading");
+			ScansioneSavegameHeader(&GlobTomb4.HeaderNG_Savegame, true);
+
+			GlobTomb4.TestSavegameConHeaderNG = false;
+
+			FreeMine(GlobTomb4.HeaderNG_Savegame.pNGArray);
+			GlobTomb4.HeaderNG_Savegame.pNGArray = NULL;
+
+			// Setta alcuni globali dopo caricamento savegame
+			RestoreAfterSavegame();
+		}
+
+		GlobTomb4.StartFromGame = GlobTomb4.pBaseOrganizer->CounterGame;
+
+		// supporto di patch per invulnerabilita' di trlm 2009
+		if (GlobTomb4.StatusNG & SNG_IMMORTAL_LARA) {
+			// creare azione di lara immortale
+			EsecuzioneFlipeffect(0, 91, 0x500, SCANF_DIRECT_CALL);
+		}
+
+		if (GlobTomb4.StatusNG & SNG_PATCH_LARA_STAR) {
+			CreaLuceFlareForLara();
+		}
+
+		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) != 0 && (GlobTomb4.pDiagnostica->DgxExtra & EDGX_SWAP_VIEW) != 0) {
+			// attivare il set camera
+			GlobTomb4.IndiceSetCamera = MAX_SET_CAMERA - 1;
+			GlobTomb4.TestSetCamera = true;
+		}
+
+		AggiornaBinocoloSuper();
+	}
+
+	// imposta in globtomb4 i valori che richiedevano di attendere il caricamento del livello
+	// poiche' sono dei double pointer
+	void InizializzaAdrGlobali(void)
+	{
+		// vettori e strutture
+		GlobTomb4.pAdr->pVetItems = (StrItemTr4*) tomb4::items;
+		GlobTomb4.pAdr->pVetRooms = (StrRoomTr4*) tomb4::room;
+		GlobTomb4.pAdr->pVetAnimations = (StrAnimationTr4*) tomb4::anims;
+		GlobTomb4.pAdr->pVetAIData = (StrAIDataTr4*) tomb4::AIObjects;
+		GlobTomb4.pAdr->pLara = (StrItemTr4*) tomb4::lara_item;
+		GlobTomb4.pAdr->pCollisionLara = (StrCollisionLara *) tomb4::lara_coll;
+		GlobTomb4.pAdr->VetMeshPointer = (StrMeshTr4 **) tomb4::meshes;
+		GlobTomb4.pAdr->pScriptMainFlags = (BYTE *) tomb4::Gameflow;
+		GlobTomb4.pAdr->pScriptDat = (char*) tomb4::gfScriptFile;
+		GlobTomb4.pAdr->Camera.pVetCamera = (StrCameraTr4 *) tomb4::camera.fixed;
+		GlobTomb4.pAdr->pVetBoxZones = (StrBoxZones*) tomb4::boxes;
+		GlobTomb4.pAdr->BaseHandles.hThread = (HANDLE) tomb4::MainThread.handle;
+		// inizialziza alcni valori
+		*GlobTomb4.pAdr->pInclinationType = 0;
+	}
+
+	void InitCordMieiOggetti(void)
+	{
+		StrCordDetectors *pCord;
+		int *pScreenY; // Screen_SalvaSizeY
+		int *pScreenX; // Screen_SalvaSizeX
+		int SizeX, SizeY;
+		float Rapporto;
+		int i;
+		int TotIndici;
+		int VetIndici[50];
+		float VetDifRapporto[50];
+		int VetDifSize[50];
+		float DifRapporto;
+		int FattoreSize;
+		int FattoreSize2;
+		int Indice;
+		int DifMin;
+
+		pScreenY = (int *) &tomb4::App.dx.dwRenderHeight;
+		pScreenX = (int *) &tomb4::App.dx.dwRenderWidth;
+		pCord = &GlobTomb4.BaseCordDetector;
+
+		// inizializzare valori di default che non vengono modificati
+		pCord->SizeTestoX = 128.0f;
+		pCord->SizeTestoY = 170.6666666f;
+		pCord->BaseVLineX = 2624;
+		pCord->GapVLineX = 112;
+		pCord->GapVLineY = 149.333333f;
+		pCord->BaseTextX = 736;
+		pCord->KeyPadX = 11056;
+
+		pCord->IndiceAttivo = 0;
+
+		SizeX = *pScreenX;
+		SizeY = *pScreenY;
+
+		// scoprire quali dati usare.
+		// usare come primo criterio il rapproto di schermo (sizex/sizey)
+		//e a parita' di rapporto, la risoluzione piu' simile.
+		Rapporto = (float) SizeX / (float) SizeY;
+		FattoreSize = SizeX + SizeY;
+		i = 0;
+		TotIndici = 0;
+		VetDifRapporto[0] = 1000000.0f;
+		while (VetDataAlign[i].ScreenX != 0) {
+			DifRapporto = (float) fabs(Rapporto - VetDataAlign[i].RapportoScreen);
+
+			if (TotIndici == 0 || DifRapporto <= VetDifRapporto[0]) {
+				// memorizzarlo
+				if (DifRapporto < VetDifRapporto[0])
+					TotIndici = 0;
+
+				VetDifRapporto[TotIndici] = DifRapporto;
+				VetIndici[TotIndici] = i;
+				// calcolare differenza tra le due risoluzioni
+				FattoreSize2 = VetDataAlign[i].ScreenX + VetDataAlign[i].ScreenY;
+
+				VetDifSize[TotIndici] = abs(FattoreSize2 - FattoreSize);
+				TotIndici++;
+			}
+			i++;
+		}
+		// ora scegliere quello con la differenza di risoluzione minore
+		Indice = -1;
+		DifMin = 1000000;
+
+		for (i = 0; i < TotIndici; i++) {
+			if (VetDifSize[i] < DifMin) {
+				DifMin = VetDifSize[i];
+				Indice = i;
+			}
+		}
+		if (Indice == -1)
+			Indice = 2;
+		else
+			Indice = VetIndici[Indice];
+
+		// ora usare i dati di Indice per i valori di allineamewnto
+		pCord->BaseTargetY = VetDataAlign[Indice].BaseTargetY;
+		pCord->BaseTextY = VetDataAlign[Indice].BaseTextY;
+		pCord->BaseVLineY = VetDataAlign[Indice].BaseVLineY;
+		pCord->CompassLineY = VetDataAlign[Indice].CompassLineY;
+		pCord->DetOrgY = VetDataAlign[Indice].DetOrgY;
+		pCord->KeyPadTextY = VetDataAlign[Indice].KeyPadTextY;
+		pCord->KeyPadY = VetDataAlign[Indice].KeyPadY;
+	}
+
+	// legge dati in basecustomize.baserollboat
+	// e trova gli indici item corrispondenti e li mette in globtomb4.baserollboat
+
+	void InitRollBoats(void)
+	{
+		StrRollBoatScript *pRollScript;
+		StrRollBoat *pRollItem;
+		int i;
+		int j;
+		WORD N;
+
+		N = 0;
+		GlobTomb4.BaseRollBoats.TestMotorBoat = false;
+		GlobTomb4.BaseRollBoats.TestRubberBoat = false;
+
+		for (i = 0; i < GlobTomb4.pBaseCustomize->BaseRollScript.TotRollBoatScript; i++) {
+			pRollScript = &GlobTomb4.pBaseCustomize->BaseRollScript.VetRollBoatsScript[i];
+			if (pRollScript->Slot == 465) {
+				// MOTOR_BOAT
+				GlobTomb4.BaseRollBoats.TestMotorBoat = true;
+			}
+
+			if (pRollScript->Slot == 467) {
+				// RUBBER_BOAT
+				GlobTomb4.BaseRollBoats.TestRubberBoat = true;
+			}
+
+			// ora trovare tutti gli item con lo slot fornito
+			for (j = 0; j < *GlobTomb4.pAdr->pTotItems; j++) {
+				if (GlobTomb4.pAdr->pVetItems[j].SlotID == pRollScript->Slot) {
+
+					// trovato
+					pRollItem = &GlobTomb4.BaseRollBoats.VetRollBoats[N++];
+
+					pRollItem->Indice = (short) j;
+					pRollItem->Flags = pRollScript->Flags;
+					pRollItem->SoundSfx = pRollScript->SoundSfx;
+					pRollItem->SpeedPitch = pRollScript->SpeedPitch;
+					pRollItem->SpeedSwing = pRollScript->SpeedSwing;
+					pRollItem->OldCordX = 0;
+					pRollItem->OldCordZ = 0;
+					pRollItem->DerivaIncX = 0;
+					pRollItem->DerivaIncZ = 0;
+					pRollItem->DerivaTotCicli = 0;
+
+					if (N >= MAX_ROLL_BOATS) {
+						sprintf_s(BufferLog, "ERROR: reached max number for Roll Boat items. Max=%d", MAX_ROLL_BOATS);
+						InviaLog(BufferLog);
+						GlobTomb4.BaseRollBoats.TotRollBoats = N;
+						return;
+					}
+				}
+			}
+		}
+
+		GlobTomb4.BaseRollBoats.TotRollBoats = N;
+	}
+
+	// ripristina valori di default per parti di codice che potrebbero
+	// essere state modifciate da precedente livello
+	// in funzione InitModificaCodice
+	void ResettaModificaCodice(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// a seconda se il file tr4 appena caricato usa una mappa dei suoni
+	// globale o allargata imposta il numero dei suoni di alcuni nuovi
+	// oggetti
+	void InizializzaSuoni(void)
+	{
+		StrSuoni *pSuoni;
+
+		pSuoni = &GlobTomb4.Suoni;
+
+		if (GlobTomb4.FlagsLevelTr4 & FLT_EXTRA_SOUND_TABLE) {
+			// suoni oggetti per mappa suoni globale
+			// --- motor boat
+			pSuoni->MotorBoatRun = 0x41f;
+			pSuoni->MotorBoatFolle = 0x41d;  // tr2=195
+
+			// ---- rubber boat
+			pSuoni->RubberBoatRun = 0x591;
+			pSuoni->RubberBoatFolle = 0x58f;
+
+			// ----- elevator
+			pSuoni->ElevatorMove = 0x172;
+			pSuoni->ElevatorStop = 0x173;
+			// ---- detector
+			pSuoni->DetectorBeep = 0x174;
+			// ---- suoni rain
+			pSuoni->Rain[0] = 0x175;
+			pSuoni->Rain[1] = 0x176;
+			pSuoni->Rain[2] = 0x177;
+			pSuoni->Rain[3] = 0x178;  // WATERFALL_LOOP  (una cascata proprio)
+
+		} else {
+			pSuoni->MotorBoatRun = 0x133;  // mapper_open
+			pSuoni->MotorBoatFolle = 0x134;  // mapper_lazer
+
+			pSuoni->RubberBoatRun = 0x133; // mapper_open
+			pSuoni->RubberBoatFolle = 0x134; // mapper_lazer
+
+			// ----- elevator
+			pSuoni->ElevatorMove = 309;
+			pSuoni->ElevatorStop = 64;
+			// ---- detector
+			pSuoni->DetectorBeep = 112;
+			pSuoni->Rain[0] = 79;
+			pSuoni->Rain[1] = 79;
+			pSuoni->Rain[2] = 79;
+			pSuoni->Rain[3] = 79;  // WATERFALL_LOOP  (una cascata proprio)
+		}
+	}
+
+	// chiamata all'inizio del livello
+	// salva tutte le coppie di stanze main/flip in variabile globale FlipamRooms
+	void InizializzaFlipMaps(void)
+	{
+		StrFlipMapRooms *pFlip;
+		int i;
+		StrRoomTr4 *pRoom;
+		int TotRooms;
+
+		pFlip = &GlobTomb4.FlipMapRooms;
+
+		TotRooms = *GlobTomb4.pAdr->pTotRooms;
+		for (i = 0; i < TotRooms; i++) {
+			pFlip->VetRoomMain[i] = -1;
+		}
+		pFlip->TotFlipRooms = TotRooms;
+
+		for (i = 0; i < TotRooms; i++) {
+			pRoom = &GlobTomb4.pAdr->pVetRooms[i];
+
+			if (pRoom->AlternateRoom != -1) {
+				// salvare l'indice di stanza main in posizione vettoredi
+				// stanza flippata cosi' da poter sempre localizzare la stanza
+				// principale di ogni stanza flippata
+				pFlip->VetRoomMain[pRoom->AlternateRoom] = (short) i;
+			}
+
+		}
+	}
+
+	void ScansioneSavegameHeader(StrExtractNG* pHeaderNGSave, bool TestCompleto)
+	{
+		static StrRecordLocuste *pVetLocuste = (StrRecordLocuste*) tomb4::Locusts;
+		static WORD *pTotLocuste = (WORD *) &tomb4::next_locust;
+
+		StrParseNGField ParseField;
+		int i, j;
+		CALL_LOADING_GAME pCallLoading;
+		StrSalvaFish *pFishTemp;
+		BYTE NuovoPivot;
+		int VetInt[2];
+		WORD Mask;
+		StrCutsceneCamera *pCut;
+		DWORD IdPlugin;
+		StrMyDatabase *pDB;
+		StrAIDataTr4 *pLoadAI;
+		StrAIDataTr4 *pVetAI;
+		WORD Flags;
+		int k;
+		StrFish *pFish;
+		StrBaseDiario *pDiario;
+		StrBaseNG_Hub *pHub;
+		StrMiniNG_Header *pRecHub;
+		WORD Tot;
+		WORD TotTempFish;
+		StrSalvaFish VetTempFish[128];
+		StrDatiVariabili *pDati;
+		int TotBytes;
+		StrAnimFrame *pFrame;
+		WORD TotIndici;
+		StrVetDiari *pBaseDiario;
+		short *pShort;
+		StrBaseSalvaCords *pSalva;
+		int z;
+		StrBaseTimerOggetti *pTimer;
+		int IndicePos;
+		int IndiceTailChanged;
+		WORD VetIndici[MAX_GLOBAL_TRIGGERS];
+		WORD VetDisabled[MAX_TRIGGER_GROUPS];
+		BYTE VetIntensita[512];
+		StrBaseAnimTr4 *pBaseAnim;
+		WORD TotCasuale;
+		StrProgressiveAction *pAzione;
+
+		// scandire dati, saltando prima word di controllo "NG"
+		i = 0;
+		while (ParseNgField(pHeaderNGSave->pNGArray, i, &ParseField)) {
+
+			// analizzare tipo di pacchetto
+			switch (ParseField.Type) {
+			case NGTAG_PLUGIN_DATA:
+				// dati per qualche plugin
+				// scoprire il plugin ID
+				j = 0;
+
+				IdPlugin = ParseField.pData[j++];
+				pDB = &MyGlobPrivate.DataBase;
+
+				if (IdPlugin < 1 || IdPlugin >= pDB->TotPlugins) {
+					// invalid id
+					sprintf_s(BufferLog, "ERROR loading savegame: plugin ID invalid %d", IdPlugin);
+					InviaLog(BufferLog);
+					break;
+				}
+
+				pCallLoading = (CALL_LOADING_GAME) pDB->pVetPlugins[IdPlugin].VetDirectCB[CB_LOADING_GAME];
+
+				if (pCallLoading == NULL) {
+					sprintf_s(BufferLog, "WARNING loading savegame: plugin [%s] has not set a callback (CB_LOADING_GAME) to load its data from savegame", pDB->pVetPlugins[IdPlugin].Nome);
+					InviaLog(BufferLog);
+					break;
+				}
+				pCallLoading((BYTE *) &ParseField.pData[j], ParseField.SizeData - 2);
+				break;
+
+			case NGTAG_OLD_EFFECTS:
+				// dati per vettore old effect
+				j = 0;
+				GlobTomb4.TotOldFlipEffects = ParseField.pData[j++];
+				TotBytes = GlobTomb4.TotOldFlipEffects * sizeof(StrOldTrigger);
+
+				memcpy(GlobTomb4.VetOldFlipEffects, &ParseField.pData[j], TotBytes);
+
+				break;
+
+			case NGTAG_FLIP_MESH:
+				j = 0;
+				GlobTomb4.BaseFlipMesh.TotFlipMesh = ParseField.pData[j++];
+				memcpy(&GlobTomb4.BaseFlipMesh.VetFlipMesh, &ParseField.pData[j], sizeof(StrFlipMesh) * GlobTomb4.BaseFlipMesh.TotFlipMesh);
+				break;
+
+			case NGTAG_SWAP_MESH:
+				j = 0;
+				MySwap.TotMeshSwap = ParseField.pData[j++];
+				// prima caricare i vecchi swap mesh nella variabile
+				// temporanea MySwap
+				// e poi eseguirli tutti in sequenza (sperando non ci
+				// siano problemi ad eseguirlo adesso)
+				memcpy(&MySwap.VetMeshSwap, &ParseField.pData[j], sizeof(StrBaseFlipSwap) * MySwap.TotMeshSwap);
+
+				break;
+			case NGTAG_NG_HUB_HEADERS:
+				j = 0;
+				// caricare tutti i valori per hub
+				// prima pero' liberare memoria precedente
+				InizializzaHubNG();
+				// ora caricare tutti i dati nell'ordine previsto
+				pHub = &GlobTomb4.BaseHub_NG;
+
+				pHub->TotHub = ParseField.pData[j++];
+				pHub->LastIndex = ParseField.pData[j++];
+
+				// caricare dati per lara hub
+				pHub->LaraHUB.NWords = ParseField.pData[j++];
+				if (pHub->LaraHUB.NWords) {
+					// caricare header ng per lara
+					pHub->LaraHUB.pNGArray = (WORD *) MallocMine(pHub->LaraHUB.NWords * 2, "LaraHUB.pNGArray in ScansioneSavegameHeader");
+					memcpy(pHub->LaraHUB.pNGArray, &ParseField.pData[j], pHub->LaraHUB.NWords * 2);
+					j += pHub->LaraHUB.NWords;
+				}
+
+				for (z = 0; z < 10; z++) {
+					pRecHub = &pHub->VetNG[z];
+
+					pRecHub->NumeroLivello = ParseField.pData[j++];
+					pRecHub->TotWords = ParseField.pData[j++];
+
+					pRecHub->pVetWords = (WORD *) MallocMine(pRecHub->TotWords * 2, "pVetWords in ScansioneSavegameHeader");
+					memcpy(pRecHub->pVetWords, &ParseField.pData[j], pRecHub->TotWords * 2);
+					j += pRecHub->TotWords;
+				}
+				break;
+
+			case NGTAG_STATUS_GTRIGGERS:
+				j = 0;
+				// dati con indici di trigger globali disabilitati
+
+				TotIndici = ParseField.pData[j++];
+
+				memcpy(VetIndici, &ParseField.pData[j],	2 * TotIndici);
+				// riscrivere lo status di tutti i globaltriggers
+				for (i = 0; i < TotIndici; i++) {
+					GlobTomb4.pBaseGlobalTriggers->VetTriggers[i].Flags = VetIndici[i];
+				}
+
+				break;
+			case NGTAG_SALVA_TIMER_OGGETTI:
+				// dati per timer di oggetti
+				j = 0;
+				pTimer = &GlobTomb4.BaseTimerOggetti;
+
+				pTimer->TotOggetti = ParseField.pData[j++];
+
+				TotBytes = sizeof(StrHeaderTimer);
+				memcpy(&pTimer->Header, &ParseField.pData[j], TotBytes);
+				j += (TotBytes / 2);
+
+				TotBytes = pTimer->TotOggetti * sizeof(StrTimerOggetti);
+				memcpy(&pTimer->VetOggetti[0], &ParseField.pData[j], TotBytes);
+				break;
+
+			case NGTAG_OLD_ACTIONS:
+				// dati per vettore old action
+				j = 0;
+				GlobTomb4.TotOldActions = ParseField.pData[j++];
+				TotBytes = GlobTomb4.TotOldActions * sizeof(StrOldTrigger);
+
+				memcpy(GlobTomb4.VetOldActions, &ParseField.pData[j], TotBytes);
+
+				break;
+			case NGTAG_PUSH_CLIMB:
+				j = 0;
+				GlobTomb4.BasePushables.BaseClimbPushable.TotPush = ParseField.pData[j++];
+				TotBytes = GlobTomb4.BasePushables.BaseClimbPushable.TotPush * sizeof(StrRecordClimbPush);
+				memcpy(GlobTomb4.BasePushables.BaseClimbPushable.VetPush, &ParseField.pData[j], TotBytes);
+				break;
+			case NGTAG_SALVA_STATICS:
+				// caricare tutti dati di posizione e status di statici
+				j = 0;
+				Tot = ParseField.pData[j++];
+				GlobTomb4.BaseSalvaStatic.TotStatics = Tot;
+				memcpy(&GlobTomb4.BaseSalvaStatic.VetStatics[0], &ParseField.pData[j], Tot * sizeof(StrSalvaStatic));
+				break;
+
+			case NGTAG_OLD_CONDITION:
+				// dati per vettore old condition
+				j = 0;
+				GlobTomb4.TotOldConditions = ParseField.pData[j++];
+				TotBytes = GlobTomb4.TotOldConditions * sizeof(StrOldTrigger);
+
+				memcpy(GlobTomb4.VetOldCondizioni, &ParseField.pData[j], TotBytes);
+
+				break;
+			case NGTAG_MIRRORS:
+				j = 0;
+				GlobTomb4.TotDisabledMirrors = ParseField.pData[j++];
+				TotBytes = GlobTomb4.TotDisabledMirrors * 2;
+				memcpy(GlobTomb4.VetDisabledMirrors, &ParseField.pData[j], TotBytes);
+				break;
+			case NGTAG_ROOM_FLAGS:
+				// invece di applicare subito il restore
+				// salvare i dati e ripristinarli solo
+				// in procedura seguente tutte le inizializzazioni
+				// dopo loadgame
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				GlobTomb4.TempRoomFlags.TotRooms = TotIndici;
+
+				for (i = 0; i < TotIndici; i++) {
+					GlobTomb4.TempRoomFlags.VetRoomFlags[i] = ParseField.pData[j++];
+				}
+
+				break;
+			case NGTAG_STATUS_ORGANIZER:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				memcpy(GlobTomb4.pBaseOrganizer->VetStatusOrganizer, &ParseField.pData[j], TotIndici * sizeof(StrStatusOrganizer));
+				// forse qui devo adattare il valore di base StartPerformed
+				// pero' se non ho salvato il valore originale
+				// come faccio a sapere che valore devo mettere adesso?
+
+				break;
+			case NGTAG_ADAPTIVE_FARVIEW:
+				memcpy(&GlobTomb4.BaseAdaptiveFar, &ParseField.pData[0], sizeof(StrAdaptiveFarView));
+				GlobTomb4.BaseAdaptiveFar.LastTime = (DWORD) GetTickCount64();
+				break;
+			case NGTAG_STATUS_ANIM_RANGES:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				memcpy(VetIndici, &ParseField.pData[j], TotIndici * 2);
+				// ok, ora reimpostare i vlaori
+				pBaseAnim = &GlobTomb4.BaseAnimTr4;
+
+				// prima uvrange
+				j = 0;
+				for (i = 0; i < pBaseAnim->TotUvRanges; i++) {
+					if (VetIndici[j] & SAR_TEST_STOP) {
+						pBaseAnim->VetUVRanges[i].TestStop = true;
+					}
+					if (VetIndici[j] & SAR_UV_NEGATIVE) {
+						pBaseAnim->VetUVRanges[i].UvRotate *= -1;
+					}
+					j++;
+				}
+
+				// ora frames
+				for (i = 0; i < pBaseAnim->TotFrameRanges; i++) {
+					if (VetIndici[j] & SAR_TEST_STOP) {
+						pBaseAnim->VetFrameRanges[i].TestStop = true;
+					}
+					j++;
+				}
+				break;
+
+			case NGTAG_INDICI_PFRAME:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+
+				for (i = 0; i < GlobTomb4.BaseAnimTr4.TotFrameRanges; i++) {
+					if (GlobTomb4.BaseAnimTr4.VetFrameRanges[i].TipoAnim == FAN_P_FRAMES) {
+						// copiare i valori per questo range
+						pFrame = &GlobTomb4.BaseAnimTr4.VetFrameRanges[i];
+						// copiare i 16 valori
+						memcpy(VetIndici, &ParseField.pData[j], MAX_TEX_PER_FRAME * 2);
+						j += MAX_TEX_PER_FRAME;
+
+						for (z = 0; z < pFrame->TotTextures; z++) {
+							IndiceTailChanged = VetIndici[z];
+							pFrame->VetChangedPos[z] = (WORD) IndiceTailChanged;
+							IndicePos = pFrame->VetTailIndex[z];
+
+							GlobTomb4.pAdr->VetTexInfo[IndicePos] = pFrame->VetTexInfoRecords[IndiceTailChanged];
+
+						}
+					}
+
+				}
+				break;
+
+			case NGTAG_OCB_ITEMS:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+
+				for (i = 0; i < TotIndici; i++) {
+					GlobTomb4.pAdr->pVetItems[i].OcbCode = ParseField.pData[j++];
+				}
+				break;
+			case NGTAG_SLOT_FLAGS_ARRAY:
+				// usato solo per trexplorer
+				break;
+
+			case NGTAG_ANIM_SWAPPING:
+				// dati di swap animazioni
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				GlobTomb4.pBaseMemSwapAnim->TotMemSwap = TotIndici;
+
+				if (TotIndici) {
+					memcpy(&GlobTomb4.pBaseMemSwapAnim->VetMemSwapAnim[0], &ParseField.pData[j], sizeof(StrMemSwapAnim) * TotIndici);
+				}
+
+				break;
+			case NGTAG_CUTSCENE_CAMERA:
+				// legge record cutscene camera
+				pCut = &GlobTomb4.pBaseCutscene->BaseCamera;
+				memcpy(pCut, &ParseField.pData[0], sizeof(StrCutsceneCamera));
+
+				break;
+
+			case NGTAG_ACTORS_INDICES:
+				// legge indice di attori leading, e extra
+				memcpy(&VetInt, &ParseField.pData[0], sizeof(int) * 2);
+				GlobTomb4.pBaseCutscene->LeadingActorIndex = VetInt[0];
+				GlobTomb4.pBaseCutscene->ExtraActorIndex = VetInt[1];
+
+				break;
+
+			case NGTAG_EXTRA_AI_RECORDS:
+				// legge i record ai creati dinamicamente
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				if (TotIndici) {
+					// se c'erano dei record AI extra, aggiungerli adesso
+					pLoadAI = (StrAIDataTr4*) &ParseField.pData[j];
+					// legge record AI attuali
+					k = *GlobTomb4.pAdr->pTotAIData;
+					// e trova indirizzo successivo per caricare quelli nuovi
+					pVetAI = &GlobTomb4.pAdr->pVetAIData[k];
+					// copiare dati
+					memcpy(pVetAI, pLoadAI, sizeof(StrAIDataTr4) * TotIndici);
+					// aumenta i dati
+					k += TotIndici;
+					*GlobTomb4.pAdr->pTotAIData = (short) k;
+				}
+
+				break;
+
+			case NGTAG_WEATHER_INTENSITY:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				memcpy(VetIntensita, &ParseField.pData[j], TotIndici);
+				for (i = 0; i < TotIndici; i++) {
+					GlobTomb4.VetExtraInfoRoom[i].WaterIntensity = VetIntensita[i];
+				}
+				GlobTomb4.DatiRain.LastRoomCamera = -1;
+				GlobTomb4.DatiSnow.LastRoomCamera = -1;
+				break;
+			case NGTAG_DIARY_DATA:
+				// dati globali di tutti i diari
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+
+				pShort = (short *) &ParseField.pData[j];
+				pBaseDiario = &GlobTomb4.BaseDiari;
+				z = 0;
+				Tot = pShort[z++];  // totdiary
+
+				for (j = 0; j < Tot; j++) {
+					// legge ID a cui sono riferiti questi indici stringa
+					TotCasuale = pShort[z++];  // id diario now
+					pDiario = GetDiarioConID(TotCasuale);
+					if (pDiario == NULL) {
+						// saltare tutte le stringhe perche' non c'e' piu'
+						// un diario per questi dati
+						TotCasuale = pShort[z++];
+						z += TotCasuale;
+					} else {
+						TotCasuale = pShort[z++]; // totstringhe
+						pDiario->TotStringhe = TotCasuale;
+						for (k = 0; k < pDiario->TotStringhe; k++) {
+							pDiario->VetStringhe[k] = pShort[z++];
+						}
+					}
+
+				}
+
+				break;
+
+			case NGTAG_OLD_FMV:
+				// dati per BYTE GlobTomb4.BaseFMV.VetFmvEseguiti[128];
+				// dimensione sempre fissa di 128 bytes
+				memcpy(GlobTomb4.BaseFMV.VetFmvEseguiti, ParseField.pData, MAX_FMV);
+				break;
+
+			case NGTAG_MINI_SHOT:
+				// per ora limitarsi a salvare l'immagine
+				// su disco
+				// poi dovro' invece ricopiarla ne ivalore di globaltomb4
+				// in modo da poterla poi usare, salvandola o meno
+				// a seconda dell'occorrenza
+
+				break;
+
+			case NGTAG_VARIABLE_DATA:
+
+				// questa struttura puo' essere totale serie di dati variabili
+				// o solo roba livello
+
+				memcpy(GlobTomb4.pDatiVariabili, ParseField.pData, sizeof(StrDatiVariabili));
+
+				pDati = GlobTomb4.pDatiVariabili;
+				if (TestCompleto) {
+					// se e' completo c'e' tutto e quindi lo imposta
+					// ma se non e' ompleto vuol dire che sono solo dati
+					// di livello e aspetta caricamento di dati lara
+					// e poi fusione prima di impostarli
+					ImpostaDatiVariabili(pDati);
+				}
+
+				break;
+			case NGTAG_VAR_DATA_LARA:
+				// dati variabili per lara
+				// questo tag si puo' trovare solo in header hub di lara
+				memcpy(GlobTomb4.pDatiVarLara, ParseField.pData, sizeof(StrDatiVariabili));
+
+				break;
+
+			case NGTAG_VAR_GLOBAL_TRNG:
+				// carica vriabili globali trng
+				memcpy(&GlobTomb4.pBaseVariableTRNG->Globals, ParseField.pData, sizeof(StrVariabiliGlobTRNG));
+				break;
+
+			case NGTAG_SAVE_LOCUST:
+				// se c'e' caricarlo sempre
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				*pTotLocuste = TotIndici;
+				if (TotIndici) {
+					memcpy(pVetLocuste, &ParseField.pData[j], sizeof(StrRecordLocuste) * TotIndici);
+				}
+
+				break;
+
+			case NGTAG_FROZEN_ITEMS:
+				// carica dati di item frozen
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				GlobTomb4.BaseFreeze.TotFreeze = TotIndici;
+				if (TotIndici) {
+					memcpy(&GlobTomb4.BaseFreeze.VetFreeze[0], &ParseField.pData[j], sizeof(StrRecordFreeze) * TotIndici);
+				}
+				break;
+			case NGTAG_FISH:
+				j = 0;
+				TotTempFish = ParseField.pData[j++];
+				if (TotTempFish) {
+					memcpy(&VetTempFish[0], &ParseField.pData[j], sizeof(StrSalvaFish) * TotTempFish);
+					// ripristinare i fish
+					for (i = 0; i < TotTempFish; i++) {
+						pFishTemp = &VetTempFish[i];
+
+						// trovare il primo indice libero per fish
+						pFish = &GlobTomb4.pAdr->pVetFish[i];
+
+						// localizzare indice di pivto attuale (se c'e')
+						if ((pFishTemp->FlagFish & FISH_NO_BRANCO) == 0) {
+							// ok, questo e' un indice pivot
+							NuovoPivot = (BYTE) i;
+							if (pFishTemp->IndiceNow != pFishTemp->IndicePivot) {
+								for (z = 0; z < TotTempFish; z++) {
+									if (VetTempFish[z].IndiceNow == pFishTemp->IndicePivot) {
+										NuovoPivot = (BYTE) z;
+										break;
+									}
+								}
+							}
+						} else {
+							// se non e' branco allora usare sempre indice corrente
+							NuovoPivot = (BYTE) i;
+						}
+
+						// ok metterlo in indice i
+						pFish->TipoUsato = 2;
+						pFish->CordX = pFishTemp->CordX << 1;
+						pFish->CordY = pFishTemp->CordY << 1;
+						pFish->CordZ = pFishTemp->CordZ << 1;
+						pFish->FlagFish = pFishTemp->FlagFish;
+						pFish->IndicePivot = NuovoPivot;
+						pFish->OrientH = pFishTemp->OrientH;
+						pFish->OrientV = pFishTemp->OrientV;
+						pFish->Room = pFishTemp->Room;
+						pFish->Tempo = 0xf;
+						pFish->TipoFase = pFishTemp->TipoFase;
+						pFish->SpeedH = pFishTemp->SpeedH;
+						pFish->SpeedV = pFishTemp->SpeedV;
+					}
+				}
+				break;
+
+			case NGTAG_NO_COLL_ITEMS:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				GlobTomb4.TotItemNoCollisions = TotIndici;
+				if (TotIndici) {
+					memcpy(&GlobTomb4.VetItemNoCollisions[0], &ParseField.pData[j], sizeof(short) * TotIndici);
+				}
+				break;
+
+			case NGTAG_STATUS_TRIGGER_GROUP:
+				j = 0;
+				TotIndici = ParseField.pData[j++];
+				if (TotIndici > 0) {
+					memcpy(VetDisabled, &ParseField.pData[j], TotIndici * 2);
+					for (j = 0; j < TotIndici; j++) {
+						Mask = TGROUP_SINGLE_SHOT_RESUMED | TGROUP_DISABLED | TGROUP_SINGLE_SHOT;
+
+						Flags = GlobTomb4.pBaseTriggerGroups->VetTriggerGroups[j].VetTriggers[0].Flags & ~Mask;
+						Flags |= (VetDisabled[j] & Mask);
+
+						GlobTomb4.pBaseTriggerGroups->VetTriggerGroups[j].VetTriggers[0].Flags = Flags;
+					}
+				}
+				break;
+
+			case NGTAG_VAR_LOCAL_TRNG:
+				//carica variabili locali trng
+				memcpy(&GlobTomb4.pBaseVariableTRNG->Locals, ParseField.pData, sizeof(StrBloccoNumVar));
+				break;
+
+			case NGTAG_KAYAK_EXTRA_DATA:
+				// copaire dati extra in kayak
+				GlobTomb4.TestExtraKayak = true;
+				memcpy(&GlobTomb4.DatiExtraKayak[0], ParseField.pData, 0x2e);
+				break;
+
+			case NGTAG_SALVA_COORDINATE:
+				// dati di orientamento di animating,visibilita'
+				// e coordinate
+				// prima word e' il numero di strutture animating
+				// poi vengono tutte le strutture
+				i = 0;
+				pSalva = &GlobTomb4.BaseSalvaCoordinate;
+
+				pSalva->TotSalvati = ParseField.pData[i++];
+				if (pSalva->TotSalvati >= MAX_SALVA_CORD) {
+
+					sprintf_s(BufferLog, "ERROR: number of item to save coors is too high (%d). It has been reset the structure for coordinate saving", pSalva->TotSalvati);
+					pSalva->TotSalvati = 0;
+					InviaLog(BufferLog);
+					break;
+				}
+
+				for (z = 0; z < pSalva->TotSalvati; z++) {
+					pSalva->VetIndici[z] = ParseField.pData[i++];
+				}
+
+				memcpy(pSalva->VetSalvati, &ParseField.pData[i], pSalva->TotSalvati * sizeof(StrSalvaCords));
+
+				break;
+			case NGTAG_PROGR_ACTIONS:
+				// caricare azioni in corso
+				// nota: dato che questo tag potrerbbe essere letto due volte,
+				// una per lara e l'altra per livelli
+				// non devo impostare TotProgressiveActions ma solo incrementarlo
+
+				i = GlobTomb4.TotProgressiveActions;
+				j = ParseField.pData[0];
+				GlobTomb4.TotProgressiveActions += (WORD) j;
+				memcpy(&GlobTomb4.VetProgressiveActions[i], &ParseField.pData[1], sizeof(StrProgressiveAction) * j);
+				// aggiornare indirizzo e posizione stringa per comandi print text
+				for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+					pAzione = &GlobTomb4.VetProgressiveActions[i];
+
+					switch (pAzione->ActionType) {
+					case AZ_PRINT_STRING:
+
+						if (pAzione->ItemIndex == SCRIPT_IGNORE) {
+							pAzione->ActionType = 0;
+						} else {
+							AggiornaAdrStringa(pAzione);
+							AggiornaPosStringa(pAzione);
+						}
+						break;
+					case AZ_SHOW_TIMER_TRNG:
+						// rimettere indirizzo stringa
+						if (pAzione->ItemIndex == 0x33) {
+							// global timer
+							pAzione->VetArg[0] = (int) &BufGlobalTimer[0];
+						} else {
+							// local timer
+							pAzione->VetArg[0] = (int) &BufLocalTimer[0];
+						}
+						AggiornaPosStringa(pAzione);
+						break;
+					}
+
+				}
+				break;
+			case NGTAG_ELEVATORS:
+				// carifcare numero di elevatoro
+				if (GlobTomb4.BaseElevator.TotElelevators != ParseField.pData[0]) {
+
+					sprintf_s(BufferLog, "ERROR reading elevators data from savegame. Number of elevators in script.dat (%d) is different than number of elevators in savegames (%d)", GlobTomb4.BaseElevator.TotElelevators, ParseField.pData[0]);
+					InviaLog(BufferLog);
+
+					break;
+				}
+				GlobTomb4.BaseElevator.TotElelevators = ParseField.pData[0];
+				memcpy(&GlobTomb4.BaseElevator.VetAscensori[0], &ParseField.pData[1], sizeof(StrElevator) * ParseField.pData[0]);
+				break;
+
+			case NGTAG_PRINT_STRING:
+				// caricare dati printstring
+				memcpy(&GlobTomb4.PrintString, &ParseField.pData[0], sizeof(StrPrintString));
+				break;
+			case NGTAG_VERSION_HEADER:
+				memcpy(&GlobTomb4.VersioneSavegame, &ParseField.pData[0], sizeof(StrVersionHeader));
+				break;
+			}
+
+			// puntare a chunk successivo
+			i = ParseField.NextIndex;
+		}
+	}
+
+	// azzera i dati di baseng hub
+	void InizializzaHubNG(void)
+	{
+		StrBaseNG_Hub *pHub;
+		int i;
+
+		pHub = &GlobTomb4.BaseHub_NG;
+
+		if (pHub->LaraHUB.NWords && pHub->LaraHUB.pNGArray) {
+			FreeMine(pHub->LaraHUB.pNGArray);
+			pHub->LaraHUB.pNGArray = NULL;
+		}
+
+		for (i = 0; i < pHub->TotHub; i++) {
+			FreeMine(pHub->VetNG[i].pVetWords);
+			pHub->VetNG[i].pVetWords = NULL;
+		}
+
+		memset(pHub, 0, sizeof(StrBaseNG_Hub));
+	}
+
+	// copia tutti i valori di dati variabili appena caricati in
+	// struttura StrDatiVariabili pDati, nei rispettivi valori globali
+	// usati da tomb4
+
+	void ImpostaDatiVariabili(StrDatiVariabili *pDati)
+	{
+		InviaLog("VariableData -> GlobalData");
+
+		// ora resimpostarli in strutture globali
+		GlobTomb4.DamageColdWater.FlagProgresso = pDati->FlagProgressoCold;
+
+		GlobTomb4.DamageColdWater.DamValue = pDati->ValoreCold;
+		GlobTomb4.DamageRoom.FlagProgresso = pDati->FlagProgressoDamage;
+		GlobTomb4.DamageRoom.DamValue = pDati->ValoreDamage;
+		GlobTomb4.KeysToStop = pDati->KeysToStop;
+		GlobTomb4.StatusNG = pDati->StatusNG;
+		GlobTomb4.TestDisableFeatures = pDati->TestDisableFeatures;
+		GlobTomb4.pBaseOrganizer->CounterGame = pDati->CounterGame;
+		*GlobTomb4.pAdr->pScriptLevelFlags = pDati->FlagLivelloNow;
+
+		*GlobTomb4.pAdr->pColorLayer1 = pDati->ColoreLayer1;
+		*GlobTomb4.pAdr->pColorLayer2 = pDati->ColoreLayer2;
+		*GlobTomb4.pAdr->pSpeedLayer1 = pDati->SpeedLayer1;
+		*GlobTomb4.pAdr->pSpeedLayer2 = pDati->SpeedLayer2;
+
+		if (pDati->TestHardFog == 0 || pDati->FogEnd == 0 || MyGlobPrivate.TestNG_NoScript == true) {
+
+			// impostare tutto con valori standard
+			InizializzaBaseFog();
+			ModificaFogStart();
+			ModificaFogEnd();
+			ModificaHardwareFog();
+			ModificaFogBulbDistance();
+
+		} else {
+
+			GlobTomb4.BaseFog.FloatFogStart = pDati->FloatFogStart;
+			GlobTomb4.BaseFog.NowEndFog = pDati->FogEnd;
+			GlobTomb4.BaseFog.NowStartFog = (short) (pDati->FloatFogStart / 1024.0f);
+
+			ModificaColoreFog(pDati->FogColors[2], pDati->FogColors[1], pDati->FogColors[0]);
+
+			GlobTomb4.BaseFog.TestHardFogEnabled = true;
+
+			// imposta volumetric fx
+			*GlobTomb4.pAdr->pSetting_Volumetric = pDati->SalvaVolumetric;
+
+			// ora devo impostare i valori per fog
+			ModificaFogStart();
+			ModificaFogEnd();
+			ModificaHardwareFog();
+			ModificaFogBulbDistance();
+
+			GlobTomb4.BaseFog.NowStartFog = pDati->FogDistanceNow;
+		}
+
+		GlobTomb4.pScriptLevelNow->LevelFlags = pDati->LevelNGFlags;
+
+		GlobTomb4.BasePushables.IndicePushSpinto = pDati->IndicePushSpinto;
+
+		GlobTomb4.ParallelBar.TotFrames = pDati->ParBarFrames;
+		GlobTomb4.ParallelBar.GiriCompleti = pDati->ParBarGiri;
+
+		if (GlobTomb4.KeysToStop != CMD_ALL) {
+			GlobTomb4.pScriptLevelNow->LevelFlags &= ~fngl_CutScene;
+
+			GlobTomb4.TestTakeAwayWeapons = false;
+		}
+
+		// detector
+		if (pDati->TestMostraDetector) {
+			GlobTomb4.BaseDetector.TestMostra = true;
+		} else {
+			GlobTomb4.BaseDetector.TestMostra = false;
+		}
+	}
+
+	// modifcia il colore della fog chiamando directx
+	// e salva il valore anche in tutte le variabili globali
+	void ModificaColoreFog(BYTE Rosso, BYTE Verde, BYTE Blue)
+	{
+		tomb4::SetFogColor(Rosso, Verde, Blue);
+
+		tomb4::savegame.fog_colour.r = Rosso;
+		tomb4::savegame.fog_colour.g = Verde;
+		tomb4::savegame.fog_colour.b = Blue;
+
+		tomb4::gfFog.r = Rosso;
+		tomb4::gfFog.g = Verde;
+		tomb4::gfFog.b = Blue;
+	}
+
+	// cerca se c'e' nelle sezioni hub di header ng una sezione
+	// per livello attuale
+	// se c'e' restituisce l'indice della sezione da caricare
+	// se non c'e' restituisce -1
+	int TrovaSezioneHeader_Hub(void)
+	{
+		int i;
+		WORD NLivello;
+		StrBaseNG_Hub *pHub;
+
+		NLivello = *GlobTomb4.pAdr->pLevelNext;
+
+		pHub = &GlobTomb4.BaseHub_NG;
+
+		for (i = 0; i < pHub->TotHub; i++) {
+			if (pHub->VetNG[i].NumeroLivello == NLivello) {
+				sprintf_s(BufferLog, "Find HUB Section for Level = %d", NLivello);
+				InviaLog(BufferLog);
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	// chiamata subito dopo aver caricato realmente dati saveame
+	// e' usata per effettuare ripristini complessi
+	void RestoreAfterSavegame(void)
+	{
+		int i;
+		int Indice;
+		StrProgressiveAction *pAzione;
+		int IndiceSlot;
+
+		// se c'e' un'azione AZ_TRAP_PUSHABLE
+		// impostare valore corretto per vetcollisionepuhsable
+
+		for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+			pAzione = &GlobTomb4.VetProgressiveActions[i];
+
+			if (pAzione->ActionType == AZ_TRAP_PUSHABLE || pAzione->ActionType == AZ_PUSH_PUSHABLE) {
+
+				Indice = pAzione->ItemIndex;
+				GlobTomb4.BasePushables.VetCollisionePushable[Indice] = CP_FALLING;
+				if (pAzione->ActionType == AZ_PUSH_PUSHABLE)
+					GlobTomb4.BasePushables.TestCadutaPushable = true;
+			}
+
+			if (pAzione->ActionType == AZ_MOVE_ANIMATING || pAzione->ActionType == AZ_MOVE_MOVEABLE) {
+
+				// se l'oggetto e' un pushable attivare CP_MOVING_ACTION
+				IndiceSlot = GlobTomb4.pAdr->pVetItems[pAzione->ItemIndex].SlotID;
+				if (IndiceSlot >= 156 && IndiceSlot <= 160) {
+					GlobTomb4.BasePushables.VetCollisionePushable[pAzione->ItemIndex] |= CP_MOVING_ACTION;
+				}
+			}
+
+		}
+	}
+
+	// viene chiamata dopo aver caricato dati variabili lara e (opzionalemnte)
+	// dati variabili livello
+	// vengono fuse le due strutture in modo che anche i dati lara
+	// siano messi in dativariabili
+	void UnisciDatiVariabili(void)
+	{
+		StrDatiVariabili *pSrc;
+		StrDatiVariabili *pDati;
+
+		pDati = GlobTomb4.pDatiVariabili;
+		pSrc = GlobTomb4.pDatiVarLara;
+
+		// non toccare i dati di livelli gia' presenti in pdati
+		// copiare quelli specifici di lara
+		pDati->KeysToStop = pSrc->KeysToStop;
+		pDati->StatusNG |= pSrc->StatusNG;
+		pDati->TestDisableFeatures |= pSrc->TestDisableFeatures;
+		pDati->CounterGame = pSrc->CounterGame;
+	}
+
+	// modifica in modo dinamico exe per avere (o meno) super binocolo
+	void AggiornaBinocoloSuper(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -3404,4 +4733,19 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100BDF5D, (unsigned int)trng::RipristinaSettings, replace);
 	ProcessInject(0x100D0784, (unsigned int)trng::LiberaPlugins, false);
 //	ProcessInject(0x100D3605, (unsigned int)trng::CallSlide, replace);
+	ProcessInject(0x100B3E1B, (unsigned int)trng::InizializzaStartLivello, replace);
+	ProcessInject(0x100B0FCA, (unsigned int)trng::InizializzaAdrGlobali, replace);
+	ProcessInject(0x100B3B23, (unsigned int)trng::InitCordMieiOggetti, replace);
+	ProcessInject(0x100B3970, (unsigned int)trng::InitRollBoats, replace);
+	ProcessInject(0x100B3959, (unsigned int)trng::ResettaModificaCodice, false);
+	ProcessInject(0x100B10E3, (unsigned int)trng::InizializzaSuoni, replace);
+	ProcessInject(0x100B12C8, (unsigned int)trng::InizializzaFlipMaps, replace);
+	ProcessInject(0x100B1E11, (unsigned int)trng::ScansioneSavegameHeader, replace);
+	ProcessInject(0x100CD84F, (unsigned int)trng::InizializzaHubNG, replace);
+	ProcessInject(0x100B1A67, (unsigned int)trng::ImpostaDatiVariabili, replace);
+	ProcessInject(0x100B19F7, (unsigned int)trng::ModificaColoreFog, replace);
+	ProcessInject(0x100B1968, (unsigned int)trng::TrovaSezioneHeader_Hub, replace);
+	ProcessInject(0x100B11DD, (unsigned int)trng::RestoreAfterSavegame, replace);
+	ProcessInject(0x100B38FF, (unsigned int)trng::UnisciDatiVariabili, replace);
+	ProcessInject(0x100AFC79, (unsigned int)trng::AggiornaBinocoloSuper, false);
 }

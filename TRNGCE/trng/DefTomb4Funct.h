@@ -197,4 +197,7 @@ namespace trng {
 	// for callback CB_SAVING_GAME
 	// SavingType  SAVT_
 	typedef DWORD (__cdecl *CALL_SAVING_GAME) (BYTE **pAdrZone, int SavingType);
+
+	// for callback CB_LOADING_GAME
+	typedef void (__cdecl *CALL_LOADING_GAME) (BYTE *pAdrZone, DWORD SizeData);
 }

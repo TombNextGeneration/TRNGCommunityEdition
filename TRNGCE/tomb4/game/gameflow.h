@@ -30,6 +30,7 @@ namespace tomb4
 	extern uchar &gfInitialLegendTime;
 	extern ulong &GameTimer;
 	extern long &menu_to_display;
+	extern uchar* &gfScriptFile;
 
 	void DoGameflow();
 	void DoLevel(uchar Name, uchar Audio);

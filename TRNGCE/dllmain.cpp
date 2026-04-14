@@ -69,6 +69,7 @@
 #include "tomb4/specific/registry.h"
 #include "tomb4/specific/function_table.h"
 #include "tomb4/game/health.h"
+#include "tomb4/game/init.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -593,6 +594,7 @@ static void Inject(bool replace) {
 	Inject_Registry(replace);
 	Inject_FunctionTable(replace);
 	Inject_Health(replace);
+	Inject_Init(replace);
 }
 
 static LPSTR __stdcall CallInject() {

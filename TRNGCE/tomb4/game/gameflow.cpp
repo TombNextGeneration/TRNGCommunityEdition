@@ -51,6 +51,7 @@ namespace tomb4
 	uchar &gfInitialLegendTime = *reinterpret_cast<decltype(&gfInitialLegendTime)>(0x450F59);
 	ulong &GameTimer = *reinterpret_cast<decltype(&GameTimer)>(0x7FD138);
 	long &menu_to_display = *reinterpret_cast<decltype(&menu_to_display)>(0x4BF54C);
+	uchar* &gfScriptFile = *reinterpret_cast<decltype(&gfScriptFile)>(0x7FD18C);
 
 	void DoGameflow()
 	{

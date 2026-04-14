@@ -3,6 +3,8 @@
 
 namespace tomb4
 {
+	BOX_INFO* &boxes = *reinterpret_cast<decltype(&boxes)>(0x7FE890);
+
 	void AlertNearbyGuards(ITEM_INFO* item)
 	{
 		__try { throw __func__; } __finally {}

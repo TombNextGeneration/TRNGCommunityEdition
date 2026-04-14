@@ -1,10 +1,10 @@
 #include "Tomb_NextGeneration.h"
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <direct.h>
-#include <math.h>
+#include <cmath>
 #include "../inject.h"
 #include "zPatchesTomb4.h"
 #include "zRoomEditor.h"
@@ -103,6 +103,9 @@ namespace trng {
 	HDC &GlobHdcTomb = *reinterpret_cast<decltype(&GlobHdcTomb)>(0x1054D350);
 	DWORD &ContatoreFiato = *reinterpret_cast<decltype(&ContatoreFiato)>(0x1054D374);
 	int &ReturnValue = *reinterpret_cast<decltype(&ReturnValue)>(0x103DF434);
+	StrBaseFlipSwap &MySwap = *reinterpret_cast<decltype(&MySwap)>(0x103DF860);
+	char (&BufGlobalTimer)[6] = *reinterpret_cast<decltype(&BufGlobalTimer)>(0x1015A3E8);
+	char (&BufLocalTimer)[6] = *reinterpret_cast<decltype(&BufLocalTimer)>(0x1015A3E0);
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -16920,6 +16923,41 @@ Concludi:
 			pEffetto->TotFrames = TotFrames;
 		}
 	}
+
+	void AzzeraDatiMediaPoint(void)
+	{
+		GlobTomb4.pDiagnostica->Tempo = (DWORD) GetTickCount64();
+		GlobTomb4.pDiagnostica->TotCicli = 0;
+		GlobTomb4.pDiagnostica->SommaTempo = 0;
+		InviaLog("MEDIA azzerata");
+	}
+
+	// imposta i valori di inventario per gli item di livello
+	// attuale
+	// basato sui tag EquipMent di script
+	void GestioneEquipment(void)
+	{
+		int i;
+		WORD Slot;
+		char Valore;
+		int Operazione;
+
+		for (i = 0; i < GlobTomb4.BaseEquipItem.TotEquip; i++) {
+			Slot = GlobTomb4.BaseEquipItem.VetEquip[i].Slot;
+			Valore = (char) GlobTomb4.BaseEquipItem.VetEquip[i].Quantita;
+
+			Operazione = INV_SCRIVI;  // con bit
+
+			if (Slot == 349 || Slot == 351 || Slot == 353 || Slot == 356 || Slot == 361 || Slot == 366) {
+				// se mancano indicazioni del tipo di munizioni agiunge 8
+				if ((Valore & 0x38) == 0)
+					Valore |= 8;
+				Operazione = INV_SCRIVI_NO_BIT;
+			}
+
+			GestionePickups(Slot, Operazione, Valore);
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17160,4 +17198,6 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1005D339, (unsigned int)trng::AvviaPopUpImage, replace);
 	ProcessInject(0x100757CB, (unsigned int)trng::CalcolaMicroUnits, replace);
 	ProcessInject(0x1005D00B, (unsigned int)trng::PreparaEffetti, replace);
+	ProcessInject(0x100620BC, (unsigned int)trng::AzzeraDatiMediaPoint, replace);
+	ProcessInject(0x1003A8EA, (unsigned int)trng::GestioneEquipment, replace);
 }

@@ -1,5 +1,5 @@
 #include "croc.h"
-#include <math.h>
+#include <cmath>
 #include "../../inject.h"
 #include "lara.h"
 #include "sound.h"

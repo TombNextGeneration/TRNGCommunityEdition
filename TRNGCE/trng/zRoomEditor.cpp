@@ -1,5 +1,5 @@
 #include "zRoomEditor.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
 #include "RoomEditor.h"

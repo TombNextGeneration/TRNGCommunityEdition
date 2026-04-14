@@ -2269,6 +2269,15 @@ namespace trng {
 	inline constexpr int VEC_MOTOR_BOAT = 3;
 	inline constexpr int VEC_UNKNOWN = 100;
 
+	// flag per struttura particelle fish
+	// campo Flags
+	inline constexpr int FISH_SLOW = 0x02;
+	inline constexpr int FISH_TIMID = 0x04;
+	inline constexpr int FISH_JUMP = 0x08;
+	inline constexpr int FISH_NO_BRANCO = 0x10;
+	inline constexpr int FISH_MASK_MESH = 0x60;
+	inline constexpr int FISH_ATTACK = 0x80;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -6360,6 +6369,19 @@ namespace trng {
 
 	struct StrRecordLocuste {
 		BYTE Zona[30];
+	};
+
+	struct StrAlignObjData {
+		float RapportoScreen;
+		int ScreenX;
+		int ScreenY;
+		int BaseVLineY; // detector radar VLineY
+		int CompassLineY; // detector compass: VLineY
+		int BaseTextY; // detector tutti TextY
+		int BaseTargetY; // detector radar: targetY
+		int KeyPadY;  // keypad OrgY
+		int KeyPadTextY; // keypad TextY
+		int DetOrgY;  // detector tutti: OrgY
 	};
 #pragma pack(pop)
 }

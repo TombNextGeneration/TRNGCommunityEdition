@@ -1,5 +1,5 @@
 #include "function_stubs.h"
-#include <string.h>
+#include <cstring>
 #include "../../inject.h"
 
 namespace tomb4

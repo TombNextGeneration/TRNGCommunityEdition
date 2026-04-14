@@ -602,14 +602,15 @@ namespace tomb4
 			UpdateGunShells();
 
 			if (plugin::flycheat::Trng.IdMyPlugin != -1)
+			{
 				plugin::flycheat::FriendlyFish();
-			else
-				UpdateLocusts();
-
-			if (plugin::flycheat::Trng.IdMyPlugin != -1)
 				plugin::flycheat::FriendlyBeetles();
+			}
 			else
+			{
+				UpdateLocusts();
 				UpdateScarabs();
+			}
 
 			UpdateShockwaves();
 			UpdateLightning();

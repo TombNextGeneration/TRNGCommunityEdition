@@ -1,5 +1,5 @@
 #include "trng_weather.h"
-#include <string.h>
+#include <cstring>
 #include "../inject.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
