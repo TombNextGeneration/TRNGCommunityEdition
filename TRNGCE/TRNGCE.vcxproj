@@ -130,8 +130,10 @@
     <ClInclude Include="tomb4\game\health.h" />
     <ClInclude Include="tomb4\game\init.h" />
     <ClInclude Include="tomb4\game\items.h" />
+    <ClInclude Include="tomb4\game\jeep.h" />
     <ClInclude Include="tomb4\game\lara1gun.h" />
     <ClInclude Include="tomb4\game\lara2gun.h" />
+    <ClInclude Include="tomb4\game\laraflar.h" />
     <ClInclude Include="tomb4\game\laramisc.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
     <ClInclude Include="tomb4\game\newinv.h" />
@@ -216,8 +218,10 @@
     <ClCompile Include="tomb4\game\health.cpp" />
     <ClCompile Include="tomb4\game\init.cpp" />
     <ClCompile Include="tomb4\game\items.cpp" />
+    <ClCompile Include="tomb4\game\jeep.cpp" />
     <ClCompile Include="tomb4\game\lara1gun.cpp" />
     <ClCompile Include="tomb4\game\lara2gun.cpp" />
+    <ClCompile Include="tomb4\game\laraflar.cpp" />
     <ClCompile Include="tomb4\game\laramisc.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
     <ClCompile Include="tomb4\game\newinv.cpp" />

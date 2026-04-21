@@ -2832,7 +2832,8 @@ namespace tomb4
 	{
 		short right_front_wheelrot;
 		short right_back_wheelrot;
-		long left_wheelrot;
+		short left_wheelrot;
+		short right_wheelrot;
 		long velocity;
 		long unused1;
 		long pitch1;

@@ -80,6 +80,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long ExplodingDeath2(short item_number, long mesh_bits, short Flags)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Tomb4fx(bool replace)
@@ -98,4 +103,5 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x4396F0, (unsigned int)tomb4::UpdateFadeClip, false);
 	ProcessInject(0x439790, (unsigned int)tomb4::SetScreenFadeIn, false);
 	ProcessInject(0x439740, (unsigned int)tomb4::SetScreenFadeOut, false);
+	ProcessInject(0x43A030, (unsigned int)tomb4::ExplodingDeath2, false);
 }

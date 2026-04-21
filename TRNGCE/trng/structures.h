@@ -2278,6 +2278,12 @@ namespace trng {
 	inline constexpr int FISH_MASK_MESH = 0x60;
 	inline constexpr int FISH_ATTACK = 0x80;
 
+	// fflag usati da aggiungere a indice di moveabel o static in calcolo
+	// collisioni tra veicolo e oggetto
+	inline constexpr int FCV_MASK_INDEX = 0x1FFF;
+	inline constexpr int FCV_COLLISIONE = 0x4000; // oggetto che ha avuto collisione in calcolo punti
+	inline constexpr int FCV_SLIM = 0x2000;  // oggetto piccolo
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -6382,6 +6388,30 @@ namespace trng {
 		int KeyPadY;  // keypad OrgY
 		int KeyPadTextY; // keypad TextY
 		int DetOrgY;  // detector tutti: OrgY
+	};
+
+	// mia struttura per ospitare dati minimi per calcolo collisione
+	// di questo oggetto (che poteva essere moveable o static) con un moveable
+	// usando funzione: CollideItemConCustom()
+	struct StrCustomItem {
+		DWORD CordX;	// 00
+		int CordY;		// 04
+		DWORD CordZ;	// 08
+		short MinY;		// 0C
+		short MaxY;		// 0E
+		StrBoxCollisione *pBoxRel; // 10 (box relativo)
+		short hOrient;
+		int ItemIndex; // o -1 se static
+		short Slot; // o -1 se static
+	};
+
+	struct StrMioPuntoInt {
+		int x;
+		int z;
+	};
+
+	struct StrRettangolo {
+		StrMioPuntoInt VetVertici[4];
 	};
 #pragma pack(pop)
 }

@@ -40,6 +40,11 @@ namespace tomb4
 
 		return item_num;
 	}
+
+	void AddActiveItem(short item_num)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Items(bool replace)
@@ -47,4 +52,5 @@ void Inject_Items(bool replace)
 	ProcessInject(0x453690, (unsigned int)tomb4::KillItem, false);
 	ProcessInject(0x453C80, (unsigned int)tomb4::ItemNewRoom, false);
 	ProcessInject(0x453840, (unsigned int)tomb4::CreateItem, replace);
+	ProcessInject(0x453C10, (unsigned int)tomb4::AddActiveItem, false);
 }

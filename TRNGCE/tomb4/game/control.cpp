@@ -700,6 +700,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void AnimateItem(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -722,4 +727,5 @@ void Inject_Control(bool replace)
 	ProcessInject(0x449A50, (unsigned int)tomb4::GetWaterHeight, false);
 	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
 	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
+	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, false);
 }

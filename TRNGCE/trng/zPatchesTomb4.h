@@ -106,6 +106,9 @@ namespace trng {
 	void RestoreAfterSavegame(void);
 	void UnisciDatiVariabili(void);
 	void AggiornaBinocoloSuper(void);
+	void CollBikeFinale(int *pTipoImpatto, bool TestMorta);
+	StrBoxCollisione *RuotaBox(StrBoxCollisione *pBox, WORD HOrient);
+	bool GestioneBikeVsRollingBall(StrCustomItem *pColpito, StrItemTr4 *pVeicolo, WORD Speed, short *pOrientDir);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

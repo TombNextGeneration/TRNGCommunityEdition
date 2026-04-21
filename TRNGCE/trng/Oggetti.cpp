@@ -11,6 +11,8 @@
 #include "../tomb4/specific/winmain.h"
 #include "../tomb4/specific/cmdline.h"
 #include "../tomb4/game/tomb4fx.h"
+#include "../tomb4/game/draw.h"
+#include "../tomb4/specific/3dmath.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
@@ -2304,6 +2306,193 @@ namespace trng {
 			tomb4::S_CDStop();
 		}
 	}
+
+	// funzione che fverifica in modo dettagliato se box di collisione
+	// di moveable pItem tocca il box di collisione di oggetto generico pCustom
+	// nota: ruota entrambi i box collisione e salva questi valori in GlobTomb4.pMisc->CollisionLast
+	bool CollideItemConCustom(StrItemTr4 *pItem, StrCustomItem *pCustom, int Bordo)
+	{
+		StrBoxCollisione *pBoxRelItem;
+		StrBoxCollisione *pTempColl;
+		StrRettangolo *pRet;
+		StrMioPuntoInt *pPunto;
+		int i;
+		StrAbsBoxCollision *pBoxItem;
+		StrAbsBoxCollision *pBoxCustom;
+		int x, z;
+
+		pBoxItem = &GlobTomb4.pMisc->CollisionLast.BoxItem;
+		pBoxCustom = &GlobTomb4.pMisc->CollisionLast.BoxSecondary;
+
+		// prima vedere se valori y sono tali da rendere possibile
+		// collisione
+		pBoxRelItem = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItem);
+
+		pBoxItem->MinY = pItem->CordY + pBoxRelItem->MinY;
+		pBoxItem->MaxY = pItem->CordY + pBoxRelItem->MaxY;
+
+		pBoxCustom->MinY = pCustom->CordY + pCustom->pBoxRel->MinY;
+		pBoxCustom->MaxY = pCustom->CordY + pCustom->pBoxRel->MaxY;
+
+		GlobTomb4.BaseCollItem.OutCollisioneBox.MinY = pBoxCustom->MinY;
+		GlobTomb4.BaseCollItem.OutCollisioneBox.MaxY = pBoxCustom->MaxY;
+
+		if (pBoxCustom->MaxY < pBoxItem->MinY)
+			return false;
+		if (pBoxCustom->MinY > pBoxItem->MaxY)
+			return false;
+
+		// ora ruotare i  box
+		// e trasformarli in valori assoluti
+		pTempColl = RuotaBox(pCustom->pBoxRel, pCustom->hOrient);
+
+		pBoxCustom->MinX = pCustom->CordX + pTempColl->MinX - Bordo;
+		pBoxCustom->MaxX = pCustom->CordX + pTempColl->MaxX + Bordo;
+		pBoxCustom->MinZ = pCustom->CordZ + pTempColl->MinZ - Bordo;
+		pBoxCustom->MaxZ = pCustom->CordZ + pTempColl->MaxZ + Bordo;
+
+		// ora trasformare in assoluto quello di item
+		pBoxItem->MinX = pItem->CordX + pBoxRelItem->MinX;
+		pBoxItem->MaxX = pItem->CordX + pBoxRelItem->MaxX;
+		pBoxItem->MinZ = pItem->CordZ + pBoxRelItem->MinZ;
+		pBoxItem->MaxZ = pItem->CordZ + pBoxRelItem->MaxZ;
+
+		pRet = RuotaBoxAbs(pItem->CordX, pItem->CordZ, &GlobTomb4.pMisc->CollisionLast.BoxItem, pItem->OrientationH);
+
+		// ora verificare se almeno uno dei quattro vertici di collisione item
+		// e' interno in box custom
+
+		for (i = 0; i < 4; i++) {
+			pPunto = &pRet->VetVertici[i];
+
+			if (pPunto->x >= pBoxCustom->MinX && pPunto->x <= pBoxCustom->MaxX && pPunto->z >= pBoxCustom->MinZ && pPunto->z <= pBoxCustom->MaxZ)
+				return true;
+		}
+
+		// considerare anche se origine di item principale sia dentro box collisione custom
+		x = (int) pItem->CordX;
+		z = (int) pItem->CordZ;
+
+		if (x >= pBoxCustom->MinX && x <= pBoxCustom->MaxX && z >= pBoxCustom->MinZ && z <= pBoxCustom->MaxZ)
+			return true;
+
+		// ora vedere se origine di oggetto custom e' interno a collisione di item principale
+
+		if (IsInsideRettangolo(pCustom->CordX, pCustom->CordZ, pRet) == true)
+			return true;
+
+		// ora vedere se uno dei vertici di oggetto custom e' interno a collision item
+		if (IsInsideRettangolo(pBoxCustom->MinX, pBoxCustom->MinZ, pRet) == true)
+			return true;
+
+		if (IsInsideRettangolo(pBoxCustom->MinX, pBoxCustom->MaxZ, pRet) == true)
+			return true;
+
+		if (IsInsideRettangolo(pBoxCustom->MaxX, pBoxCustom->MinZ, pRet) == true)
+			return true;
+
+		if (IsInsideRettangolo(pBoxCustom->MaxX, pBoxCustom->MaxZ, pRet) == true)
+			return true;
+
+		return false;
+	}
+
+	// ruota in modo preciso (qualunque numero di gradi)
+	// il pBox con valori gia' resi assoluti
+	StrRettangolo *RuotaBoxAbs(DWORD CX, DWORD CZ, StrAbsBoxCollision *pBox, short Gradi)
+	{
+		static StrRettangolo Ret;
+
+		int i;
+
+		Ret.VetVertici[0].x = pBox->MinX;
+		Ret.VetVertici[0].z = pBox->MinZ;
+
+		Ret.VetVertici[1].x = pBox->MaxX;
+		Ret.VetVertici[1].z = pBox->MinZ;
+
+		Ret.VetVertici[2].x = pBox->MinX;
+		Ret.VetVertici[2].z = pBox->MaxZ;
+
+		Ret.VetVertici[3].x = pBox->MaxX;
+		Ret.VetVertici[3].z = pBox->MaxZ;
+
+		for (i = 0; i < 4; i++) {
+
+			RuotaPuntoInt(CX, CZ, &Ret.VetVertici[i].x, &Ret.VetVertici[i].z, Gradi);
+		}
+
+		return &Ret;
+	}
+
+	// funzione che restituisce la rotazione di un punto
+	// intorno ad un centro di tot gradi
+	// e' usata per ruotare i vertici di un box di  collisione
+	// intorno al pivot dell'roeintamento attule dell'oggetto
+	void RuotaPuntoInt(DWORD CX, DWORD CZ, int * pPX, int * pPZ, short Gradi)
+	{
+		int DifX, DifZ;
+		int Distanza;
+		short OrientNow;
+		int IncX, IncZ;
+
+		if (Gradi == 0)
+			return;
+
+		// prima calcolare distanza tra cx e cz
+
+		DifX = CX - *pPX;
+		DifZ = CZ - *pPZ;
+
+		Distanza = Float2Int((float) sqrt((DifX * DifX) + (DifZ * DifZ)));
+
+		// ora trovare angolo tra C e P
+		OrientNow = (short) tomb4::mGetAngle(CX, CZ, *pPX, *pPZ);
+		OrientNow += 0x4000;
+
+		// ora aggiungere gradi di rotazione
+		OrientNow += Gradi;
+
+		// ora trovare punto da cx,cz con distanza in direzione OrientNow
+		CalcolaIncremento(OrientNow, &IncX, &IncZ, Distanza);
+
+		*pPX = CX + IncX;
+		*pPZ = CZ + IncZ;
+
+		return;
+	}
+
+	// verifica se il punto (x,z) e' interno al rettangolo stabilito dal rettangolo ruotato
+	// ottenuto da funzione RuotaBoxAbs()
+	bool IsInsideRettangolo(DWORD x, DWORD z, StrRettangolo *pRet)
+	{
+		StrTriangolo Tria;
+
+		Tria.A.x = (float) pRet->VetVertici[0].x;
+		Tria.A.y = (float) pRet->VetVertici[0].z;
+
+		Tria.B.x = (float) pRet->VetVertici[1].x;
+		Tria.B.y = (float) pRet->VetVertici[1].z;
+
+		Tria.C.x = (float) pRet->VetVertici[2].x;
+		Tria.C.y = (float) pRet->VetVertici[2].z;
+
+		if (IsPuntoInternoTriangolo((float) x, (float) z, &Tria))
+			return true;
+
+		// altro triangolo
+		// ora provare nell'altro triangolo
+		Tria.A.x = (float) pRet->VetVertici[1].x;
+		Tria.A.y = (float) pRet->VetVertici[1].z;
+
+		Tria.B.x = (float) pRet->VetVertici[2].x;
+		Tria.B.y = (float) pRet->VetVertici[2].z;
+
+		Tria.C.x = (float) pRet->VetVertici[3].x;
+		Tria.C.y = (float) pRet->VetVertici[3].z;
+
+		return IsPuntoInternoTriangolo((float) x, (float) z, &Tria);
+	}
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace)
@@ -2360,4 +2549,8 @@ void LoadTombNextGenerationInject_Oggetti(bool replace)
 	ProcessInject(0x10025D9D, (unsigned int)trng::PreparaLancioFilmato, replace);
 	ProcessInject(0x10026030, (unsigned int)trng::TrovaFileFMV, false);
 	ProcessInject(0x10025CA9, (unsigned int)trng::SospendiSuoniPerFMV, replace);
+	ProcessInject(0x10011568, (unsigned int)trng::CollideItemConCustom, replace);
+	ProcessInject(0x100113D1, (unsigned int)trng::RuotaBoxAbs, replace);
+	ProcessInject(0x10011305, (unsigned int)trng::RuotaPuntoInt, replace);
+	ProcessInject(0x1001147E, (unsigned int)trng::IsInsideRettangolo, replace);
 }

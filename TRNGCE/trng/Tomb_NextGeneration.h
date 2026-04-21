@@ -301,6 +301,9 @@ namespace trng {
 	void PreparaEffetti(StrScriptImage *pImage, RECT *pFine, bool *pTestRestore);
 	void AzzeraDatiMediaPoint(void);
 	void GestioneEquipment(void);
+	bool IsPuntoInternoTriangolo(float x, float y, StrTriangolo *pTri);
+	int DistanzaPrecisaXZ(DWORD X1, DWORD Z1, DWORD X2, DWORD Z2);
+	void AggiungiItemMosso(WORD Indice);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

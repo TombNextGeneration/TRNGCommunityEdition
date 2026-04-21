@@ -4283,7 +4283,7 @@ namespace trng {
 	// converte da float a int con arrotondamento all'intero piu' vicino
 	int Float2Int(float x)
 	{
-		return lroundf(x);
+		return lround(x);
 	}
 
 	// crea il corrispettivo di Cord che era costruito per schermo SchermoRef
@@ -16958,6 +16958,72 @@ Concludi:
 			GestionePickups(Slot, Operazione, Valore);
 		}
 	}
+
+	// verifca se il punto (x,y) e' interno al triangolo pTri
+	// nota valori da 0 a 1024
+	bool IsPuntoInternoTriangolo(float x, float y, StrTriangolo *pTri)
+	{
+		float D1, D2, D, a, b;
+
+		D1 = (x - pTri->A.x) * (pTri->C.y - pTri->A.y) - (y - pTri->A.y) * (pTri->C.x - pTri->A.x);
+
+		D2 = (pTri->A.x - x) * (pTri->B.y - pTri->A.y) - (pTri->A.y - y) * (pTri->B.x - pTri->A.x);
+
+		D = (pTri->B.x - pTri->A.x) * (pTri->C.y - pTri->A.y) - (pTri->B.y - pTri->A.y) * (pTri->C.x - pTri->A.x);
+
+		if (D == 0)
+			return false;
+
+		a = D1 / D;
+		b = D2 / D;
+
+		if (a >= 0 && b >= 0 && (a + b) <= 1)
+			return true;
+
+		return false;
+	}
+
+	// calcola in modo preciso la distanza tra due punti ignorando le Y
+	int DistanzaPrecisaXZ(DWORD X1, DWORD Z1, DWORD X2, DWORD Z2)
+	{
+		float DifX, DifZ;
+
+		DifX = (float) X1 - (float) X2;
+		DifZ = (float) Z1 - (float) Z2;
+
+		return Float2Int((float) sqrt(pow(DifX, 2) + pow(DifZ, 2)));
+	}
+
+	// ogni volta che viene mosso un moveable con un action o flipeffect speciale
+	// viene chiamata questa procedura per memorizzare il suo indice
+	void AggiungiItemMosso(WORD Indice)
+	{
+		int i;
+		WORD TotItem;
+
+		// prima vedere se e' gia' stato salvato nel qual
+		// caso si puo' uscire subito
+		TotItem = GlobTomb4.BaseSalvaCoordinate.TotSalvati;
+		if (TotItem >= MAX_SALVA_CORD) {
+			InviaLog("WARNING: reached max number of item to save (coords and flags) in savegame");
+			return;
+		}
+		if (Indice > 1023) {
+			sprintf_s(BufferLog, "ERROR: invalid index of item (%d) whose it has been required saving of position", Indice);
+			InviaLog(BufferLog);
+			return;
+		}
+		for (i = 0; i < TotItem; i++) {
+			if (GlobTomb4.BaseSalvaCoordinate.VetIndici[i] == Indice)
+				return;
+		}
+
+		// non ancora salvato
+
+		// ok, salvarlo
+		GlobTomb4.BaseSalvaCoordinate.VetIndici[TotItem] = Indice;
+		GlobTomb4.BaseSalvaCoordinate.TotSalvati++;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17200,4 +17266,7 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1005D00B, (unsigned int)trng::PreparaEffetti, replace);
 	ProcessInject(0x100620BC, (unsigned int)trng::AzzeraDatiMediaPoint, replace);
 	ProcessInject(0x1003A8EA, (unsigned int)trng::GestioneEquipment, replace);
+	ProcessInject(0x10076BB9, (unsigned int)trng::IsPuntoInternoTriangolo, replace);
+	ProcessInject(0x1007E016, (unsigned int)trng::DistanzaPrecisaXZ, replace);
+	ProcessInject(0x1004AA12, (unsigned int)trng::AggiungiItemMosso, replace);
 }

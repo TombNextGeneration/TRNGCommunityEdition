@@ -41,6 +41,8 @@
 #include "../tomb4/specific/gamemain.h"
 #include "../tomb4/game/croc.h"
 #include "../tomb4/specific/function_table.h"
+#include "../tomb4/game/jeep.h"
+#include "../tomb4/game/items.h"
 #define malloc ((void *(*)(size_t)) 0x10135531)
 #define realloc ((void *(*)(void *, size_t)) 0x101353F9)
 #define free ((void (*)(void *)) 0x101355BD)
@@ -4661,6 +4663,656 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// viene chiamata PRIMA di AnimateBike
+	// ricorda: coordinate e state id in pLara
+	// mentre velocita e record AI in pVeicolo
+	// se modifico dati pLara poi verranno agfgiornati
+	// anche in pVeicolo (coordinate e orientamenti)
+	void CollBikeFinale(int *pTipoImpatto, bool TestMorta)
+	{
+		int i, j;
+		StrCustomItem Custom;
+		StrVetItemCollision *pBase;
+		bool TestIndietro;
+		StrSlotVehicleCollide *pCustSlot;
+		StrBoxCollisione *pColl;
+		bool TestSpinta;
+		bool TestNemico;
+		WORD FlagImpatto;
+		float Fattore;
+		StrProgressiveAction *pAzione;
+		short OrientDir, OrientDif;
+		StrItemTr4 *pItem;
+		short NewOrient;
+		int NuovoImpatto;
+		int NuovaSpeed;
+		int Indice;
+		int BassoY, AltoY;
+		StrCustomItem *pColpito;
+		StrMeshInfo *pStatic;
+		StrBoxCollisione *pCollStatic;
+		StrRoomTr4 *pRoom;
+		int Room;
+		int IncX, IncZ;
+		int DifY;
+		StrItemTr4 *pLara;
+		DWORD DifX, DifZ;
+		WORD SlotNow;
+		bool TestNoDistanza;
+		tomb4::BIKEINFO *pBike;
+
+		pColpito = NULL;
+		pBase = &GlobTomb4.BaseCollItem;
+		pLara = GlobTomb4.pAdr->pLara;
+
+		if (TestMorta)
+			return;
+
+		// cercare collisioni
+		for (i = 0; i < pBase->TotMoveables; i++) {
+
+			// controllare con questo
+			Indice = pBase->VetMoveables[i] & FCV_MASK_INDEX;
+			pItem = &GlobTomb4.pAdr->pVetItems[Indice];
+
+			pColl = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItem);
+			Custom.CordX = pItem->CordX;
+			Custom.CordY = pItem->CordY;
+			Custom.CordZ = pItem->CordZ;
+			Custom.MaxY = pColl->MaxY;
+			Custom.MinY = pColl->MinY;
+			Custom.hOrient = pItem->OrientationH;
+			Custom.pBoxRel = pColl;
+			Custom.ItemIndex = Indice;
+			Custom.Slot = pItem->SlotID;
+
+			if (CollideItemConCustom(pBase->pVeicolo, &Custom, 0) == true) {
+				pColpito = &Custom;
+				break;
+			}
+
+		}
+		// se non e' stata trovato con moveable, provfare con static
+		if (pColpito == NULL) {
+			for (i = 0; i < pBase->TotStatics; i++) {
+
+				Indice = pBase->VetStatics[i].IndiceStatic & FCV_MASK_INDEX;
+				Room = pBase->VetStatics[i].IndiceRoom;
+
+				pRoom = &GlobTomb4.pAdr->pVetRooms[Room];
+				pStatic = &pRoom->Ptr_StaticMesh[Indice];
+
+				pCollStatic = &GlobTomb4.pAdr->pVetEditObjects[pStatic->SlotId].CollisionBox;
+
+				Custom.CordX = pStatic->x;
+				Custom.CordY = pStatic->y;
+				Custom.CordZ = pStatic->z;
+				Custom.MaxY = pCollStatic->MaxY;
+				Custom.MinY = pCollStatic->MinY;
+				Custom.hOrient = pStatic->Orient;
+				Custom.pBoxRel = pCollStatic;
+				Custom.ItemIndex = -1;
+				Custom.Slot = -1;
+
+				if (CollideItemConCustom(pBase->pVeicolo, &Custom, 0) == true) {
+
+					pColpito = &Custom;
+					break;
+				}
+
+			}
+		}
+
+		if (pColpito == NULL)
+			return;
+
+		// trovata una collisione
+		// modificare i dati di veicolo in modo da avere rimbalzo
+		// o variazione di rotazione
+		pBike = (tomb4::BIKEINFO *) pBase->pVeicolo->pZonaSavegame;
+		NuovoImpatto = 13;
+		if (*pTipoImpatto == 0) {
+
+			NuovaSpeed = pBase->pVeicolo->SpeedH;
+
+		} else {
+			NuovaSpeed = pBase->OldSpeed - (pBase->OldSpeed >> 2);
+		}
+
+		if (NuovaSpeed < 0) {
+			TestIndietro = true;
+		} else {
+			TestIndietro = false;
+		}
+
+		// impostare ai8
+		pBike->velocity = (NuovaSpeed << 8) | 0x80;
+
+		// vedere se è una creatura
+		// oppure se è uno degli slot con effetti speciali
+		TestNemico = false;
+		FlagImpatto = 0;
+		pCustSlot = &GlobTomb4.pBaseCustomize->BaseSlotCollideVehicles;
+		pItem = NULL;
+
+		if (pColpito->Slot != -1) {
+			pItem = &GlobTomb4.pAdr->pVetItems[pColpito->ItemIndex];
+			if (pItem->FlagsMain & 0x02)
+				TestNemico = true;
+
+			// vedere se slot è uno di quelli usati in cust_bike_vs_enemy
+
+			SlotNow = pItem->SlotID;
+			for (i = 0; i < pCustSlot->TotSlotCollide; i++)  {
+				if ((pCustSlot->VetSlotCollide[i] & HIT_MASK_SLOT) == SlotNow) {
+					FlagImpatto = pCustSlot->VetSlotCollide[i] & HIT_MASK_FLAGS;
+					break;
+				}
+			}
+		}
+
+		if (FlagImpatto & HIT_BIKE_EXPLODE) {
+			// esplode moto
+			pLara->MeshVisibilityMask = 0;
+			pLara->Health = 0;
+			pLara->Objectbuttons |= 0x100;
+			tomb4::JeepExplode((tomb4::ITEM_INFO *) pBase->pVeicolo);
+		}
+
+		if ((FlagImpatto & HIT_PUSH_AWAY) == 0) {
+
+			if (FlagImpatto & HIT_EXPLODE) {
+				// fare esplodere moveable
+				if (pBase->OldSpeed > 110) {
+					EsecuzioneActionTrigger(0, 0x152, pColpito->ItemIndex, SCANF_DIRECT_CALL);
+				}
+			}
+		}
+
+		if (FlagImpatto & HIT_HURT) {
+			i = pBase->OldSpeed >> 3;
+			pItem->Health -= (short) i;
+		}
+
+		if ((FlagImpatto & (HIT_EXPLODE | HIT_BIKE_EXPLODE)) != 0 && (FlagImpatto & HIT_PUSH_AWAY) == 0)
+			return;
+
+		if (FlagImpatto & HIT_KILL) {
+			pItem->Health = 0;
+		}
+
+		// vedere se e' oggetto piccolo in basso (che provochera'salto)
+		// o in alto che potrerbbe provocare morte di lara
+		AltoY = pBase->OutCollisioneBox.MinY;
+		BassoY = pBase->OutCollisioneBox.MaxY;
+
+		DifY = pBase->pVeicolo->CordY - AltoY;
+		if ((FlagImpatto & HIT_PUSH_AWAY) == 0) {
+
+			if (NuovaSpeed >= 0x2a && DifY < 300 && DifY >= 60) {
+
+				// fare salto
+				// prima verificare che procedura di salto non fosse gia' stata
+				// iniziata
+				if (pBase->pVeicolo->StateIdCurrent == 8) {
+					// era gia' iniziata
+					return;
+				}
+				pBase->pVeicolo->OrientationV += 0x300;
+				pBase->pVeicolo->SpeedV -= 10;
+				EseguiAnimNemico(pBase->pVeicolo, 22, 8);
+				return;
+			}
+
+			if (DifY < 60 && DifY > 10) {
+				if (pBase->pVeicolo->StateIdCurrent != 11) {
+					// solo un traballamento
+					if (TestIndietro == false) {
+						EseguiAnimNemico(pBase->pVeicolo, 11, 11);
+					}
+				}
+				return;
+			}
+
+			// qui probabilmernte dovrei uscire con dify < 300 se velocitaà è bassa
+			if (DifY <= 10)
+				return;
+
+			if (DifY < 300 && NuovaSpeed < 0x2a) {
+				if (pBase->pVeicolo->StateIdCurrent != 11) {
+					// solo un traballamento a meno che non si stia procedendo
+					// all'indietro
+					if (TestIndietro == false) {
+						EseguiAnimNemico(pBase->pVeicolo, 11, 11);
+					}
+				}
+
+				return;
+			}
+
+			// ora analisi per oggetto che colpisce lara in testa
+			DifY = pBase->pVeicolo->CordY - BassoY;
+
+			if (DifY >= 360 && DifY < 576) {
+				// vedere che origine x,z sia molto vicina
+				DifX = abs((int)(pColpito->CordX - pLara->CordX));
+				DifZ = abs((int)(pColpito->CordZ - pLara->CordZ));
+
+				if (DifX > 512 || DifZ > 512)
+					return;
+
+				NuovaSpeed = pBase->OldSpeed;
+				if (abs(pBase->pVeicolo->SpeedV) > NuovaSpeed)
+					NuovaSpeed = abs(pBase->pVeicolo->SpeedV);
+
+				if (DifY < 400 && NuovaSpeed >= 110 && TestNemico == false) {
+					// esplode modo
+					pLara->MeshVisibilityMask = 0;
+					pLara->Health = 0;
+					pLara->Objectbuttons |= 0x100;
+					tomb4::JeepExplode((tomb4::ITEM_INFO *) pBase->pVeicolo);
+					return;
+				}
+
+				if (DifY > 560 || TestNemico == true) {
+					// solo perdita vita
+					pLara->Health -= (pBase->OldSpeed >> 3);
+					pLara->FlagsMain |= 0x10;
+					return;
+				}
+
+				// qui mettere codice per ammazzare lara con dolore
+				pLara->Health = -1;
+
+				EseguiAnimNemico(pBase->pVeicolo, 0, 7);
+
+				i = *GlobTomb4.pIndiceFirstAnimBike;
+
+				pLara->AnimationNow = (WORD) i;
+				pLara->StateIdCurrent = 0;
+				pLara->FrameNow = GlobTomb4.pAdr->pVetAnimations[i].FrameStart;
+
+				return;
+			}
+		}
+
+		// ora dovrei calcolare variazione di orientamento (da mettere in pVeicolo
+		// trovare la direzione di impatto tra veicolo e oggetto
+		OrientDir = (short) tomb4::mGetAngle(pBase->pVeicolo->CordX, pBase->pVeicolo->CordZ, pColpito->CordX, pColpito->CordZ);
+		OrientDir += 0x4000;
+
+		// ora calcolare differenza rispetto a direzione di veicolo
+		OrientDif = pBase->pVeicolo->OrientationH - OrientDir;
+
+		// se velocita' e' zero c'e' collisione controllare che oggetto
+		// non si sia avvicinato troppo e nel caso tenerlo a distanza
+		TestNoDistanza = false;
+
+		if (pColpito->Slot == -1 || (FlagImpatto & HIT_WALL) != 0)
+			TestNoDistanza = true;
+		// se e' slot di door nemmeno
+		if (pColpito->Slot >= 322 && pColpito->Slot <= 335)
+			TestNoDistanza = true;
+
+		if (pBase->OldSpeed == 0 && TestNoDistanza == false) {
+
+			// tenere solo lontano nemico
+			i = DistanzaPrecisaXZ(pBase->pVeicolo->CordX, pBase->pVeicolo->CordZ, pColpito->CordX, pColpito->CordZ);
+
+			if (i < 1024) {
+				// controllare e attivare bit di collisione per baddy
+				tomb4::TestCollision((tomb4::ITEM_INFO *) pItem, (tomb4::ITEM_INFO *) GlobTomb4.pAdr->pLara);
+			}
+			if (i < 512) {
+
+				// fare in modo che disranza sia 300 e non di piu'
+				CalcolaIncremento(pItem->OrientationH - 0x7fff, &IncX, &IncZ, 512);
+				pItem->CordX += IncX;
+				pItem->CordZ += IncZ;
+
+				return;
+			}
+		}
+
+		if (OrientDif >= 0) {
+			pBike->extra_rotation = +200;
+		}
+
+		if (OrientDif < 0) {
+			pBike->extra_rotation = -200;
+		}
+
+		// analisi per impatto con nemici o slot speciali
+
+		if (FlagImpatto & HIT_PUSH_AWAY) {
+			// qui faro' un'azione di spinta
+			// per ora muoverlo di colpo
+			// se oggetto NON e' enemy attivrlo come oggetto mosso
+			// in modo da salvare erirpistiare la sua posizione
+			if (TestNemico == false)
+				AggiungiItemMosso((WORD) pColpito->ItemIndex);
+
+			NewOrient = OrientDir;
+			if (abs(OrientDif) > 0x1000)
+				NewOrient -= pBike->extra_rotation;
+
+			TestSpinta = true;
+			// se e' rollingball lo attiva
+			if (pColpito->Slot == 130) {
+				// e' rollingball
+				TestSpinta = GestioneBikeVsRollingBall(pColpito, pBase->pVeicolo, pBase->OldSpeed, &NewOrient);
+			}
+
+			if (TestSpinta) {
+
+				pAzione = &GlobTomb4.VetProgressiveActions[0];
+
+				for (i = 0; i < GlobTomb4.TotProgressiveActions; i++) {
+					if (pAzione->ActionType == AZ_PUSH_AWAY && pAzione->ItemIndex == pColpito->ItemIndex)
+						break;
+					pAzione++;
+				}
+
+				if (i == GlobTomb4.TotProgressiveActions) {
+					i = CreaNuovaAzioneProgressiva();
+					pAzione = &GlobTomb4.VetProgressiveActions[i];
+				}
+				// calcolare dimensione di oggetto
+				i = abs(pColpito->pBoxRel->MaxX - pColpito->pBoxRel->MinX) + abs(pColpito->pBoxRel->MaxZ - pColpito->pBoxRel->MinZ) + abs(pColpito->pBoxRel->MaxY - pColpito->pBoxRel->MinY);
+				// calcolare la dimnesione media dei lati
+				Fattore = ((float) i) / 3.0f;
+				// per esempio se e' un cubo di un settore sarebbe 1024
+				// e in questo caso lo si deve spostare di poco
+				Fattore = Fattore / 512.0f;
+
+				// ok, eseguirlo adesso
+				i = abs(pBase->OldSpeed);
+				pAzione->ActionType = AZ_PUSH_AWAY;
+				pAzione->ItemIndex = (short) pColpito->ItemIndex;
+				pAzione->Arg1 = NewOrient;
+				pAzione->Arg2 = (WORD) (i + (i >> 1));  // velocita orizzontale
+
+				pAzione->VetArg[0] = pItem->CordY;
+				pAzione->VetArgShort[2] = (short) -(i / 2); // vspeed
+				pAzione->VetArgShort[3] = -1;
+				pAzione->VetArgWord[4] = FlagImpatto;
+				pAzione->VetArgShort[5] = 0; // max velocita' di caduta
+
+				//nel caso lo colpisca di striscio limitare di molto
+				// velocita
+				if (abs(OrientDif) > 0x1200) {
+					pAzione->Arg2 /= 2;
+					pAzione->VetArgShort[2] /= 2;
+				}
+
+				// riduzione velocita' orizzontale
+				pAzione->VetArgShort[6] = (short) Float2Int(4.0f * Fattore);
+				if (pAzione->VetArgShort[6] < 1)
+					pAzione->VetArgShort[6] = 1;
+
+				// rifduzione velocita' verticale
+				pAzione->VetArgShort[7] = (short) Float2Int(6.0f * Fattore);
+				if (pAzione->VetArgShort[7] < 1)
+					pAzione->VetArgShort[7] = 1;
+
+				// salvare valore di shadow
+				pAzione->VetArgWord[8] = GlobTomb4.pAdr->pVetSlot[pItem->SlotID].FootStep;
+
+				// calcolare animazione
+
+				// impostare animazione speciale se possibile
+				i = -1;
+
+				switch (pItem->SlotID) {
+				case 35:
+					// skeleton
+					if (pAzione->Arg2 > 100) {
+						i = 17;
+					} else {
+						i = 35;
+					}
+
+					break;
+				case 37:
+					// guide
+					i = 57;
+
+					break;
+				case 39:
+					// von croy
+					if (pAzione->Arg2 > 100) {
+						i = 22;
+					} else {
+						i = 51;
+					}
+
+					break;
+
+				case 47:
+					// mummy
+					if (pAzione->Arg2 > 100) {
+						i = 10;
+					} else {
+						i = 3;
+					}
+
+					break;
+				case 49:
+					// sphinx
+					i = 6;
+
+					break;
+				case 55:
+					// scorpion
+					i = 7;
+
+					break;
+				case 61:
+					// KNIGHTS_TEMPLAR
+					i = 6;
+
+					break;
+				case 65:
+					// horse
+					if (pAzione->Arg2 > 100) {
+						i = 13;
+					} else {
+						i = 3;
+					}
+
+					break;
+				case 67:
+					// baboon_normal
+					if (pAzione->Arg2 > 100) {
+						i = 27;
+					} else {
+						i = 7;
+					}
+
+					break;
+				case 75:
+					// harpy
+					if (pAzione->Arg2 > 100) {
+						i = 17;
+					} else {
+						i = 12;
+					}
+
+					break;
+
+				case 80:
+					// dog
+					i = 2;
+
+					break;
+
+				case 102:
+					// ahmet
+					if (pAzione->Arg2 > 100) {
+						i = 4;
+					} else {
+						i = 8;
+					}
+					break;
+				}
+
+				if (i != -1) {
+					// non eseguirla se e' gia' attiva
+					j = pItem->SlotID;
+					j = GlobTomb4.pAdr->pVetSlot[j].IndexFirstAnim;
+
+					if ((i + j) != pItem->AnimationNow) {
+						EseguiAnimNemico(pItem, (WORD) i, -1);
+					}
+				}
+			}
+		}
+
+		// calcolare tipo impatto
+		//
+
+		if (pBase->OldSpeed > 42 && pBase->pVeicolo->StateIdCurrent != 12 && pBase->pVeicolo->StateIdCurrent != 15) {
+			// impostare animazione di scossone
+			EseguiAnimNemico(pBase->pVeicolo, 12, 12);
+			if (pBase->OldSpeed > 60) {
+				pLara->Health -= (pBase->OldSpeed >> 3);
+				pLara->FlagsMain |= 0x10;
+			}
+		}
+
+		if (*pTipoImpatto == 0) {
+			// non c'era impatto, creare ora dati mancanti
+			// per evitare che moto si sia incastrata nell'oggetto
+			// muoverlo in direzione opposta del doppio della vfelocita'
+
+			CalcolaIncremento(OrientDir + 0x7fff, &IncX, &IncZ, pBase->OldSpeed);
+
+			pBase->pVeicolo->CordX += IncX;
+			pBase->pVeicolo->CordZ += IncZ;
+		}
+
+		// se non c'era impatto rilevato ma in pratica c'e' adesso ridurre
+		// velocita'
+		if (*pTipoImpatto == 0) {
+			NuovaSpeed -= NuovaSpeed >> 1;
+			pBase->pVeicolo->SpeedH = (short) NuovaSpeed;
+			// impostare ai8
+			pBike->velocity = (NuovaSpeed << 8) | 0x80;
+		}
+		*pTipoImpatto = NuovoImpatto;
+	}
+
+	// modifica coordinate sulla base di orienting
+	// nota: se orientamento e' diagonale restitisce il valore originale
+	StrBoxCollisione *RuotaBox(StrBoxCollisione *pBox, WORD HOrient)
+	{
+		static StrBoxCollisione MioBox;
+
+		MioBox = *pBox;
+
+		switch (HOrient) {
+
+		case 0x4000:
+			MioBox.MinX = pBox->MinZ;
+			MioBox.MaxX = pBox->MaxZ;
+			MioBox.MinZ = -pBox->MaxX;
+			MioBox.MaxZ = -pBox->MinX;
+
+			break;
+
+		case 0x8000:
+			MioBox.MinX = -pBox->MaxX;
+			MioBox.MaxX = -pBox->MinX;
+			MioBox.MinZ = -pBox->MaxZ;
+			MioBox.MaxZ = -pBox->MinZ;
+			break;
+		case 0xc000:
+
+			MioBox.MinX = -pBox->MaxZ;
+			MioBox.MaxX = -pBox->MinZ;
+			MioBox.MinZ = pBox->MinX;
+			MioBox.MaxZ = pBox->MaxX;
+			break;
+		}
+		return &MioBox;
+	}
+
+	// chiamata quando bike colpisco rollingball ed era impostato
+	// il flag HIT_PUSH_AWAY
+	// orientdir e' la direzione Bike -> rolling
+	// mentre speed era la velocita' della moto
+	bool GestioneBikeVsRollingBall(StrCustomItem *pColpito, StrItemTr4 *pVeicolo, WORD Speed, short *pOrientDir)
+	{
+		StrItemTr4 *pRoll;
+		short DifOrient;
+		StrItemTr4 *pLara;
+		int Differenza;
+		int IncX, IncZ;
+		WORD OrientAlign;
+
+		pRoll = &GlobTomb4.pAdr->pVetItems[pColpito->ItemIndex];
+
+		// se rolling era gia' attivo, non fare altro
+		// tranne perdita vita lara nel caso ci sia una collisione in direzioni
+		// diverse
+
+		if ((pRoll->Objectbuttons & 0x3e00) == 0x3e00) {
+
+			// era gia' attivo
+			// vedere se c''e direzione di impatto
+			DifOrient = *pOrientDir - pRoll->OrientationH;
+
+			if (abs(DifOrient) > 16384 && (pRoll->Reserved_34 != 0 || pRoll->Reserved_36 != 0)) {
+				// e' il rollingball che e' piombato addosso a lara
+				pLara = GlobTomb4.pAdr->pLara;
+				pLara->Health -= pRoll->SpeedH;
+				pLara->FlagsMain |= 0x10;
+			}
+
+			return true;
+		}
+		// attivare rollingball
+		pRoll->Objectbuttons |= 0x3e00;
+		pRoll->ObjectTimer = 0;
+		pRoll->ContactFlags = 0;
+		tomb4::AddActiveItem((short) pColpito->ItemIndex);
+		pRoll->FlagsMain |= 2;
+
+		// calcolare nuovo orientamento in mod che sia perpendicolare a muri
+		OrientAlign = GetAlignedOrient(*pOrientDir, true, &Differenza);
+		// ora calcolare i due incremneti
+		IncX = 0;
+		IncZ = 0;
+
+		switch (OrientAlign) {
+		case 0:
+			// verso est
+			IncZ = Speed;
+
+			break;
+		case 0x4000:
+			// verso sud
+			IncX = Speed;
+
+			break;
+		case 0x8000:
+			// verso ovest
+			IncZ = -Speed;
+
+			break;
+		case 0xC000:
+			// verso nord
+			IncX = -Speed;
+			break;
+		}
+
+		pRoll->Reserved_34 = (short) IncX;
+		pRoll->Reserved_36 = (short) IncZ;
+
+		*pOrientDir = OrientAlign;
+		return true;
+	}
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -4748,4 +5400,7 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100B11DD, (unsigned int)trng::RestoreAfterSavegame, replace);
 	ProcessInject(0x100B38FF, (unsigned int)trng::UnisciDatiVariabili, replace);
 	ProcessInject(0x100AFC79, (unsigned int)trng::AggiornaBinocoloSuper, false);
+	ProcessInject(0x100CF587, (unsigned int)trng::CollBikeFinale, replace);
+	ProcessInject(0x100C1ADD, (unsigned int)trng::RuotaBox, replace);
+	ProcessInject(0x100CF3CE, (unsigned int)trng::GestioneBikeVsRollingBall, replace);
 }

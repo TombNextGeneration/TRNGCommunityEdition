@@ -9,9 +9,15 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long TestCollision(ITEM_INFO* item, ITEM_INFO* l)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Sphere(bool replace)
 {
 	ProcessInject(0x45F160, (unsigned int)tomb4::GetJointAbsPosition, false);
+	ProcessInject(0x45ED00, (unsigned int)tomb4::TestCollision, false);
 }
