@@ -72,6 +72,7 @@
 #include "tomb4/game/init.h"
 #include "tomb4/game/laraflar.h"
 #include "tomb4/game/jeep.h"
+#include "tomb4/game/laraswim.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -599,6 +600,7 @@ static void Inject(bool replace) {
 	Inject_Init(replace);
 	Inject_Laraflar(replace);
 	Inject_Jeep(replace);
+	Inject_Laraswim(replace);
 }
 
 static LPSTR __stdcall CallInject() {

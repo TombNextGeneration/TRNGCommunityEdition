@@ -136,6 +136,7 @@
     <ClInclude Include="tomb4\game\laraflar.h" />
     <ClInclude Include="tomb4\game\laramisc.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
+    <ClInclude Include="tomb4\game\laraswim.h" />
     <ClInclude Include="tomb4\game\newinv.h" />
     <ClInclude Include="tomb4\game\objects.h" />
     <ClInclude Include="tomb4\game\pickup.h" />
@@ -224,6 +225,7 @@
     <ClCompile Include="tomb4\game\laraflar.cpp" />
     <ClCompile Include="tomb4\game\laramisc.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
+    <ClCompile Include="tomb4\game\laraswim.cpp" />
     <ClCompile Include="tomb4\game\newinv.cpp" />
     <ClCompile Include="tomb4\game\objects.cpp" />
     <ClCompile Include="tomb4\game\pickup.cpp" />

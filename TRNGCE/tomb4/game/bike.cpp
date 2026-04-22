@@ -17,11 +17,19 @@
 #include "tomb4fx.h"
 #include "../../trng/zPatchesTomb4.h"
 #include "../../trng/Tomb_NextGeneration.h"
+#include "../../flep/PlugIn_trng.h"
+#include "../../flep/structures_mine.h"
+#include "laraswim.h"
 
 namespace tomb4
 {
 	static short &bikefspeed = *reinterpret_cast<decltype(&bikefspeed)>(0x4BFADC);
 	static char &dont_exit_bike = *reinterpret_cast<decltype(&dont_exit_bike)>(0x4BFAF8);
+
+	long &bike_booster_object = *reinterpret_cast<decltype(&bike_booster_object)>(0x463922);
+	uchar &bike_explode_in_water = *reinterpret_cast<decltype(&bike_explode_in_water)>(0x465B09);
+#define bike_explode_in_water (bike_explode_in_water == 0x74)
+	long &bike_maximum_depth = *reinterpret_cast<decltype(&bike_maximum_depth)>(0x818B4A);
 
 	static long UserControl(ITEM_INFO* item, long height, long* pitch)
 	{
@@ -85,7 +93,7 @@ namespace tomb4
 
 			if (angle <= -8190 || angle >= 24570)
 			{
-				if (GLOBAL_inventoryitemchosen == PUZZLE_ITEM1)
+				if (GLOBAL_inventoryitemchosen == bike_booster_object)
 				{
 					l->anim_number = *trng::GlobTomb4.pIndiceFirstAnimBike + 28;
 					GLOBAL_inventoryitemchosen = NO_ITEM;
@@ -505,7 +513,7 @@ namespace tomb4
 			}
 		}
 
-		if (room[item->room_number].flags & (ROOM_UNDERWATER | ROOM_QUICKSAND))
+		if (bike_explode_in_water && room[item->room_number].flags & (ROOM_UNDERWATER | ROOM_QUICKSAND) && (!flep::pPatchMap[flep::PATCH_MOTORBIKE_AND_JEEP_EXPLOSION_IN_WATER] || GetWaterDepth(item->pos.x_pos, item->pos.y_pos, item->pos.z_pos, item->room_number) > bike_maximum_depth))
 		{
 			lara_item->goal_anim_state = 20;
 			lara_item->hit_points = 0;

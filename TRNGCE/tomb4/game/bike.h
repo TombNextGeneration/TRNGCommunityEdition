@@ -3,6 +3,10 @@
 
 namespace tomb4
 {
+	extern long &bike_booster_object;
+	extern uchar &bike_explode_in_water;
+	extern long &bike_maximum_depth;
+
 	void BikeTriggerExhaustSmoke(long x, long y, long z, short angle, long velocity, long thing);
 	void BikeCollision(short item_number, ITEM_INFO* l, COLL_INFO* coll);
 	void TriggerBikeBeam(ITEM_INFO* item);
