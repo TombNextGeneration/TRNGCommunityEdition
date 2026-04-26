@@ -102,7 +102,7 @@ namespace tomb4
 				gfNumMips = 0;
 				gfMirrorRoom = uchar(-1);
 
-				if (gfStatus != 3 || gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
+				if (gfStatus != 3 || (gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest) || skipped_level)
 				{
 					gfFog.b = 0;
 					gfFog.g = 0;
@@ -125,7 +125,7 @@ namespace tomb4
 
 				case 3:
 
-					if (gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest || skipped_level)
+					if ((gfLevelFlags & GF_RESETHUB && gfLevelComplete == gfResetHubDest) || skipped_level)
 					{
 						sgInitialiseHub(0);
 						skipped_level = 0;

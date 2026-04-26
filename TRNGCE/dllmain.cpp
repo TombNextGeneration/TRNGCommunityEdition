@@ -475,7 +475,38 @@ static void ReferenceInject(void *reference, void *value) {
 	memcpy(reference, value, sizeof(void *));
 }
 
+static void *malloc_inject(size_t size) {
+	return malloc(size);
+}
+
+static void *realloc_inject(void *memblock, size_t size) {
+	return realloc(memblock, size);
+}
+
+static void free_inject(void *memblock) {
+	free(memblock);
+}
+
+static void *calloc_inject(size_t number, size_t size) {
+	return calloc(number, size);
+}
+
+static void Inject_stdlib(bool replace) {
+	ProcessInject(0x49DCD6, (unsigned int)malloc_inject, replace);
+	ProcessInject(0x49ED23, (unsigned int)realloc_inject, replace);
+	ProcessInject(0x49E22D, (unsigned int)free_inject, replace);
+	ProcessInject(0x49F2DC, (unsigned int)calloc_inject, replace);
+}
+
+static void LoadTombNextGenerationInject_stdlib(bool replace) {
+	ProcessInject(0x10135531, (unsigned int)malloc_inject, replace);
+	ProcessInject(0x101353F9, (unsigned int)realloc_inject, replace);
+	ProcessInject(0x101355BD, (unsigned int)free_inject, replace);
+	ProcessInject(0x1013E496, (unsigned int)calloc_inject, replace);
+}
+
 static void LoadTombNextGenerationInject(bool replace) {
+	LoadTombNextGenerationInject_stdlib(replace);
 	LoadTombNextGenerationInject_TombNextGeneration(replace);
 	LoadTombNextGenerationInject_ZRoomEditor(replace);
 	LoadTombNextGenerationInject_Plugin(replace);
@@ -505,6 +536,7 @@ static void Terminate(const char *message) {
 	strcat_s(message, name);
 	strcat_s(message, " is incompatible with TRNG-CE. Try installing the latest version of the plugin to fix this problem.");
 	Terminate(message);
+	__assume(0);
 }
 
 static void CheckPluginVersion(const char *name, WORD major, WORD minor, WORD build, WORD revision) {
@@ -677,9 +709,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		LdrRegisterDllNotification = (NTSTATUS (__stdcall *)(ULONG, void (__stdcall *)(ULONG, LDR_DLL_NOTIFICATION_DATA *, PVOID), PVOID, PVOID *)) GetProcAddress(module, "LdrRegisterDllNotification");
 		if (!LdrRegisterDllNotification)
 			return FALSE;
+		Inject_stdlib(REPLACE);
 		LdrRegisterDllNotification(0, LoadInject, NULL, &cookie);
 		GetCommandLineBinding = CallInject;
 	}
 	return TRUE;
 }
-

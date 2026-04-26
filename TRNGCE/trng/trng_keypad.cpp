@@ -4,9 +4,6 @@
 #include "../tomb4/game/control.h"
 #include "../tomb4/game/sound.h"
 #include "zPatchesTomb4.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	int GestioneKeyPad(int TipoKeyPad, WORD OcbCode, WORD Slot)
@@ -18,21 +15,17 @@ namespace trng {
 		int TastiInput;
 		int IndiceTree;
 		int *pMeshTree;
-		bool TestShowNumero;
 		int i;
 		DWORD FramePassati;
 		bool TestNuovoTasto;
 		WORD ValoreTasto;
 		const int TempoDelay = 10;
-		bool TestEsegui;
 		int Moltiplicatore;
 		int MaxCifre;
 		bool TestPremutoTasto;
 		DWORD FrameNow;
 		bool TestIgnora;
 		int Range;
-
-		TestShowNumero = false;
 
 		pKeyPad = &GlobTomb4.BaseKeyPad;
 
@@ -103,8 +96,6 @@ namespace trng {
 			}
 		}
 
-		TestEsegui = false;
-
 		if (pKeyPad->Fase == FKP_RIMUOVI) {
 			if (pKeyPad->IndiceTastoOld != -1) {
 				CambiaTasto(pKeyPad->pStartMeshTree, pKeyPad->IndiceTastoOld, 0, true);
@@ -153,7 +144,6 @@ namespace trng {
 
 		if (pKeyPad->Fase == FKP_ATTENDI_FINE_ESCAPE) {
 			if (GlobTomb4.VetKeysToStop[1] == 0) {
-				ValoreTasto = (WORD) (pKeyPad->IndiceTasto + 1);
 				// ripristinare tasti
 				if (pKeyPad->IndiceTastoOld != -1) {
 					CambiaTasto(pKeyPad->pStartMeshTree, pKeyPad->IndiceTastoOld, 0, true);

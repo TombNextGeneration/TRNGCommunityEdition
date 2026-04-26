@@ -43,9 +43,6 @@
 #include "../tomb4/specific/function_table.h"
 #include "../tomb4/game/jeep.h"
 #include "../tomb4/game/items.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -78,7 +75,6 @@ namespace trng {
 	{
 		int i;
 		WORD *pPunta;
-		const char *pMex;
 
 		// allocare memoria necessaria
 		//a ttenzione questo viene chiamato ad ogni livello
@@ -91,10 +87,6 @@ namespace trng {
 
 		for (i = 0; i < TotMesh; i++) {
 			pPunta = VetPtrMesh[i];
-			if (pPunta[5] > 255)
-				pMex = "\t**** MAGGIORE DI 255 *******";
-			else
-				pMex = "";
 
 			//tot vertici e' all'offset 10 0x0A quindi la 5a word
 			GlobTomb4.pVetSalvaSizeMesh[i] = pPunta[5];
@@ -1093,7 +1085,6 @@ namespace trng {
 		// ------------ WEAPONS ------------
 		// pistole
 		pWeap = &pCust->WeaponPistols;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 
 		pWeap->Dispersion = 1456;
 		pWeap->DistanceAiming = 8192;
@@ -1109,7 +1100,6 @@ namespace trng {
 		pWeap->VPositionOfWeapon = 650;
 		// REVOLVER
 		pWeap = &pCust->WeaponRevolver;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 
 		pWeap->Dispersion = 728;
 		pWeap->DistanceAiming = 8192;
@@ -1125,7 +1115,6 @@ namespace trng {
 		pWeap->VPositionOfWeapon = 650;
 		// UZI
 		pWeap = &pCust->WeaponUzi;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 
 		pWeap->Dispersion = 728;
 		pWeap->DistanceAiming = 8192;
@@ -1141,7 +1130,6 @@ namespace trng {
 		pWeap->VPositionOfWeapon = 650;
 		// fucile
 		pWeap = &pCust->WeaponFucile;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 		pWeap->Dispersion = 0;
 		pWeap->DistanceAiming = 8192;
 		pWeap->FrameToTakeWeapon = 10;
@@ -1153,7 +1141,6 @@ namespace trng {
 
 		// balestra
 		pWeap = &pCust->WeaponBalestra;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 		pWeap->Dispersion = 1456;
 		pWeap->DistanceAiming = 8192;
 		pWeap->FrameToTakeWeapon = 10;
@@ -1164,7 +1151,6 @@ namespace trng {
 		pWeap->VPositionOfWeapon = 500;
 		// lancia granate
 		pWeap = &pCust->WeaponLanciaGranate;
-		memset(pWeap, sizeof(StrCustWeapon), 0);
 		pWeap->Dispersion = 1456;
 		pWeap->DistanceAiming = 8192;
 		pWeap->FrameToTakeWeapon = 10;
@@ -1632,9 +1618,6 @@ namespace trng {
 		StrBaseImportFile *pImport;
 		StrListaWav *pVetNomiTracce;
 
-		if (NumeroCd == 130) {
-			j = 0;
-		}
 		pVetNomiTracce = tomb4::TrackFileNames;
 		AggiornaVolumeBass();
 
@@ -2117,7 +2100,6 @@ namespace trng {
 	bool IsLaraPiediInPalude(void)
 	{
 		StrMovePosition TriRec;
-		void *pFloor;
 		short Room;
 		int BaseLaraY;
 
@@ -2128,7 +2110,7 @@ namespace trng {
 		BaseLaraY = TriRec.RelY;
 
 		Room = GlobTomb4.pAdr->pLara->Room;
-		pFloor = tomb4::GetFloor(GlobTomb4.pAdr->pLara->CordX, BaseLaraY, GlobTomb4.pAdr->pLara->CordZ, &Room);
+		tomb4::GetFloor(GlobTomb4.pAdr->pLara->CordX, BaseLaraY, GlobTomb4.pAdr->pLara->CordZ, &Room);
 
 		if (GlobTomb4.pAdr->pVetRooms[Room].FlagsRoom & 0x4)
 			return true;
@@ -2446,7 +2428,6 @@ namespace trng {
 		void *pFloor;
 		short Room;
 		int Altezza;
-		int IndiceSlot;
 		bool TestMod;
 		StrBoxCollisione *pBox;
 		int TopY, BottomY;
@@ -2457,7 +2438,6 @@ namespace trng {
 		int Distanza;
 
 		TestMod = false;
-		IndiceSlot = pItem->SlotID;
 		pBox = (StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItem);
 
 		if (pItem->SpeedV != 0) {
@@ -3348,7 +3328,6 @@ namespace trng {
 	void InizializzaStartLivello(void)
 	{
 		int i;
-		bool TestHeader_HUB;
 		int j;
 		short *pSchermoY;
 		int Valore;
@@ -3509,7 +3488,6 @@ namespace trng {
 		// scoprire se tra le barche da rollare c'e' rubberboat o motorboat
 
 		SalvaDimensioneSchermo();
-		TestHeader_HUB = false;
 		GlobTomb4.TestHubLara = false;
 		GlobTomb4.TestHubLevel = false;
 
@@ -3881,7 +3859,6 @@ namespace trng {
 		int TotBytes;
 		StrAnimFrame *pFrame;
 		WORD TotIndici;
-		StrVetDiari *pBaseDiario;
 		short *pShort;
 		StrBaseSalvaCords *pSalva;
 		int z;
@@ -4106,8 +4083,7 @@ namespace trng {
 				break;
 
 			case NGTAG_INDICI_PFRAME:
-				j = 0;
-				TotIndici = ParseField.pData[j++];
+				j = 1;
 
 				for (i = 0; i < GlobTomb4.BaseAnimTr4.TotFrameRanges; i++) {
 					if (GlobTomb4.BaseAnimTr4.VetFrameRanges[i].TipoAnim == FAN_P_FRAMES) {
@@ -4200,11 +4176,9 @@ namespace trng {
 				break;
 			case NGTAG_DIARY_DATA:
 				// dati globali di tutti i diari
-				j = 0;
-				TotIndici = ParseField.pData[j++];
+				j = 1;
 
 				pShort = (short *) &ParseField.pData[j];
-				pBaseDiario = &GlobTomb4.BaseDiari;
 				z = 0;
 				Tot = pShort[z++];  // totdiary
 
@@ -4417,7 +4391,7 @@ namespace trng {
 					switch (pAzione->ActionType) {
 					case AZ_PRINT_STRING:
 
-						if (pAzione->ItemIndex == SCRIPT_IGNORE) {
+						if (pAzione->ItemIndex == -1) {
 							pAzione->ActionType = 0;
 						} else {
 							AggiornaAdrStringa(pAzione);

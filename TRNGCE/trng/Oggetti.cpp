@@ -13,9 +13,6 @@
 #include "../tomb4/game/tomb4fx.h"
 #include "../tomb4/game/draw.h"
 #include "../tomb4/specific/3dmath.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	char (&ZonaReplace)[32000] = *reinterpret_cast<decltype(&ZonaReplace)>(0x10193C68);
@@ -441,7 +438,6 @@ namespace trng {
 		int i;
 		bool TestCorreggiWide;
 		bool TestSospendi;
-		bool TestFirst;
 		bool TestRefresh;
 
 		TestPrimaVolta = true;
@@ -502,8 +498,6 @@ namespace trng {
 				StopBassSuoni(1);
 			}
 		}
-
-		TestFirst = true;
 
 		TestNoInput = false;
 		do {
@@ -577,8 +571,6 @@ namespace trng {
 
 			TestWait = true;
 			do {
-
-				TestFirst = false;
 
 				if (pDiario->FlagsLDF & LDF_TRANSPARENT_BKG) {
 					TransparentBlt(pBase->Temp.MemHdc, pBase->ZonaSchermoTomb.left, pBase->ZonaSchermoTomb.top, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImagePageDiario.MemHdc, 0, 0, pBase->ImagePageDiario.SizeX, pBase->ImagePageDiario.SizeY, 0xff00ff);
@@ -1361,7 +1353,6 @@ namespace trng {
 	// usando i dati di frame text1/2
 	void StampaTestoPaginaNow(HDC MioHdc, StrBaseDiario *pDiario)
 	{
-		HFONT MioFont;
 		RECT FrameText1;
 		RECT FrameText2;
 		StrWindowsFont *pFont;
@@ -1372,7 +1363,6 @@ namespace trng {
 		SetBkMode(MioHdc, TRANSPARENT);
 		SetMapMode(MioHdc, MM_TEXT);
 
-		MioFont = NULL;
 		FrameText1 = pDiario->PaginaNow.FrameText1;
 		FrameText2 = pDiario->PaginaNow.FrameText2;
 
@@ -1382,7 +1372,7 @@ namespace trng {
 
 			ImpostaWindowsFont(pFont, MioHdc, false, false);
 
-			NextOrgY = StampaTestoWindowsForCB(&FrameText1, pFont, MioHdc, pDiario->PaginaNow.pTitolo, &TestErrore, true, 0);
+			StampaTestoWindowsForCB(&FrameText1, pFont, MioHdc, pDiario->PaginaNow.pTitolo, &TestErrore, true, 0);
 
 			if (TestErrore == true) {
 
@@ -1701,7 +1691,6 @@ namespace trng {
 		static wchar_t BufferRep[32000];
 
 		DWORD i;
-		DWORD Indice;
 		char StrHex[10];
 		DWORD j;
 		int Codice;
@@ -1715,9 +1704,9 @@ namespace trng {
 
 		z = 0;
 		BufferRep[z] = 0;
-		Indice = 0;
 		i = 0;
 		TestPlaceFolder = false;
+		// NOLINTNEXTLINE(clang-analyzer-core.NullDereference)
 		while (pTesto[i]) {
 			MioCar = pTesto[i];
 			TestReplaced = false;
@@ -1842,7 +1831,6 @@ namespace trng {
 	char *ReplaceVarPlaceFolders(char *pTesto)
 	{
 		DWORD i;
-		DWORD Indice;
 		char StrHex[10];
 		DWORD j;
 		int Codice;
@@ -1856,7 +1844,6 @@ namespace trng {
 
 		z = 0;
 		ZonaReplace[z] = 0;
-		Indice = 0;
 		i = 0;
 		TestPlaceFolder = false;
 		while (pTesto[i]) {
@@ -1995,7 +1982,6 @@ namespace trng {
 	{
 		StrEffettoImage *pEffetto;
 		float OrgX, OrgY;
-		DWORD FlagTasti;
 		StrEffettoImage StoreEffetto;
 		StrShowImage *pBase;
 		DWORD StartTime;
@@ -2004,11 +1990,8 @@ namespace trng {
 		RECT StoreRect;
 		RECT *pMioRect;
 		DWORD TotFrames;
-		bool TestTombAllocatoNow;
 
 		pMioRect = &StoreRect;
-
-		TestTombAllocatoNow = false;
 
 		pBase = &GlobTomb4.BaseImages;
 		pEffetto = &StoreEffetto;
@@ -2049,7 +2032,6 @@ namespace trng {
 		pEffetto->TotFrames = TotFrames;
 		// adesso eseguire dinamicamente l'effetto
 
-		FlagTasti = 0;
 		StartTime = (DWORD) GetTickCount64();
 		LastTick = 0;
 		TickNow = 1;
@@ -2166,9 +2148,7 @@ namespace trng {
 	void ElaboraTriggerFMV(int NumeroFmv)
 	{
 		int i;
-		BYTE *pFlagWindow;
 
-		pFlagWindow = (BYTE*) &tomb4::App.dx.Flags;
 		if (NumeroFmv >= 128 || GlobTomb4.BaseFMV.VetFmvEseguiti[NumeroFmv])
 			return;
 
@@ -2199,17 +2179,11 @@ namespace trng {
 		StrProgressiveAction *pAzione;
 		int IndiceAzione;
 		char Buffer[256];
-		int *pTestOggettoSoundAttivo;
 		BYTE *pSettingNoFMV;
-		short *pTestAttivoFade;
-		short *pSchermoBuio;
 		StrFMV *pFmv;
 		bool TestFade;
 
-		pTestOggettoSoundAttivo = (int*) &tomb4::sound_active;
 		pSettingNoFMV = (BYTE*) &tomb4::fmvs_disabled;
-		pTestAttivoFade = &tomb4::ScreenFading;
-		pSchermoBuio = &tomb4::ScreenFadedOut;
 
 		if (*pSettingNoFMV) {
 

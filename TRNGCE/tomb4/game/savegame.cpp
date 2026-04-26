@@ -160,7 +160,7 @@ namespace tomb4
 
 			// se livello trasparenza e' minore di 128
 			// mantenerlo
-			if ((item->after_death > 127 && (item->object_number < GAME_PIECE1 || item->object_number > ENEMY_PIECE)) || item->flags & IFL_CLEARBODY && IsCreatureDead(item))
+			if ((item->after_death > 127 && (item->object_number < GAME_PIECE1 || item->object_number > ENEMY_PIECE)) || (item->flags & IFL_CLEARBODY && IsCreatureDead(item)))
 			{
 				packed = 0x2000;
 				WriteSG(&packed, sizeof(ushort));
@@ -176,7 +176,7 @@ namespace tomb4
 				// incendia
 				// se +34h diverso da zero forzare il salvataggio dei
 				// dati
-				if (item->object_number == ELEMENT_PUZZLE && item->item_flags[0] || item->flags & (IFL_CODEBITS | IFL_INVISIBLE | IFL_TRIGGERED) || item->object_number == LARA && FullSave)
+				if ((item->object_number == ELEMENT_PUZZLE && item->item_flags[0]) || item->flags & (IFL_CODEBITS | IFL_INVISIBLE | IFL_TRIGGERED) || (item->object_number == LARA && FullSave))
 				{
 					packed = 0x8000;
 

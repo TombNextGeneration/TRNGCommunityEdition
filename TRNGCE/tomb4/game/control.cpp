@@ -256,7 +256,7 @@ namespace tomb4
 			if (gfLevelComplete)
 				return 3;
 
-			if (reset_flag || lara.death_count > 300 || lara.death_count > 60 && input)
+			if (reset_flag || lara.death_count > 300 || (lara.death_count > 60 && input))
 			{
 				if (Gameflow->DemoDisc && reset_flag)
 				{
@@ -316,7 +316,7 @@ namespace tomb4
 			if (MainThread.ended)
 				return 4;
 
-			if (input & IN_LOOK && (LaserSightHarpoon() || lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH ||
+			if (input & IN_LOOK && (LaserSightHarpoon() || (lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH) ||
 				(lara.IsDucked && !(input & IN_DUCK) && lara_item->anim_number == ANIM_DUCKBREATHE && lara_item->goal_anim_state == AS_DUCK)))
 			{
 				if (!BinocularRange)

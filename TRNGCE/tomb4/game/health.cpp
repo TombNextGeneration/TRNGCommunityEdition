@@ -38,7 +38,7 @@ namespace tomb4
 			else
 				S_DrawHealthBar(0, flash_state);
 		}
-		else if (health_bar_timer > 0 || hitpoints <= 0 || lara.gun_status == LG_READY && lara.gun_type != 8 || lara.poisoned >= 256)
+		else if (health_bar_timer > 0 || hitpoints <= 0 || (lara.gun_status == LG_READY && lara.gun_type != 8) || lara.poisoned >= 256)
 			S_DrawHealthBar(hitpoints / 10, flash_state);
 
 		if (PoisonFlag)
