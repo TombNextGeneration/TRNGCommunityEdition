@@ -1,5 +1,5 @@
 #pragma once
-#include <stdio.h>
+#include <cstdio>
 #include "structures.h"
 #include "MyStructures.h"
 #include "DefTomb4Funct.h"
@@ -58,6 +58,9 @@ namespace trng {
 	extern HDC &GlobHdcTomb;
 	extern DWORD &ContatoreFiato;
 	extern int &ReturnValue;
+	extern StrBaseFlipSwap &MySwap;
+	extern char (&BufGlobalTimer)[6];
+	extern char (&BufLocalTimer)[6];
 
 	void ImpostaEnemyDamage(void);
 	bool Inizializza(void);
@@ -296,6 +299,11 @@ namespace trng {
 	void AvviaPopUpImage(WORD IdImageCmd, StrScriptImage *pImage, WORD Contatore);
 	RECT *CalcolaMicroUnits(RECT *pZona);
 	void PreparaEffetti(StrScriptImage *pImage, RECT *pFine, bool *pTestRestore);
+	void AzzeraDatiMediaPoint(void);
+	void GestioneEquipment(void);
+	bool IsPuntoInternoTriangolo(float x, float y, StrTriangolo *pTri);
+	int DistanzaPrecisaXZ(DWORD X1, DWORD Z1, DWORD X2, DWORD Z2);
+	void AggiungiItemMosso(WORD Indice);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

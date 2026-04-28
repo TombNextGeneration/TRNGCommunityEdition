@@ -1,10 +1,10 @@
 #include "Tomb_NextGeneration.h"
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <direct.h>
-#include <math.h>
+#include <cmath>
 #include "../inject.h"
 #include "zPatchesTomb4.h"
 #include "zRoomEditor.h"
@@ -43,9 +43,6 @@
 #include "../tomb4/game/savegame.h"
 #include "../tomb4/specific/gamemain.h"
 #include "../tomb4/game/croc.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	StrGlobaliTomb4 &GlobTomb4 = *reinterpret_cast<decltype(&GlobTomb4)>(0x101C9578);
@@ -103,6 +100,9 @@ namespace trng {
 	HDC &GlobHdcTomb = *reinterpret_cast<decltype(&GlobHdcTomb)>(0x1054D350);
 	DWORD &ContatoreFiato = *reinterpret_cast<decltype(&ContatoreFiato)>(0x1054D374);
 	int &ReturnValue = *reinterpret_cast<decltype(&ReturnValue)>(0x103DF434);
+	StrBaseFlipSwap &MySwap = *reinterpret_cast<decltype(&MySwap)>(0x103DF860);
+	char (&BufGlobalTimer)[6] = *reinterpret_cast<decltype(&BufGlobalTimer)>(0x1015A3E8);
+	char (&BufLocalTimer)[6] = *reinterpret_cast<decltype(&BufLocalTimer)>(0x1015A3E0);
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -134,7 +134,6 @@ namespace trng {
 		int i;
 		char *pChar;
 
-		TestEsito = true;
 		strcpy_s(Dir_Trle, TrovaDirectoryCorrente());
 		memset(&GlobTomb4, 0, sizeof(StrGlobaliTomb4));
 		LinkGlobTomb4Structures();
@@ -610,7 +609,6 @@ namespace trng {
 		int IndiceStringa;
 		int j;
 		StrRecPluginScript *pPlugin;
-		int TestIgnora;
 		bool TestEraSetting; // per controllo crypt
 		DWORD EndOffset, StartOffset, NuovaSize;
 		WORD TagScript;
@@ -622,7 +620,6 @@ namespace trng {
 		FILE *pFile;
 		int Tot;
 		WORD FarView;
-		bool TestExport;
 
 		// prima caricare extrang strings (anche se solo in modo temporaneo)
 		CaricaNGStringTemp();
@@ -678,7 +675,6 @@ namespace trng {
 		MyGlobPrivate.TestNG_NoScript = false;
 		// scoprire data e dimensione di file script.dat
 		// prima scoprire i dati di attuale script.dat
-		TestExport = true;
 		if (fopen_s(&pFile, NomeScriptDat, "rb") != 0)
 			return false;
 
@@ -798,7 +794,6 @@ namespace trng {
 					TagScript = ParseField.pData[i++] >> 8;
 					Indice = i + TotWords;
 					TestEraSetting = false;
-					TestIgnora = 0;
 
 					switch (TagScript) {
 					case cnt_FlagsOption:
@@ -969,10 +964,9 @@ namespace trng {
 
 	void VerifyImagesPix(void)
 	{
-		StrListaFiles *VetNomi;
 		int TotNomi;
 
-		VetNomi = TrovaFiles("pix", "image*.jpg", &TotNomi);
+		TrovaFiles("pix", "image*.jpg", &TotNomi);
 		if (TotNomi == 0)
 			return;
 		MessageBox(NULL, "WARNING: some image in PIX folder is in jpg format. You should convert them in .bmp format using the CONVERTER.exe utility otherwise they will be not showed in game", "TRNG Warning", 0);
@@ -1361,8 +1355,6 @@ namespace trng {
 	// e' una stringa NG, altrimenti e' una stringa standard
 	char * GetString(int IndiceStringa)
 	{
-		static char MexNotFound[17] = "STRING NOT FOUND";
-
 		char *pChar;
 		int i;
 		WORD Indice;
@@ -1436,7 +1428,6 @@ namespace trng {
 		DWORD TotItems;
 		StrRecordSwitch *pSwitch;
 		StrBaseFog *pFog;
-		StrListaFiles *VetFiles;
 		int TotFiles;
 		StrPanelloSavegame *pPanel;
 		StrCombine *pCombine;
@@ -1498,17 +1489,15 @@ namespace trng {
 		StrSingleShotResumTG *pSingleShotTG;
 		StrProgressiveAction *pAzione;
 		int TotRandom;
-		DWORD Tempo;
 		CALL_VOID pCallBack;
 		int TotMip;
-		StrElevator *pAscensore;
 		StrScriptElevator *pElevatore;
 
 		// mescola meglio i numeri casuali
 		TotRandom = GetTickCount64() & 0x7f;
 		TotRandom++;
 		for (i = 0; i < TotRandom; i++) {
-			Tempo = rand();
+			(void)rand();
 		}
 
 		sprintf_s(BufferLog, "Parsing script.dat NG header for (new) level number %d", *GlobTomb4.pAdr->pLevelNow);
@@ -2244,7 +2233,7 @@ namespace trng {
 
 								pStand->AudioTrack = ParseField.pData[i++];
 								pStand->VerticalOrient = ParseField.pData[i++];
-								if (pStand->VerticalOrient == -1)
+								if (pStand->VerticalOrient == SCRIPT_IGNORE)
 									pStand->VerticalOrient = (WORD) -2730; // default valore
 
 								pStand->OrientSpeed = ParseField.pData[i++];
@@ -2441,7 +2430,6 @@ namespace trng {
 								}
 								GlobTomb4.BaseElevator.TotElelevators++;
 								pElevatore = &GlobTomb4.BaseElevator.VetScriptElevators[j];
-								pAscensore = &GlobTomb4.BaseElevator.VetAscensori[j];
 
 								// primo valore e' indice elevatore
 								pElevatore->IndiceElevatore = ParseField.pData[i++];
@@ -3877,7 +3865,7 @@ namespace trng {
 
 		if (GlobTomb4.pBaseCustomize->FlagsFMV & FMV_PRE_CACHE) {
 			InviaLog("Precaching of FMVs folder");
-			VetFiles = TrovaFiles(GetFileTrle("fmvs"), "fmv*", &TotFiles);
+			TrovaFiles(GetFileTrle("fmvs"), "fmv*", &TotFiles);
 		}
 
 		// applicare le impostazioni di basefog
@@ -4280,7 +4268,7 @@ namespace trng {
 	// converte da float a int con arrotondamento all'intero piu' vicino
 	int Float2Int(float x)
 	{
-		return lroundf(x);
+		return lround(x);
 	}
 
 	// crea il corrispettivo di Cord che era costruito per schermo SchermoRef
@@ -6191,7 +6179,6 @@ namespace trng {
 		WORD Orient;
 		StrItemTr4 *pTarget;
 		int IncX, IncZ;
-		void *pFloor;
 		short RoomNow;
 		DWORD FrameNow;
 		bool TestSoggettiva;
@@ -6285,7 +6272,7 @@ namespace trng {
 			// ora aggiornare numero di room di cutscene camera
 			RoomNow = pCut->pCamera->Room;
 
-			pFloor = tomb4::GetFloor(pCut->pCamera->CordX, pCut->pCamera->CordY, pCut->pCamera->CordZ, &RoomNow);
+			tomb4::GetFloor(pCut->pCamera->CordX, pCut->pCamera->CordY, pCut->pCamera->CordZ, &RoomNow);
 
 			pCut->pCamera->Room = RoomNow;
 		} else {
@@ -7007,7 +6994,7 @@ namespace trng {
 		if ((GlobTomb4.ScriptOptions.MainFlags & ngfm_Diagnostica) == 0)
 			return;
 		if (GlobTomb4.pDiagnostica->DgxExtra & EDGX_CUTSCENE_LOG && fopen_s(&pFile, "cutscene_log.txt", "at") == 0) {
-			fprintf(pFile, pMex);
+			fputs(pMex, pFile);
 			fclose(pFile);
 		}
 	}
@@ -7436,7 +7423,6 @@ namespace trng {
 						j = i + 1;
 
 						for (i = j; i < pGroup->TotTriggers; i++) {
-							pTrigger = &pGroup->VetTriggers[i];
 
 							if (pGroup->VetTriggers[i].Flags & TGROUP_ELSE) {
 								// mettere testesito=1 perche'
@@ -7675,8 +7661,6 @@ Concludi:
 	DWORD LeggiDirectInput(void)
 	{
 		DWORD *pFlagComandiJoystick;
-		DWORD SalvaFlagTastiPremuti;
-		DWORD SalvaComandiJoystick;
 		DWORD ValNow;
 		DWORD TempoNow;
 		int TempoPassato;
@@ -7690,9 +7674,6 @@ Concludi:
 
 		if (TempoPassato < 55 && TempoPassato >= 0)
 			return GlobTomb4.BaseDirectInputMine.LastCheckFlags;
-
-		SalvaFlagTastiPremuti = *GlobTomb4.pAdr->pInputExtGameCommands;
-		SalvaComandiJoystick = *pFlagComandiJoystick;
 
 		*GlobTomb4.pAdr->pInputExtGameCommands = 0;
 		*pFlagComandiJoystick = 0;
@@ -8339,7 +8320,6 @@ Concludi:
 		static short *pTestAttivoFade = &tomb4::ScreenFading;
 		static char BufDemoLegend[256];
 
-		int NuovoLivello;
 		int i;
 		int DemoId;
 		StrScriptOrganizer *pOrganizer;
@@ -8521,7 +8501,6 @@ Concludi:
 
 							// livello e' diverso: iniziare procedura per caricare un nuovo livello
 
-							NuovoLivello = GlobTomb4.pBaseDemo->DatiLara.pLevelNow;
 							*GlobTomb4.pAdr->pInputExtGameCommands = 0;
 							pDemo->TestLoadAndPlay = true;
 							return 2;
@@ -9941,7 +9920,6 @@ Concludi:
 	//							verra' catturato l'hdc della finestra
 	bool AllocaHdcTomb(StrShowImage *pBase, bool TestHdcTemp, bool TestWriteHdc)
 	{
-		BYTE *pFlagsWindow;
 		RECT SizeHdc;
 		int SizeX, SizeY;
 		HDC HdcSrc;
@@ -9949,7 +9927,6 @@ Concludi:
 		float Rapporto;
 		float SizeXTeorica;
 
-		pFlagsWindow = (BYTE *) &tomb4::App.dx.Flags;
 		if (pBase->TestTombAllocato == true) {
 			InviaLog("WARNING: hdc tomb was already allocated");
 			LiberaHdcTomb(pBase, false);
@@ -10409,7 +10386,6 @@ Concludi:
 		HDC RoomHdc;
 		int SizeImage;
 		bool TestRgb;
-		int NLinee;
 		int TotColori;
 		StrMiniShot *pShot;
 
@@ -10511,7 +10487,7 @@ Concludi:
 			return;
 		}
 
-		NLinee = GetDIBits(MemHdc, MioBitMap, 0, DestY, pMiaMemoria, pInfoDIB, DIB_RGB_COLORS);
+		GetDIBits(MemHdc, MioBitMap, 0, DestY, pMiaMemoria, pInfoDIB, DIB_RGB_COLORS);
 
 		if (TestRgb == false)
 			SizeImage = pInfoDIB->bmiHeader.biSizeImage;
@@ -10953,8 +10929,6 @@ Concludi:
 	void EsecuzioniFlipEffects(void)
 	{
 		static int *pLastFlipEffect = (int *) &tomb4::flipeffect;
-		static DWORD *pZonaItems = (DWORD*) &tomb4::items;
-		static WORD *pFlagPulsantiTrigger = (WORD *) &tomb4::FXType;
 
 		DWORD OffsetFloor;
 		int i;
@@ -11057,7 +11031,6 @@ Concludi:
 		int RepeatType;
 		DWORD OffsetFloor;
 		bool TestEsegui;
-		DWORD Result;
 		StrScanAction* BaseStruc;
 
 		if (GlobTomb4.TotScanActions == 0) {
@@ -11102,7 +11075,6 @@ Concludi:
 
 			if (TestEsegui == true) {
 				// vedere call back per azioni
-				Result = 0;
 				BaseStruc = &GlobTomb4.VetScanActions[i];
 
 				RepeatType = EsecuzioneActionTrigger(BaseStruc->PluginId, BaseStruc->Timer, BaseStruc->ItemIndex, BaseStruc->Flags);
@@ -11620,7 +11592,6 @@ Concludi:
 		short MaxOrient;
 		StrItemTr4 *pItem;
 		bool TestIgnora;
-		bool TestDeriva;
 		bool TestSuono;
 
 		pRoll = &GlobTomb4.BaseRollBoats.VetRollBoats[0];
@@ -11644,7 +11615,6 @@ Concludi:
 
 				if (TestIgnora == false) {
 					TestSuono = false;
-					TestDeriva = false;
 					// vedere se va eliminato o creato il movimento alla deriva
 					if (pRoll->Flags & FRB_ALLOW_DRIFT) {
 						// consentire deriva
@@ -11761,10 +11731,9 @@ Concludi:
 	bool IsKayakSpiaggiata(StrItemTr4 *pItem)
 	{
 		short Room;
-		void *pFloor;
 
 		Room = pItem->Room;
-		pFloor = tomb4::GetFloor(pItem->CordX, pItem->CordY + 256, pItem->CordZ, &Room);
+		tomb4::GetFloor(pItem->CordX, pItem->CordY + 256, pItem->CordZ, &Room);
 
 		if (GlobTomb4.pAdr->pVetRooms[Room].FlagsRoom & 1) {
 			return false;
@@ -12278,7 +12247,7 @@ Concludi:
 				pItem = &GlobTomb4.pAdr->pVetItems[Indice];
 
 				// vedere se e' attivo
-				if ((pItem->FlagsMain & FITEM_ACTIVE) != 0 && pItem->Health != 0xc000 && pItem->Health < 1) {
+				if ((pItem->FlagsMain & FITEM_ACTIVE) != 0 && pItem->Health != -0x4000 && pItem->Health < 1) {
 
 					// e' attivo, non e' immortale e  vitalita' e' azero
 					// e l'animazione non e' ancora quella giusta
@@ -12343,7 +12312,6 @@ Concludi:
 		}
 		// se e' stampa impostato un tempo di attesa verificare se e' passato
 
-		TempoNow = 0;
 		if (GlobTomb4.pDemoTitle->LastInputTime == 0x7fffffff) {
 			GlobTomb4.pDemoTitle->LastInputTime = *GlobTomb4.pAdr->pFrameCounter;
 		}
@@ -12506,7 +12474,6 @@ Concludi:
 
 		for (i = 0; i < Tot; i++) {
 			TestEsegui = false;
-			TestTrovato = false;
 
 			if ((pRec->Flags & FGT_DISABLED) == 0) {
 				TestTrovato = true;
@@ -13253,8 +13220,6 @@ Concludi:
 
 		StrAdaptiveFarView *pFrame;
 		int i;
-		float Differenza;
-		int TipoVar;
 		bool TestOk;
 		bool TestOkAll;
 		bool TestGrave;
@@ -13286,20 +13251,6 @@ Concludi:
 			if (pFrame->VetLastFps[2] < (pFrame->FPStoKeep - 5))
 				TestGrave = true;
 
-			// vedere se e' incrementato o diminuito o stabile
-			Differenza = pFrame->VetLastFps[2] - pFrame->VetLastFps[1];
-
-			TipoVar = TV_UGUALE;
-
-			if (Differenza > 1.5) {
-				// migliorato
-				// se c'era operazione di decremento toglierlo
-				TipoVar = TV_MIGLIORATO;
-			} else {
-				if (Differenza < -1.5) {
-					TipoVar = TV_PEGGIORATO;
-				}
-			}
 			// ok ora impostare incremneto che funzionera' per un secondo
 			if (TestOkAll == true) {
 				// incrementare se c'e' bisogno
@@ -13710,7 +13661,6 @@ Concludi:
 	// o magari gia' per essere sott'acqua
 	void ControllaMorteLara(StrItemTr4* pLara)
 	{
-		int StartAnim;
 		int IndiceAnim;
 
 		if (pLara->Health > 0)
@@ -13728,7 +13678,6 @@ Concludi:
 
 			*GlobTomb4.pAdr->pLaraLocationFlags = 1;
 
-			StartAnim = GlobTomb4.pAdr->pVetSlot[0].IndexFirstAnim;
 			IndiceAnim = 86;
 			pLara->FrameNow = GlobTomb4.pAdr->pVetAnimations[IndiceAnim].FrameStart;
 			pLara->StateIdCurrent = GlobTomb4.pAdr->pVetAnimations[IndiceAnim].StateId;
@@ -13762,13 +13711,11 @@ Concludi:
 		WORD Terza;
 		StrJiga *pJiga;
 		bool TestOk;
-		int j;
 		bool Test70, Test71, Test72;
 		bool Test104, Test106;
 
 		pJiga = &GlobTomb4.DatiJiga;
 
-		j = 3;
 		// controllare se siamo in modalita' jiga
 		if (pJiga->TotAnim >= 30) {
 
@@ -13904,7 +13851,6 @@ Concludi:
 				// salto in avanti
 				GlobTomb4.pAdr->pLara->CordY -= 128;
 				EseguiAnimazione(73, 0, false);
-				TestOk = true;
 				pJiga->TestLaraBalla = false;
 			}
 		}
@@ -15434,7 +15380,6 @@ Concludi:
 
 		WORD *pVetExtra;
 		int NWords;
-		BYTE NumeroLivello;
 		StrCutsceneCamera *pCut;
 		StrMiniNG_Header *pRecHub;
 		int VetInt[2];
@@ -15482,8 +15427,6 @@ Concludi:
 
 		NWords = *pNumeroWords;
 		pVetExtra = *pVettoreWords;
-
-		NumeroLivello = *GlobTomb4.pAdr->pLevelNow;
 
 		if (TestCompleto || (TestCompleto == false && TestSoloLara)) {
 			// ROBA LARA
@@ -16212,7 +16155,6 @@ Concludi:
 		SizeMem = IndiceWords * 2 + 100;
 
 		if (TotItem == NO_ARRAY) {
-			TotRecord = 1;
 			TotBytes = SizeSingleItem;
 
 			NumeroWords = 2 + (TotBytes / 2);
@@ -16297,6 +16239,7 @@ Concludi:
 
 		*pNWords = IndiceWords;
 		*p2VetExtra = pVetExtra;
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	}
 
 	// viene chiamata prima di salvare savwegame.
@@ -16920,6 +16863,107 @@ Concludi:
 			pEffetto->TotFrames = TotFrames;
 		}
 	}
+
+	void AzzeraDatiMediaPoint(void)
+	{
+		GlobTomb4.pDiagnostica->Tempo = (DWORD) GetTickCount64();
+		GlobTomb4.pDiagnostica->TotCicli = 0;
+		GlobTomb4.pDiagnostica->SommaTempo = 0;
+		InviaLog("MEDIA azzerata");
+	}
+
+	// imposta i valori di inventario per gli item di livello
+	// attuale
+	// basato sui tag EquipMent di script
+	void GestioneEquipment(void)
+	{
+		int i;
+		WORD Slot;
+		char Valore;
+		int Operazione;
+
+		for (i = 0; i < GlobTomb4.BaseEquipItem.TotEquip; i++) {
+			Slot = GlobTomb4.BaseEquipItem.VetEquip[i].Slot;
+			Valore = (char) GlobTomb4.BaseEquipItem.VetEquip[i].Quantita;
+
+			Operazione = INV_SCRIVI;  // con bit
+
+			if (Slot == 349 || Slot == 351 || Slot == 353 || Slot == 356 || Slot == 361 || Slot == 366) {
+				// se mancano indicazioni del tipo di munizioni agiunge 8
+				if ((Valore & 0x38) == 0)
+					Valore |= 8;
+				Operazione = INV_SCRIVI_NO_BIT;
+			}
+
+			GestionePickups(Slot, Operazione, Valore);
+		}
+	}
+
+	// verifca se il punto (x,y) e' interno al triangolo pTri
+	// nota valori da 0 a 1024
+	bool IsPuntoInternoTriangolo(float x, float y, StrTriangolo *pTri)
+	{
+		float D1, D2, D, a, b;
+
+		D1 = (x - pTri->A.x) * (pTri->C.y - pTri->A.y) - (y - pTri->A.y) * (pTri->C.x - pTri->A.x);
+
+		D2 = (pTri->A.x - x) * (pTri->B.y - pTri->A.y) - (pTri->A.y - y) * (pTri->B.x - pTri->A.x);
+
+		D = (pTri->B.x - pTri->A.x) * (pTri->C.y - pTri->A.y) - (pTri->B.y - pTri->A.y) * (pTri->C.x - pTri->A.x);
+
+		if (D == 0)
+			return false;
+
+		a = D1 / D;
+		b = D2 / D;
+
+		if (a >= 0 && b >= 0 && (a + b) <= 1)
+			return true;
+
+		return false;
+	}
+
+	// calcola in modo preciso la distanza tra due punti ignorando le Y
+	int DistanzaPrecisaXZ(DWORD X1, DWORD Z1, DWORD X2, DWORD Z2)
+	{
+		float DifX, DifZ;
+
+		DifX = (float) X1 - (float) X2;
+		DifZ = (float) Z1 - (float) Z2;
+
+		return Float2Int((float) sqrt(pow(DifX, 2) + pow(DifZ, 2)));
+	}
+
+	// ogni volta che viene mosso un moveable con un action o flipeffect speciale
+	// viene chiamata questa procedura per memorizzare il suo indice
+	void AggiungiItemMosso(WORD Indice)
+	{
+		int i;
+		WORD TotItem;
+
+		// prima vedere se e' gia' stato salvato nel qual
+		// caso si puo' uscire subito
+		TotItem = GlobTomb4.BaseSalvaCoordinate.TotSalvati;
+		if (TotItem >= MAX_SALVA_CORD) {
+			InviaLog("WARNING: reached max number of item to save (coords and flags) in savegame");
+			return;
+		}
+		if (Indice > 1023) {
+			sprintf_s(BufferLog, "ERROR: invalid index of item (%d) whose it has been required saving of position", Indice);
+			InviaLog(BufferLog);
+			return;
+		}
+		for (i = 0; i < TotItem; i++) {
+			if (GlobTomb4.BaseSalvaCoordinate.VetIndici[i] == Indice)
+				return;
+		}
+
+		// non ancora salvato
+
+		// ok, salvarlo
+		GlobTomb4.BaseSalvaCoordinate.VetIndici[TotItem] = Indice;
+		GlobTomb4.BaseSalvaCoordinate.TotSalvati++;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17160,4 +17204,9 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1005D339, (unsigned int)trng::AvviaPopUpImage, replace);
 	ProcessInject(0x100757CB, (unsigned int)trng::CalcolaMicroUnits, replace);
 	ProcessInject(0x1005D00B, (unsigned int)trng::PreparaEffetti, replace);
+	ProcessInject(0x100620BC, (unsigned int)trng::AzzeraDatiMediaPoint, replace);
+	ProcessInject(0x1003A8EA, (unsigned int)trng::GestioneEquipment, replace);
+	ProcessInject(0x10076BB9, (unsigned int)trng::IsPuntoInternoTriangolo, replace);
+	ProcessInject(0x1007E016, (unsigned int)trng::DistanzaPrecisaXZ, replace);
+	ProcessInject(0x1004AA12, (unsigned int)trng::AggiungiItemMosso, replace);
 }

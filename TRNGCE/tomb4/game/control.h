@@ -55,6 +55,7 @@ namespace tomb4
 	long GetWaterHeight(long x, long y, long z, short room_number);
 	void FlipMap(long FlipNumber);
 	long IsRoomOutside(long x, long y, long z);
+	void AnimateItem(ITEM_INFO* item);
 }
 
 void Inject_Control(bool replace);

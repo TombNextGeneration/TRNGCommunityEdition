@@ -1,8 +1,5 @@
 #include "ListTr4Patch.h"
 #include "../inject.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	StrAdrMemory (&VetMemorySavegame)[95] = *reinterpret_cast<decltype(&VetMemorySavegame)>(0x1014D010);

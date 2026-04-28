@@ -1,11 +1,8 @@
 #include "zRoomEditor.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
 #include "RoomEditor.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	char (&MexVersione)[30] = *reinterpret_cast<decltype(&MexVersione)>(0x106A4BD0);
@@ -338,7 +335,6 @@ namespace trng {
 			if (Testo[Fine] == 0x0a)
 				Fine++;
 
-			SizeTesto = Fine - Inizio;
 			memmove(&Testo[Inizio], &Testo[Fine], strlen(&Testo[Fine]) + 1);
 		}
 
@@ -357,15 +353,13 @@ namespace trng {
 		DWORD i, j;
 		char *pChar;
 		DWORD n, z;
-		DWORD Indice;
 
 		i = InStr(0, pTesto, pNomeTag);
-		if (i == -1)
+		if (i == (DWORD) -1)
 			return NULL;
 		j = i + strlen(pNomeTag);
 
 		pChar = PrendiLinea(pTesto, &j);
-		Indice = j;
 
 		if (pChar == NULL)
 			return NULL;
@@ -425,12 +419,10 @@ namespace trng {
 	int GetArgNumerico(char *StrNumero, bool *TestErrore)
 	{
 		char *pChar;
-		DWORD Start;
 		int Valore;
 
 		pChar = Trim(StrNumero);
 
-		Start = 0;
 		if (*pChar == '$') {
 
 			pChar++;

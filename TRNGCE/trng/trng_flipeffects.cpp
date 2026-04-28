@@ -1,8 +1,5 @@
 #include "trng_flipeffects.h"
 #include "../inject.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	// qui c'e' tutto (e solo) il codice relativo all'esecuzione di flipeffect standards

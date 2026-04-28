@@ -3,12 +3,15 @@
 #include "../../inject.h"
 #include "function_stubs.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "../../trng/Tomb_NextGeneration.h"
+#include "cmdline.h"
 
 namespace tomb4
 {
 	DXPTR* &G_dxptr = *reinterpret_cast<decltype(&G_dxptr)>(0x754468);
 	char (&keymap)[256] = *reinterpret_cast<decltype(&keymap)>(0x754260);
 	DXINFO* &G_dxinfo = *reinterpret_cast<decltype(&G_dxinfo)>(0x754088);
+	HWND &G_hwnd = *reinterpret_cast<decltype(&G_hwnd)>(0x754080);
 
 	long DXAttempt(HRESULT r)
 	{
@@ -645,6 +648,31 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long DXGetInfo(DXINFO* dxinfo, HWND hwnd)
+	{
+		Log(2, "DXInitialise");
+		G_hwnd = hwnd;
+		Log(5, "Enumerating DirectDraw Devices");
+		DXAttempt(DirectDrawEnumerate(DXEnumDirectDraw, dxinfo));
+		DXAttempt(DirectSoundEnumerate(DXEnumDirectSound, dxinfo));
+
+		if (trng::GlobTomb4.TestForceSetup)
+			start_setup = true;
+
+		G_dxinfo = dxinfo;
+		return 1;
+	}
+
+	BOOL __stdcall DXEnumDirectDraw(GUID FAR* lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	BOOL __stdcall DXEnumDirectSound(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Dxshell(bool replace)
@@ -654,4 +682,7 @@ void Inject_Dxshell(bool replace)
 	ProcessInject(0x48EC60, (unsigned int)tomb4::DXGetErrorString, replace);
 	ProcessInject(0x48F9D0, (unsigned int)tomb4::DXFreeInfo, false);
 	ProcessInject(0x4917E0, (unsigned int)tomb4::DXClose, false);
+	ProcessInject(0x48F8D0, (unsigned int)tomb4::DXGetInfo, replace);
+	ProcessInject(0x48FC30, (unsigned int)tomb4::DXEnumDirectDraw, false);
+	ProcessInject(0x48F930, (unsigned int)tomb4::DXEnumDirectSound, false);
 }

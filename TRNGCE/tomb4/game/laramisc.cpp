@@ -6,6 +6,8 @@
 
 namespace tomb4
 {
+	COLL_INFO* &lara_coll = *reinterpret_cast<decltype(&lara_coll)>(0x4AB9B0);
+
 	void LaraControl(short item_number)
 	{
 		__try { throw __func__; } __finally {}

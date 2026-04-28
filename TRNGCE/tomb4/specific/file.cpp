@@ -1,5 +1,5 @@
 #include "file.h"
-#include <string.h>
+#include <cstring>
 #include "../../inject.h"
 #include "function_stubs.h"
 #include "../game/objects.h"
@@ -23,6 +23,7 @@ namespace tomb4
 	long &number_cameras = *reinterpret_cast<decltype(&number_cameras)>(0x7FE820);
 	short &nAIObjects = *reinterpret_cast<decltype(&nAIObjects)>(0x7FD0E0);
 //	THREAD &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
+	AIOBJECT* &AIObjects = *reinterpret_cast<decltype(&AIObjects)>(0x7FD0E4);
 
 	bool LoadObjects()
 	{
@@ -196,11 +197,13 @@ namespace tomb4
 		// sostituisce loadsizedemodata per vedere se si usa tabella suoni
 		// estesa
 		trng::GlobTomb4.TotSizeDemoData = *(short*)FileData;
+
 		if (trng::GlobTomb4.TotSizeDemoData)
 		{
 			// tabella estesa: forzare flag
 			trng::GlobTomb4.FlagsLevelTr4 |= trng::FLT_EXTRA_SOUND_TABLE;
 		}
+
 		FileData += sizeof(short);
 		return 1;
 	}

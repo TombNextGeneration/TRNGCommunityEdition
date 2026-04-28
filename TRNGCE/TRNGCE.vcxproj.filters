@@ -255,6 +255,21 @@
     <ClInclude Include="tomb4\specific\function_table.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\game\init.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\train.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\laraflar.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\jeep.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\laraswim.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -479,6 +494,21 @@
     </ClCompile>
     <ClCompile Include="tomb4\specific\function_table.cpp">
       <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\init.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\train.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\laraflar.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\jeep.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\laraswim.cpp">
+      <Filter>tomb4\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

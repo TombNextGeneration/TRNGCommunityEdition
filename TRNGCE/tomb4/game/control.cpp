@@ -256,7 +256,7 @@ namespace tomb4
 			if (gfLevelComplete)
 				return 3;
 
-			if (reset_flag || lara.death_count > 300 || lara.death_count > 60 && input)
+			if (reset_flag || lara.death_count > 300 || (lara.death_count > 60 && input))
 			{
 				if (Gameflow->DemoDisc && reset_flag)
 				{
@@ -316,7 +316,7 @@ namespace tomb4
 			if (MainThread.ended)
 				return 4;
 
-			if (input & IN_LOOK && (LaserSightHarpoon() || lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH ||
+			if (input & IN_LOOK && (LaserSightHarpoon() || (lara_item->current_anim_state == AS_STOP && lara_item->anim_number == ANIM_BREATH) ||
 				(lara.IsDucked && !(input & IN_DUCK) && lara_item->anim_number == ANIM_DUCKBREATHE && lara_item->goal_anim_state == AS_DUCK)))
 			{
 				if (!BinocularRange)
@@ -602,14 +602,15 @@ namespace tomb4
 			UpdateGunShells();
 
 			if (plugin::flycheat::Trng.IdMyPlugin != -1)
+			{
 				plugin::flycheat::FriendlyFish();
-			else
-				UpdateLocusts();
-
-			if (plugin::flycheat::Trng.IdMyPlugin != -1)
 				plugin::flycheat::FriendlyBeetles();
+			}
 			else
+			{
+				UpdateLocusts();
 				UpdateScarabs();
+			}
 
 			UpdateShockwaves();
 			UpdateLightning();
@@ -699,6 +700,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void AnimateItem(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -721,4 +727,5 @@ void Inject_Control(bool replace)
 	ProcessInject(0x449A50, (unsigned int)tomb4::GetWaterHeight, false);
 	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
 	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
+	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, false);
 }

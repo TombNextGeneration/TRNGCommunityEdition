@@ -19,6 +19,7 @@ namespace tomb4
 	void phd_PopMatrix();
 	void AlterFOV(short fov);
 	ulong mGetAngle(long x, long z, long x1, long z1);
+	long phd_atan(long x, long y);
 }
 
 void Inject_3dmath(bool replace);

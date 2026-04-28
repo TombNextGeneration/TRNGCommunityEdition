@@ -58,6 +58,10 @@ namespace trng {
 	void PreparaLancioFilmato(int NumeroFMV);
 	bool TrovaFileFMV(char NomeFmv[], int Indice);
 	void SospendiSuoniPerFMV(void);
+	bool CollideItemConCustom(StrItemTr4 *pItem, StrCustomItem *pCustom, int Bordo);
+	StrRettangolo *RuotaBoxAbs(DWORD CX, DWORD CZ, StrAbsBoxCollision *pBox, short Gradi);
+	void RuotaPuntoInt(DWORD CX, DWORD CZ, int * pPX, int * pPZ, short Gradi);
+	bool IsInsideRettangolo(DWORD x, DWORD z, StrRettangolo *pRet);
 }
 
 void LoadTombNextGenerationInject_Oggetti(bool replace);

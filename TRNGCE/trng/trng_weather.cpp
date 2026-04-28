@@ -1,9 +1,6 @@
 #include "trng_weather.h"
-#include <string.h>
+#include <cstring>
 #include "../inject.h"
-#define malloc ((void *(*)(size_t)) 0x10135531)
-#define realloc ((void *(*)(void *, size_t)) 0x101353F9)
-#define free ((void (*)(void *)) 0x101355BD)
 
 namespace trng {
 	StrWeather &RainSnowData = *reinterpret_cast<decltype(&RainSnowData)>(0x10609558);

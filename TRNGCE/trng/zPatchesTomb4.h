@@ -20,6 +20,8 @@ namespace trng {
 	extern StrSalvaOldDebug (&VetSalvaOldDebug)[30];
 	extern DWORD &LastReturnDX;
 	extern DWORD &ColorSlide;
+	extern bool &TestGiaInitDetector;
+	extern StrAlignObjData (&VetDataAlign)[18];
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -89,6 +91,24 @@ namespace trng {
 	void RipristinaSettings(void);
 	void LiberaPlugins(void);
 	void CallSlide(int CordX, int CordY, int SizeX, int SizeY, int Percentuale, DWORD Colore, DWORD ColoreFade);
+	void InizializzaStartLivello(void);
+	void InizializzaAdrGlobali(void);
+	void InitCordMieiOggetti(void);
+	void InitRollBoats(void);
+	void ResettaModificaCodice(void);
+	void InizializzaSuoni(void);
+	void InizializzaFlipMaps(void);
+	void ScansioneSavegameHeader(StrExtractNG* pHeaderNGSave, bool TestCompleto);
+	void InizializzaHubNG(void);
+	void ImpostaDatiVariabili(StrDatiVariabili *pDati);
+	void ModificaColoreFog(BYTE Rosso, BYTE Verde, BYTE Blue);
+	int TrovaSezioneHeader_Hub(void);
+	void RestoreAfterSavegame(void);
+	void UnisciDatiVariabili(void);
+	void AggiornaBinocoloSuper(void);
+	void CollBikeFinale(int *pTipoImpatto, bool TestMorta);
+	StrBoxCollisione *RuotaBox(StrBoxCollisione *pBox, WORD HOrient);
+	bool GestioneBikeVsRollingBall(StrCustomItem *pColpito, StrItemTr4 *pVeicolo, WORD Speed, short *pOrientDir);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

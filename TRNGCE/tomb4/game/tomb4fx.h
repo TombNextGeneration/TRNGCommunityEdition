@@ -24,6 +24,7 @@ namespace tomb4
 	void UpdateFadeClip();
 	void SetScreenFadeIn(short speed);
 	void SetScreenFadeOut(short speed, short back);
+	long ExplodingDeath2(short item_number, long mesh_bits, short Flags);
 }
 
 void Inject_Tomb4fx(bool replace);

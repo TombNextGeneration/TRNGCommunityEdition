@@ -2832,7 +2832,8 @@ namespace tomb4
 	{
 		short right_front_wheelrot;
 		short right_back_wheelrot;
-		long left_wheelrot;
+		short left_wheelrot;
+		short right_wheelrot;
 		long velocity;
 		long unused1;
 		long pitch1;
@@ -3239,6 +3240,29 @@ namespace tomb4
 		long Bit;
 		short YRot;
 		short Flags;
+	};
+
+	struct AIOBJECT
+	{
+		short object_number;
+		short room_number;
+		long x;
+		long y;
+		long z;
+		short trigger_flags;
+		short flags;
+		short y_rot;
+		short box_number;
+	};
+
+	struct BOX_INFO
+	{
+		uchar left;
+		uchar right;
+		uchar top;
+		uchar bottom;
+		short height;
+		short overlap_index;
 	};
 #pragma pack(pop)
 }
