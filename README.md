@@ -19,6 +19,10 @@ In your existing game folder (normally named Engine), replace tomb4.exe and extr
 
 Visit us on [TRNG - Community Edition Discord server](https://discord.gg/JJgQUYKBB6) to follow development, get involved, and ask questions.
 
+## Website
+
+Explore our website [trng.center](https://www.trng.center) for more resources.
+
 ## Changelog
 
 Learn about the [latest changes](CHANGELOG.md).
