@@ -15,6 +15,7 @@ namespace tomb4
 
 	inline constexpr long W2V_SHIFT = 14;
 	inline constexpr long NO_ITEM = -1;
+	inline constexpr long NO_HEIGHT = -32512;
 
 	enum mood_type
 	{

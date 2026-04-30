@@ -2284,6 +2284,17 @@ namespace trng {
 	inline constexpr int FCV_COLLISIONE = 0x4000; // oggetto che ha avuto collisione in calcolo punti
 	inline constexpr int FCV_SLIM = 0x2000;  // oggetto piccolo
 
+	// campo TipoFase
+	// tipi di fase
+	inline constexpr int FISH_NO_TARGET = 0;
+	inline constexpr int FISH_FOLLOW_PIVOT = 1;
+	inline constexpr int FISH_FOLLOW_LARA = 2;
+	inline constexpr int FISH_JUMP_OUT = 3;
+	inline constexpr int FISH_DYING_ON_GROUND = 4;
+	inline constexpr int FISH_DEATH_ON_GROUND = 5;
+	inline constexpr int FISH_BUBBLES = 6;
+	inline constexpr int FISH_ESCAPE_FROM_LARA = 7;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone

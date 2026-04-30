@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdio>
+#include "structures.h"
 
 namespace trng {
 	// for generic void / void callback procedure
@@ -200,4 +202,6 @@ namespace trng {
 
 	// for callback CB_LOADING_GAME
 	typedef void (__cdecl *CALL_LOADING_GAME) (BYTE *pAdrZone, DWORD SizeData);
+
+	typedef DWORD (__cdecl *TYPE_QuantoLungoFile) (FILE *pFile);
 }

@@ -6,6 +6,7 @@ namespace tomb4
 	void S_InitialisePolyList();
 	void S_OutputPolyList();
 	long S_DumpScreen();
+	void phd_PutPolygons_train(short* objptr, long x);
 }
 
 void Inject_Output(bool replace);

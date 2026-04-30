@@ -1,6 +1,8 @@
 #pragma once
+#include <cstdio>
 #include "structures.h"
 #include "../tomb4/types.h"
+#include "DefTomb4Funct.h"
 
 namespace trng {
 	extern DWORD &OffsetPosLara;
@@ -22,6 +24,7 @@ namespace trng {
 	extern DWORD &ColorSlide;
 	extern bool &TestGiaInitDetector;
 	extern StrAlignObjData (&VetDataAlign)[18];
+	extern TYPE_QuantoLungoFile &QuantoLungoFile;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -109,6 +112,11 @@ namespace trng {
 	void CollBikeFinale(int *pTipoImpatto, bool TestMorta);
 	StrBoxCollisione *RuotaBox(StrBoxCollisione *pBox, WORD HOrient);
 	bool GestioneBikeVsRollingBall(StrCustomItem *pColpito, StrItemTr4 *pVeicolo, WORD Speed, short *pOrientDir);
+	void DisegnaMioPesce(StrFish *pFish);
+	void DisegnaPesce(DWORD CordX, int CordY, DWORD CordZ, int TipoFish, short HOrient, short VOrient, short ROrient);
+	void StopFarfalla(void);
+	bool IsLaraInPalude(void);
+	DWORD CorreggiSizeFile(const char *pNomeFile, FILE *pFile, BYTE **pBaseMem);
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

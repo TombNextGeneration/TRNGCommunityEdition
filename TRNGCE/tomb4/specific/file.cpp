@@ -10,6 +10,7 @@
 #include "drawroom.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
+#include "../../trng/zRoomEditor.h"
 
 namespace tomb4
 {
@@ -207,10 +208,80 @@ namespace tomb4
 		FileData += sizeof(short);
 		return 1;
 	}
+
+	long LoadFile(const char* name, char** dest)
+	{
+		FILE* file;
+		long size, count;
+
+		Log(2, "LoadFile");
+		Log(5, "File - %s", name);
+		file = FileOpen(name);
+
+		if (!file)
+			return 0;
+
+		trng::RetValue = trng::CorreggiSizeFile(name, file, (BYTE**)dest);
+		size = trng::RetValue;
+
+		if (!*dest)
+			*dest = (char*)malloc(size);
+
+		count = fread(*dest, 1, size, file);
+		Log(5, "Read - %d FileSize - %d", count, size);
+
+		if (count != size)
+		{
+			Log(1, "Error Reading File");
+			FileClose(file);
+			free(*dest);
+			return 0;
+		}
+
+		FileClose(file);
+		return size;
+	}
+
+	FILE* FileOpen(const char* name)
+	{
+		FILE* file;
+		char path_name[256];
+
+		strcpy_s(path_name, name);
+		Log(5, "FileOpen - %s", path_name);
+
+		if (fopen_s(&file, path_name, "rb"))
+		{
+			Log(1, "Unable To Open %s", path_name);
+			return 0;
+		}
+
+		return file;
+	}
+
+	long FileSize(FILE* file)
+	{
+		long size;
+
+		fseek(file, 0, SEEK_END);
+		size = ftell(file);
+		fseek(file, 0, SEEK_SET);
+		return size;
+	}
+
+	void FileClose(FILE* file)
+	{
+		Log(2, "FileClose");
+		fclose(file);
+	}
 }
 
 void Inject_File(bool replace)
 {
 	ProcessInject(0x473090, (unsigned int)tomb4::LoadObjects, replace);
 	ProcessInject(0x474450, (unsigned int)tomb4::LoadCinematic, replace);
+	ProcessInject(0x472090, (unsigned int)tomb4::LoadFile, replace);
+//	ProcessInject(0x471FD0, (unsigned int)tomb4::FileOpen, replace);
+	ProcessInject(0x472060, (unsigned int)tomb4::FileSize, replace);
+//	ProcessInject(0x472040, (unsigned int)tomb4::FileClose, replace);
 }

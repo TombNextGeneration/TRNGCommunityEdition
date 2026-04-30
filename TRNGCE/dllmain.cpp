@@ -73,6 +73,7 @@
 #include "tomb4/game/laraflar.h"
 #include "tomb4/game/jeep.h"
 #include "tomb4/game/laraswim.h"
+#include "tomb4/game/lara.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -506,6 +507,7 @@ static void LoadTombNextGenerationInject_stdlib(bool replace) {
 }
 
 static void LoadTombNextGenerationInject(bool replace) {
+	Inject_stdlib(replace);
 	LoadTombNextGenerationInject_stdlib(replace);
 	LoadTombNextGenerationInject_TombNextGeneration(replace);
 	LoadTombNextGenerationInject_ZRoomEditor(replace);
@@ -633,6 +635,7 @@ static void Inject(bool replace) {
 	Inject_Laraflar(replace);
 	Inject_Jeep(replace);
 	Inject_Laraswim(replace);
+	Inject_Lara(replace);
 }
 
 static LPSTR __stdcall CallInject() {
