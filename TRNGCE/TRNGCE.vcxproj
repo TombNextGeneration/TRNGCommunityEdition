@@ -143,6 +143,7 @@
     <ClInclude Include="tomb4\game\laraswim.h" />
     <ClInclude Include="tomb4\game\newinv.h" />
     <ClInclude Include="tomb4\game\objects.h" />
+    <ClInclude Include="tomb4\game\objlight.h" />
     <ClInclude Include="tomb4\game\pickup.h" />
     <ClInclude Include="tomb4\game\rope.h" />
     <ClInclude Include="tomb4\game\savegame.h" />
@@ -232,6 +233,7 @@
     <ClCompile Include="tomb4\game\laraswim.cpp" />
     <ClCompile Include="tomb4\game\newinv.cpp" />
     <ClCompile Include="tomb4\game\objects.cpp" />
+    <ClCompile Include="tomb4\game\objlight.cpp" />
     <ClCompile Include="tomb4\game\pickup.cpp" />
     <ClCompile Include="tomb4\game\rope.cpp" />
     <ClCompile Include="tomb4\game\savegame.cpp" />

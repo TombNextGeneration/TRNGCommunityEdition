@@ -48,8 +48,8 @@ namespace tomb4
 	ANIM_STRUCT* &anims = *reinterpret_cast<decltype(&anims)>(0x533938);
 	long* &bones = *reinterpret_cast<decltype(&bones)>(0x533958);
 	ulong &FmvSceneTriggered = *reinterpret_cast<decltype(&FmvSceneTriggered)>(0x7FE0F0);
-	long (&flip_stats)[32] = *reinterpret_cast<decltype(&flip_stats)>(0x4598AF);
-	long (&flipmap)[32] = *reinterpret_cast<decltype(&flipmap)>(0x4598D8);
+	long (&flip_stats)[10] = *reinterpret_cast<decltype(&flip_stats)>(0x7FE1E0);
+	long (&flipmap)[10] = *reinterpret_cast<decltype(&flipmap)>(0x7FE100);
 	long &flipeffect = *reinterpret_cast<decltype(&flipeffect)>(0x4ACBFC);
 	long &fliptimer = *reinterpret_cast<decltype(&fliptimer)>(0x4BF2E8);
 	long &flip_status = *reinterpret_cast<decltype(&flip_status)>(0x7FE0F8);
@@ -705,6 +705,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long TriggerActive(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -712,8 +717,8 @@ __declspec(naked) static void** Inject_Control_flipmap() { __asm lea eax, [tomb4
 
 void Inject_Control(bool replace)
 {
-	IndirectReferenceInject(Inject_Control_flip_stats());
-	IndirectReferenceInject(Inject_Control_flipmap());
+	ConditionalInvalidReferenceInject(Inject_Control_flip_stats(), ConditionNoScript());
+	ConditionalInvalidReferenceInject(Inject_Control_flipmap(), ConditionNoScript());
 
 	ProcessInject(0x448B10, (unsigned int)tomb4::ControlPhase, replace);
 	ProcessInject(0x448A90, (unsigned int)tomb4::UpdateSky, false);
@@ -728,4 +733,5 @@ void Inject_Control(bool replace)
 	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
 	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
 	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, false);
+	ProcessInject(0x44ACB0, (unsigned int)tomb4::TriggerActive, false);
 }

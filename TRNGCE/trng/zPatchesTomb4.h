@@ -25,6 +25,12 @@ namespace trng {
 	extern bool &TestGiaInitDetector;
 	extern StrAlignObjData (&VetDataAlign)[18];
 	extern TYPE_QuantoLungoFile &QuantoLungoFile;
+	extern DWORD &StoreResult;
+	extern int &ValGlobale;
+	extern SECURITY_ATTRIBUTES &Attributi;
+	extern char (&DatiMoveables)[0x7DE5];
+	extern int (&VetEnabledFlipMaps)[32];
+	extern int (&VetButtonFlipMaps)[32];
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -117,6 +123,12 @@ namespace trng {
 	void StopFarfalla(void);
 	bool IsLaraInPalude(void);
 	DWORD CorreggiSizeFile(const char *pNomeFile, FILE *pFile, BYTE **pBaseMem);
+	void CaricaSavegame(char *pNomeSave);
+	void LeggiExtraNG_Savegame(char *pNomeFile);
+	void ControllaTrapDoor(StrItemTr4 *pTrap);
+	int TrovaFrameArmaPesante(void);
+	void StopSuScatto(void);
 }
 
+void Inject_ZPatchesTomb4(bool replace);
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace);

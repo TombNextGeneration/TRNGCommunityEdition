@@ -7,8 +7,8 @@ namespace tomb4
 	extern ANIM_STRUCT* &anims;
 	extern long* &bones;
 	extern ulong &FmvSceneTriggered;
-	extern long (&flip_stats)[32];
-	extern long (&flipmap)[32];
+	extern long (&flip_stats)[10];
+	extern long (&flipmap)[10];
 	extern long &flipeffect;
 	extern long &fliptimer;
 	extern long &flip_status;
@@ -56,6 +56,7 @@ namespace tomb4
 	void FlipMap(long FlipNumber);
 	long IsRoomOutside(long x, long y, long z);
 	void AnimateItem(ITEM_INFO* item);
+	long TriggerActive(ITEM_INFO* item);
 }
 
 void Inject_Control(bool replace);

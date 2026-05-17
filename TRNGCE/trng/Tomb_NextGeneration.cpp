@@ -16964,6 +16964,32 @@ Concludi:
 		GlobTomb4.BaseSalvaCoordinate.VetIndici[TotItem] = Indice;
 		GlobTomb4.BaseSalvaCoordinate.TotSalvati++;
 	}
+
+	// viene chiamata quando si e'termianto di caricare savegame
+	// il file e' ancora aperto (handle in HFile)
+	// viene usata per chiamare eventuale call back di load savegame
+	// nota: puo' usare valori globali GlobTomb4.SavegameLastName
+	// e GlobTomb4.SavegameLastNumber
+	// questa funzione dopo eventuale chiamata a call back deve chiudere il
+	// file usando closehandle
+	// nota: sulla base di nuovo savegame i dati sono gia' stati caricati
+	// ma si trovano in due zone diverse. quella di BaseSavegame da 0x57 fino 0x220
+	// e poi quella variabile ampliata il cui indirizzo di memoria
+	// e' contenuto in GlobTomb4.BaseRemap.Old_7F7769
+	// e MiaCopiaZonaMoveable
+	void FineLoadSavegame(HANDLE HFile)
+	{
+		// ora chiudere file
+
+		// ora chiudere il file del savegame
+		CloseHandle(HFile);
+
+		// se c'era audio sospeso in corso, aggiornare il suono vecchio salvato prima
+		// con quello appena caricato
+		if (GlobTomb4.AudioSospeso.CountSuspend) {
+			GlobTomb4.AudioSospeso.VetSospeso[0].NumeroCD = *GlobTomb4.pAdr->pAudioTrackLoop;
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17209,4 +17235,5 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x10076BB9, (unsigned int)trng::IsPuntoInternoTriangolo, replace);
 	ProcessInject(0x1007E016, (unsigned int)trng::DistanzaPrecisaXZ, replace);
 	ProcessInject(0x1004AA12, (unsigned int)trng::AggiungiItemMosso, replace);
+	ProcessInject(0x1007F3F5, (unsigned int)trng::FineLoadSavegame, replace);
 }

@@ -14,6 +14,12 @@ namespace tomb4
 	long LaraHitCeiling(ITEM_INFO* item, COLL_INFO* coll);
 	long LaraFallen(ITEM_INFO* item, COLL_INFO* coll);
 	long TestLaraSlide(ITEM_INFO* item, COLL_INFO* coll);
+	void LaraCollideStop(ITEM_INFO* item, COLL_INFO* coll);
+	void lara_as_wade(ITEM_INFO* item, COLL_INFO* coll);
+	void lara_col_dash(ITEM_INFO* item, COLL_INFO* coll);
+	long TestLaraVault(ITEM_INFO* item, COLL_INFO* coll);
+	long LaraDeflectEdge(ITEM_INFO* item, COLL_INFO* coll);
+	long TestWall(ITEM_INFO* item, long front, long right, long down);
 }
 
 void Inject_Lara(bool replace);

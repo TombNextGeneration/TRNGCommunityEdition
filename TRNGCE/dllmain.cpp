@@ -74,6 +74,8 @@
 #include "tomb4/game/jeep.h"
 #include "tomb4/game/laraswim.h"
 #include "tomb4/game/lara.h"
+#include "tomb4/game/switch.h"
+#include "tomb4/game/objlight.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -455,6 +457,7 @@ static const char *PatchTitles[342] = {
 	"Electric Lara",
 	"Headlight"
 };
+static void *InvalidAddress;
 
 #pragma comment(linker, "/EXPORT:_DummyFunction,@1,NONAME")
 extern "C" int DummyFunction() {
@@ -577,6 +580,7 @@ static void CheckPluginVersion(const char *name, WORD major, WORD minor, WORD bu
 }
 
 static void Inject(bool replace) {
+	Inject_ZPatchesTomb4(replace);
 	Inject_Croc(replace);
 	Inject_Sound(replace);
 	Inject_Draw(replace);
@@ -636,6 +640,8 @@ static void Inject(bool replace) {
 	Inject_Jeep(replace);
 	Inject_Laraswim(replace);
 	Inject_Lara(replace);
+	Inject_Switch(replace);
+	Inject_Objlight(replace);
 }
 
 static LPSTR __stdcall CallInject() {
@@ -690,14 +696,27 @@ void IndirectReferenceInject(void **reference) {
 void ModuleReferenceInject(void **reference, void *module) {
 	void *address;
 
-	address = module ? (void *) GetProcAddress((HMODULE) module, (LPCSTR) *reference) : (void *) 0xCCCCCCCC;
+	address = module ? (void *) GetProcAddress((HMODULE) module, (LPCSTR) *reference) : InvalidAddress;
 	ReferenceInject(reference, &address);
+}
+
+void ConditionalInvalidReferenceInject(void **reference, bool condition) {
+	if (!condition)
+		ReferenceInject(reference, &InvalidAddress);
+}
+
+void ConditionalIndirectReferenceInject(void **reference, bool condition) {
+	ReferenceInject(reference, condition ? *reference : &InvalidAddress);
 }
 
 void CopyInject(void *module, const char *name, void *target, unsigned int size) {
 	if (!module)
 		return;
 	memcpy(target, (void *) GetProcAddress((HMODULE) module, name), size);
+}
+
+bool ConditionNoScript() {
+	return trng::MyGlobPrivate.TestNG_NoScript;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
