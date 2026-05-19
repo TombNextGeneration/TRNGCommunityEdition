@@ -3,7 +3,6 @@
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
 #include "../tomb4/game/control.h"
-#include "DefTomb4Funct.h"
 #include "MyStructures.h"
 #include "trng_elevator.h"
 #include "../tomb4/game/collide.h"
@@ -43,6 +42,7 @@
 #include "../tomb4/specific/function_table.h"
 #include "../tomb4/game/jeep.h"
 #include "../tomb4/game/items.h"
+#include "../tomb4/specific/output.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -66,6 +66,13 @@ namespace trng {
 	bool &TestGiaInitDetector = *reinterpret_cast<decltype(&TestGiaInitDetector)>(0x10682050);
 	// vettori con costanti usate per allineare decoder e keypad  a diverse risoluzioni
 	StrAlignObjData (&VetDataAlign)[18] = *reinterpret_cast<decltype(&VetDataAlign)>(0x10169EE8);
+	TYPE_QuantoLungoFile &QuantoLungoFile = *reinterpret_cast<decltype(&QuantoLungoFile)>(0x10169EC4);
+	DWORD &StoreResult = *reinterpret_cast<decltype(&StoreResult)>(0x1068204C);
+	int &ValGlobale = *reinterpret_cast<decltype(&ValGlobale)>(0x106699E0);
+	SECURITY_ATTRIBUTES &Attributi = *reinterpret_cast<decltype(&Attributi)>(0x10657B40);
+	char (&DatiMoveables)[0x7DE5] = *reinterpret_cast<decltype(&DatiMoveables)>(0x45982B);
+	int (&VetEnabledFlipMaps)[32] = *reinterpret_cast<decltype(&VetEnabledFlipMaps)>(0x4598AF);
+	int (&VetButtonFlipMaps)[32] = *reinterpret_cast<decltype(&VetButtonFlipMaps)>(0x4598D8);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -5287,6 +5294,235 @@ namespace trng {
 		*pOrientDir = OrientAlign;
 		return true;
 	}
+
+	void DisegnaMioPesce(StrFish *pFish)
+	{
+		short OrientR;
+		WORD TipoFish;
+		DWORD Offset;
+
+		TipoFish = (pFish->FlagFish & FISH_MASK_MESH) >> 5;
+
+		if (pFish->TipoFase == FISH_DEATH_ON_GROUND) {
+
+			Offset = (DWORD) pFish;
+			if (Offset & 0x04) {
+				OrientR = 0x4000;
+			} else {
+				OrientR = -0x4000;
+			}
+		} else {
+			OrientR = 0;
+		}
+
+		if (pFish->TipoFase == FISH_DYING_ON_GROUND) {
+			OrientR = (tomb4::GetRandomControl() & 0x7ff) - 0x3ff;
+		}
+
+		DisegnaPesce(pFish->CordX, pFish->CordY, pFish->CordZ, TipoFish, pFish->OrientH, pFish->OrientV, OrientR);
+	}
+
+	// nota: in tipofish (0,1,2 oppure 3)
+	void DisegnaPesce(DWORD CordX, int CordY, DWORD CordZ, int TipoFish, short HOrient, short VOrient, short ROrient)
+	{
+		StrMeshTr4 *pMesh;
+		int IndiceMesh;
+
+		IndiceMesh = GlobTomb4.pAdr->pVetSlot[491].IndexFirstMesh;
+
+		pMesh = GlobTomb4.pAdr->VetMeshPointer[IndiceMesh + (TipoFish << 1)];
+
+		tomb4::phd_PushMatrix();
+		tomb4::phd_TranslateAbs(CordX, CordY, CordZ);
+
+		tomb4::phd_RotYXZ(HOrient, VOrient, ROrient);
+		tomb4::phd_PutPolygons_train((short*) pMesh, 0);
+
+		*GlobTomb4.pAdr->pZonaRecord30 -= 0x30;
+	}
+
+	void StopFarfalla(void)
+	{
+		StrCollisionLara *pColl;
+
+		pColl = GlobTomb4.pAdr->pCollisionLara;
+
+		if (pColl->AnimNowOld == 158) {
+			EseguiAnimazione(32, 0, true);
+		}
+	}
+
+	// funzione asm usata dalle patch di palude per scoprire se lara
+	// e' nella stanza quicksand
+	// se lo e' restituisce c=0 , se non lo e' resittuisce c=1
+	bool IsLaraInPalude(void)
+	{
+		if (tomb4::room[tomb4::lara_item->room_number].flags & tomb4::ROOM_QUICKSAND)
+			return true;
+		return false;
+	}
+
+	// chiamata in CaricaFileConNome()
+	// e' usata per correggere dimensione effettiva di file
+	// evitando di caricare anche header ng
+	// restituisce la dimensione del file
+	DWORD CorreggiSizeFile(const char *pNomeFile, FILE *pFile, BYTE **pBaseMem)
+	{
+		if (_stricmp(pNomeFile, "script.dat") == 0) {
+			// se c'era header ng, allora fare favolosa correzione
+			if (GlobTomb4.HeaderNG_Script.Result == 1) {
+				// c'era header ng
+				return GlobTomb4.HeaderNG_Script.StartOffset;
+			}
+		}
+
+		// usare codice normale
+		return QuantoLungoFile(pFile);
+	}
+
+	// viene chiamata PRIMA di caricare savegame pNomeSave (il file
+	// e' ancora chiuso)
+	void CaricaSavegame(char *pNomeSave)
+	{
+		int Numero;
+		int i;
+		char *pChar;
+
+		strcpy_s(GlobTomb4.SavegameLastName, pNomeSave);
+		Numero = -1;
+		for (i = strlen(pNomeSave) - 1; i >= 0; i--) {
+			if (pNomeSave[i] == '.') {
+				pChar = &pNomeSave[i + 1];
+
+				if (sscanf_s(pChar, "%d", &Numero) != 1)
+					Numero = -1;
+				break;
+			}
+		}
+		GlobTomb4.SavegameLastNumber = Numero;
+
+		LeggiExtraNG_Savegame(pNomeSave);
+	}
+
+	// legge da savegame
+	void LeggiExtraNG_Savegame(char *pNomeFile)
+	{
+		int i;
+
+		for (i = 0; i < 128; i++)
+			GlobTomb4.BaseFMV.VetFmvEseguiti[i] = 0;
+
+		GlobTomb4.TotOldFlipEffects = 0;
+		GlobTomb4.TotProgressiveActions = 0;
+		GlobTomb4.TotDisabledMirrors = 0;
+		GlobTomb4.TestSavegameConHeaderNG = false;
+
+		if (ExtractNGHeader(pNomeFile, &GlobTomb4.HeaderNG_Savegame) == false) {
+
+			switch (GlobTomb4.HeaderNG_Savegame.Result) {
+			case -2:
+
+				sprintf_s(BufferLog, "ERROR: cann't open file: \"%s\" (to read extra ng header)", SoloNome(pNomeFile));
+
+				InviaLog(BufferLog);
+
+				return;
+			case -1:
+
+				InviaLog("WARNING: Extra NG Header appears corrupted");
+
+				return;
+			case 0:
+
+				InviaLog("Current file has no Extra NG Header");
+
+				return;
+			}
+		}
+
+		GlobTomb4.TestSavegameConHeaderNG = true;
+
+		InviaLog("Found Extra NG Header for savegame");
+	}
+
+	// verificare se su trap door che sta per essere aperta
+	// c'e' un pushable
+	// se il pushable e' sopra trapdoor mettere il valore 4 in
+	// VetCollisionePushable
+	void ControllaTrapDoor(StrItemTr4 *pTrap)
+	{
+		int i;
+		DWORD CordX, CordZ;
+		int CordY;
+		int Indice;
+		StrProgressiveAction *pAzione;
+		int IndiceAzione;
+
+		CordX = pTrap->CordX;
+		CordY = pTrap->CordY;
+		CordZ = pTrap->CordZ;
+
+		for (i = 0; i < GlobTomb4.BasePushables.TotPushables; i++) {
+			if (CordX == GlobTomb4.BasePushables.VetPushables[i]->CordX && CordY == GlobTomb4.BasePushables.VetPushables[i]->CordY && CordZ == GlobTomb4.BasePushables.VetPushables[i]->CordZ) {
+
+				Indice = GlobTomb4.BasePushables.VetPushablesIndex[i];
+
+				GlobTomb4.BasePushables.VetCollisionePushable[Indice] = CP_FALLING;
+				// adesso incominciare azione di movimento del favoloso
+				// pushable
+
+				IndiceAzione = CreaNuovaAzioneProgressiva();
+				pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+				pAzione->ItemIndex = (short) Indice;
+				pAzione->ActionType = AZ_TRAP_PUSHABLE;
+				pAzione->Arg1 = 0;  // contatore
+				pAzione->VetArg[0] = 128; // incremento
+				GlobTomb4.BasePushables.VetPushables[i]->SpeedV = 0;
+
+				return;
+			}
+		}
+	}
+
+	// restituisce il numero di frame per riporre arma pesante
+	// in accordo con arma attuale gestita da lara usando valori customize
+	int TrovaFrameArmaPesante(void)
+	{
+		int Frame;
+
+		Frame = 0;
+		switch (*GlobTomb4.pAdr->pWeaponSelected) {
+		case 4:
+			// fucile
+			Frame = GlobTomb4.pBaseCustomize->WeaponFucile.FrameToLetWeapon;
+			break;
+		case 5:
+			// lanciagranate
+			Frame = GlobTomb4.pBaseCustomize->WeaponLanciaGranate.FrameToLetWeapon;
+			break;
+		case 6:
+			// balestra
+			Frame = GlobTomb4.pBaseCustomize->WeaponBalestra.FrameToLetWeapon;
+			break;
+		}
+		return Frame;
+	}
+
+	void StopSuScatto(void)
+	{
+		EseguiAnimazione(53, 0, true);
+	}
+}
+
+__declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
+__declspec(naked) static void** Inject_ZPatchesTomb4_VetEnabledFlipMaps() { __asm lea eax, [trng::VetEnabledFlipMaps] __asm ret }
+__declspec(naked) static void** Inject_ZPatchesTomb4_VetButtonFlipMaps() { __asm lea eax, [trng::VetButtonFlipMaps] __asm ret }
+
+void Inject_ZPatchesTomb4(bool replace)
+{
+	ConditionalIndirectReferenceInject(Inject_ZPatchesTomb4_DatiMoveables(), !ConditionNoScript());
+	ConditionalIndirectReferenceInject(Inject_ZPatchesTomb4_VetEnabledFlipMaps(), !ConditionNoScript());
+	ConditionalIndirectReferenceInject(Inject_ZPatchesTomb4_VetButtonFlipMaps(), !ConditionNoScript());
 }
 
 void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
@@ -5377,4 +5613,14 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100CF587, (unsigned int)trng::CollBikeFinale, replace);
 	ProcessInject(0x100C1ADD, (unsigned int)trng::RuotaBox, replace);
 	ProcessInject(0x100CF3CE, (unsigned int)trng::GestioneBikeVsRollingBall, replace);
+	ProcessInject(0x100CE540, (unsigned int)trng::DisegnaMioPesce, replace);
+	ProcessInject(0x100CE40A, (unsigned int)trng::DisegnaPesce, replace);
+	ProcessInject(0x100D3470, (unsigned int)trng::StopFarfalla, replace);
+//	ProcessInject(0x100D3631, (unsigned int)trng::IsLaraInPalude, replace);
+//	ProcessInject(0x100C7DFA, (unsigned int)trng::CorreggiSizeFile, replace);
+	ProcessInject(0x100B04C7, (unsigned int)trng::CaricaSavegame, replace);
+	ProcessInject(0x100B03DD, (unsigned int)trng::LeggiExtraNG_Savegame, replace);
+	ProcessInject(0x100C61E2, (unsigned int)trng::ControllaTrapDoor, replace);
+	ProcessInject(0x100CB427, (unsigned int)trng::TrovaFrameArmaPesante, replace);
+	ProcessInject(0x100D34A1, (unsigned int)trng::StopSuScatto, replace);
 }

@@ -13,6 +13,7 @@ namespace tomb4
 	void UpdateSparks();
 	void UpdateSplashes();
 	void TriggerExplosionSparks(long x, long y, long z, long extras, long dynamic, long uw, short room_number);
+	void TriggerDynamic(long x, long y, long z, long falloff, long r, long g, long b);
 }
 
 void Inject_Effect2(bool replace);

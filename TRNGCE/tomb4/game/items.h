@@ -9,6 +9,7 @@ namespace tomb4
 	void ItemNewRoom(short item_num, short room_num);
 	short CreateItem();
 	void AddActiveItem(short item_num);
+	void RemoveActiveItem(short item_num);
 }
 
 void Inject_Items(bool replace);

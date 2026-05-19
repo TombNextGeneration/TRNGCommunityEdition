@@ -1,11 +1,8 @@
 #pragma once
+#include "../../tomb4/types.h"
 
 namespace flep
 {
-	typedef unsigned char uchar;
-	typedef unsigned short ushort;
-	typedef unsigned long ulong;
-
 #pragma pack(push, 1)
 	struct CARTINFO
 	{
@@ -37,7 +34,7 @@ namespace flep
 		short momentum_angle;
 		short extra_rotation;
 		long pitch;
-		uchar Flags;
+		tomb4::uchar Flags;
 	};
 
 	struct SUBINFO
@@ -61,7 +58,7 @@ namespace flep
 		char subject_type;
 		char blend_mode[2];
 		char operation;
-		ulong colour[2];
+		tomb4::ulong colour[2];
 	};
 #pragma pack(pop)
 }

@@ -15,6 +15,7 @@ namespace tomb4
 
 	inline constexpr long W2V_SHIFT = 14;
 	inline constexpr long NO_ITEM = -1;
+	inline constexpr long NO_HEIGHT = -32512;
 
 	enum mood_type
 	{
@@ -2214,6 +2215,14 @@ namespace tomb4
 		TXT_NUM_STRINGS
 	};
 
+	enum item_status
+	{
+		ITEM_INACTIVE,
+		ITEM_ACTIVE,
+		ITEM_DEACTIVATED,
+		ITEM_INVISIBLE
+	};
+
 #pragma pack(push, 1)
 	struct PHD_3DPOS
 	{
@@ -3263,6 +3272,29 @@ namespace tomb4
 		uchar bottom;
 		short height;
 		short overlap_index;
+	};
+
+	struct LIGHTNING_STRUCT
+	{
+		PHD_VECTOR Point[4];
+		uchar r;
+		uchar g;
+		uchar b;
+		uchar Life;
+		char Xvel1;
+		char Yvel1;
+		char Zvel1;
+		char Xvel2;
+		char Yvel2;
+		char Zvel2;
+		char Xvel3;
+		char Yvel3;
+		char Zvel3;
+		uchar Size;
+		uchar Flags;
+		uchar Rand;
+		uchar Segments;
+		uchar Pad[3];
 	};
 #pragma pack(pop)
 }

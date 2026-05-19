@@ -20,6 +20,9 @@ namespace tomb4
 	void AlterFOV(short fov);
 	ulong mGetAngle(long x, long z, long x1, long z1);
 	long phd_atan(long x, long y);
+	void phd_PushMatrix();
+	void phd_TranslateAbs(long x, long y, long z);
+	void phd_RotYXZ(short y, short x, short z);
 }
 
 void Inject_3dmath(bool replace);

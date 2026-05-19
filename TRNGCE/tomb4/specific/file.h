@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdio>
 #include "../types.h"
 
 namespace tomb4
@@ -15,6 +16,10 @@ namespace tomb4
 
 	bool LoadObjects();
 	bool LoadCinematic();
+	long LoadFile(const char* name, char** dest);
+	FILE* FileOpen(const char* name);
+	long FileSize(FILE* file);
+	void FileClose(FILE* file);
 }
 
 void Inject_File(bool replace);

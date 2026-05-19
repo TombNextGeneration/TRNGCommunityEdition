@@ -7,6 +7,7 @@ namespace tomb4
 
 	long OnTwoBlockPlatform(ITEM_INFO* item, long x, long z);
 	void LaraBurn();
+	void OpenTrapDoor(ITEM_INFO* item);
 }
 
 void Inject_Traps(bool replace);

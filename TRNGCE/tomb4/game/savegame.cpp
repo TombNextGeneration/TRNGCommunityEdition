@@ -79,20 +79,42 @@ namespace tomb4
 
 		WriteSG(&FmvSceneTriggered, sizeof(long));
 		WriteSG(&GLOBAL_lastinvitem, sizeof(long));
-		flags = 0;
 
-		for (int i = 0; i < 32; i++)
+		if (trng::MyGlobPrivate.TestNG_NoScript)
 		{
-			if (flip_stats[i])
-				flags |= (1 << i);
-		}
+			word = 0;
 
-		WriteSG(&flags, sizeof(ulong));
+			for (int i = 0; i < 10; i++)
+			{
+				if (flip_stats[i])
+					word |= (1 << i);
+			}
 
-		for (int i = 0; i < 32; i++)
-		{
-			word = short(flipmap[i] >> 8);
 			WriteSG(&word, sizeof(short));
+
+			for (int i = 0; i < 10; i++)
+			{
+				word = short(flipmap[i] >> 8);
+				WriteSG(&word, sizeof(short));
+			}
+		}
+		else
+		{
+			flags = 0;
+
+			for (int i = 0; i < 32; i++)
+			{
+				if (trng::VetEnabledFlipMaps[i])
+					flags |= (1 << i);
+			}
+
+			WriteSG(&flags, sizeof(ulong));
+
+			for (int i = 0; i < 32; i++)
+			{
+				word = short(trng::VetButtonFlipMaps[i] >> 8);
+				WriteSG(&word, sizeof(short));
+			}
 		}
 
 		WriteSG(&flipeffect, sizeof(long));

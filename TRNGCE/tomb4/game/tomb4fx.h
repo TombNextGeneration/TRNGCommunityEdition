@@ -1,4 +1,5 @@
 #pragma once
+#include "../types.h"
 
 namespace tomb4
 {
@@ -9,6 +10,7 @@ namespace tomb4
 	extern short &FlashFader;
 	extern short &ScreenFading;
 	extern short &ScreenFadedOut;
+	extern LIGHTNING_STRUCT (&Lightning)[16];
 
 	void TriggerBlood(long x, long y, long z, long angle, long num);
 	void ClearFires();
@@ -25,6 +27,7 @@ namespace tomb4
 	void SetScreenFadeIn(short speed);
 	void SetScreenFadeOut(short speed, short back);
 	long ExplodingDeath2(short item_number, long mesh_bits, short Flags);
+	LIGHTNING_STRUCT* TriggerLightning(PHD_VECTOR* s, PHD_VECTOR* d, char variation, long rgb, uchar flags, uchar size, uchar segments);
 }
 
 void Inject_Tomb4fx(bool replace);

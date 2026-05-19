@@ -438,10 +438,30 @@ namespace trng {
 			pTree[(IndiceTasto + 12) * 4 + 2] = 0;
 		}
 	}
+
+	bool VerificaSwitchKeypad(void)
+	{
+		// chiamata da controllo switch
+		// se keypad e' attivo, e' di tipo switch ed e' stato impostato
+		// tesdtattivatriggerswitch
+		// allora rimuovere keypad e restituire true
+		StrKeyPad *pKeyPad;
+
+		pKeyPad = &GlobTomb4.BaseKeyPad;
+
+		if (pKeyPad->TestAttivo == true && pKeyPad->TipoKeyPad == TKP_SWITCH && pKeyPad->TestAttivaTriggerSwitch == true) {
+			//ok
+			pKeyPad->Fase = FKP_RIMUOVI;
+			GestioneKeyPad(TKP_SWITCH, 0, 0);
+			return true;
+		}
+		return false;
+	}
 }
 
 void LoadTombNextGenerationInject_TrngKeypad(bool replace)
 {
 	ProcessInject(0x100ACA69, (unsigned int)trng::GestioneKeyPad, replace);
 	ProcessInject(0x100ACA20, (unsigned int)trng::CambiaTasto, replace);
+	ProcessInject(0x100AD694, (unsigned int)trng::VerificaSwitchKeypad, replace);
 }

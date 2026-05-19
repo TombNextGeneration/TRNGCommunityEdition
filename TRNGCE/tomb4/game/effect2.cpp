@@ -33,6 +33,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void TriggerDynamic(long x, long y, long z, long falloff, long r, long g, long b)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Effect2(bool replace)
@@ -42,4 +47,5 @@ void Inject_Effect2(bool replace)
 	ProcessInject(0x4338E0, (unsigned int)tomb4::UpdateSparks, false);
 	ProcessInject(0x435440, (unsigned int)tomb4::UpdateSplashes, false);
 	ProcessInject(0x434480, (unsigned int)tomb4::TriggerExplosionSparks, false);
+	ProcessInject(0x435BF0, (unsigned int)tomb4::TriggerDynamic, false);
 }

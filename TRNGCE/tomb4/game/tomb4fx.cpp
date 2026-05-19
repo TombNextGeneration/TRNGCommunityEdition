@@ -1,5 +1,6 @@
 #include "tomb4fx.h"
 #include "../../inject.h"
+#include "../specific/function_stubs.h"
 
 namespace tomb4
 {
@@ -10,6 +11,7 @@ namespace tomb4
 	short &FlashFader = *reinterpret_cast<decltype(&FlashFader)>(0x4BF264);
 	short &ScreenFading = *reinterpret_cast<decltype(&ScreenFading)>(0x4BF254);
 	short &ScreenFadedOut = *reinterpret_cast<decltype(&ScreenFadedOut)>(0x4BF252);
+	LIGHTNING_STRUCT (&Lightning)[16] = *reinterpret_cast<decltype(&Lightning)>(0x7FFA00);
 
 	void TriggerBlood(long x, long y, long z, long angle, long num)
 	{
@@ -85,6 +87,54 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	LIGHTNING_STRUCT* TriggerLightning(PHD_VECTOR* s, PHD_VECTOR* d, char variation, long rgb, uchar flags, uchar size, uchar segments)
+	{
+		LIGHTNING_STRUCT* lptr;
+		char* vptr;
+
+		for (int i = 0; i < 16; i++)
+		{
+			lptr = &Lightning[i];
+
+			if (!lptr->Life)
+			{
+				lptr->Point[0].x = s->x;
+				lptr->Point[0].y = s->y;
+				lptr->Point[0].z = s->z;
+				lptr->Point[1].x = ((s->x * 3) + d->x) >> 2;
+				lptr->Point[1].y = ((s->y * 3) + d->y) >> 2;
+				lptr->Point[1].z = ((s->z * 3) + d->z) >> 2;
+				lptr->Point[2].x = ((d->x * 3) + s->x) >> 2;
+				lptr->Point[2].y = ((d->y * 3) + s->y) >> 2;
+				lptr->Point[2].z = ((d->z * 3) + s->z) >> 2;
+				lptr->Point[3].x = d->x;
+				lptr->Point[3].y = d->y;
+				lptr->Point[3].z = d->z;
+				vptr = &lptr->Xvel1;
+
+				for (int j = 0; j < 6; j++)
+					*vptr++ = (GetRandomControl() % variation) - (variation >> 1);
+
+				for (int j = 0; j < 3; j++)
+				{
+					if (flags & 2)
+						*vptr++ = (GetRandomControl() % variation) - (variation >> 1);
+					else
+						*vptr++ = 0;
+				}
+
+				lptr->Flags = flags;
+				*(long*)&lptr->r = rgb;
+				lptr->Segments = segments;
+				lptr->Rand = variation;
+				lptr->Size = size;
+				return lptr;
+			}
+		}
+
+		return 0;
+	}
 }
 
 void Inject_Tomb4fx(bool replace)
@@ -104,4 +154,5 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x439790, (unsigned int)tomb4::SetScreenFadeIn, false);
 	ProcessInject(0x439740, (unsigned int)tomb4::SetScreenFadeOut, false);
 	ProcessInject(0x43A030, (unsigned int)tomb4::ExplodingDeath2, false);
+	ProcessInject(0x43A7E0, (unsigned int)tomb4::TriggerLightning, replace);
 }
