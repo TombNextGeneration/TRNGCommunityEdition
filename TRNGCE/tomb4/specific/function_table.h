@@ -3,6 +3,8 @@
 
 namespace tomb4
 {
+	extern HRESULT (*&_EndScene)();
+
 	HRESULT HWBeginScene();
 	void SetFogColor(long r, long g, long b);
 }

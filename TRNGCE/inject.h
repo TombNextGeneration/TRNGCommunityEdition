@@ -1,6 +1,7 @@
 #pragma once
 
 void ProcessInject(unsigned int from, unsigned int to, bool replace);
+void ProcessInject(unsigned int from, unsigned int to, unsigned int patch, bool replace);
 void ModuleProcessInject(void *module, const char *name, unsigned int to, bool replace);
 void IndirectReferenceInject(void **reference);
 void ModuleReferenceInject(void **reference, void *module);

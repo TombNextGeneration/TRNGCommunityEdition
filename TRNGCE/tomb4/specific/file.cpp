@@ -1,5 +1,6 @@
 #include "file.h"
 #include <cstring>
+#include <process.h>
 #include "../../inject.h"
 #include "function_stubs.h"
 #include "../game/objects.h"
@@ -11,6 +12,8 @@
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zPatchesTomb4.h"
 #include "../../trng/zRoomEditor.h"
+#include "output.h"
+#include "../game/gameflow.h"
 
 namespace tomb4
 {
@@ -25,6 +28,9 @@ namespace tomb4
 	short &nAIObjects = *reinterpret_cast<decltype(&nAIObjects)>(0x7FD0E0);
 //	THREAD &LevelLoadingThread = *reinterpret_cast<decltype(&LevelLoadingThread)>(0x4A6D38);
 	AIOBJECT* &AIObjects = *reinterpret_cast<decltype(&AIObjects)>(0x7FD0E4);
+	short* &aranges = *reinterpret_cast<decltype(&aranges)>(0x753B44);
+	long &nAnimUVRanges = *reinterpret_cast<decltype(&nAnimUVRanges)>(0x4A6D30);
+	TEXTURESTRUCT* &textinfo = *reinterpret_cast<decltype(&textinfo)>(0x533990);
 
 	bool LoadObjects()
 	{
@@ -274,6 +280,80 @@ namespace tomb4
 		Log(2, "FileClose");
 		fclose(file);
 	}
+
+	bool LoadAIInfo()
+	{
+		long num_ai;
+
+		num_ai = *(long*)FileData;
+
+		// salvare il totale massimo di record ai registrabili
+		trng::BaseGlobMisc.TotOldAIRecords = num_ai;
+		trng::BaseGlobMisc.TotMaxAIRecords = num_ai + 200;
+
+		FileData += sizeof(long);
+		nAIObjects = (short)num_ai;
+
+		// in ebx c'e' la dimensione di memoria richiesta
+		// aumentarla per avere 200 record in piu'
+		AIObjects = (AIOBJECT*)game_malloc(sizeof(AIOBJECT) * (num_ai + 200), 0);
+		memcpy(AIObjects, FileData, sizeof(AIOBJECT) * num_ai);
+		FileData += sizeof(AIOBJECT) * num_ai;
+		return 1;
+	}
+
+	void S_GetUVRotateTextures()
+	{
+		TEXTURESTRUCT* tex;
+		short* pRange;
+
+		if (!trng::MyGlobPrivate.TestNG_NoScript)
+		{
+			// patch per inizializzare dati globali per animazioni texture animate
+			trng::InitTextureAnimateTomb4();
+			return;
+		}
+
+		pRange = aranges + 1;
+
+		for (int i = 0; i < nAnimUVRanges; i++)
+		{
+			for (int j = *pRange++; j >= 0; j--)
+			{
+				tex = &textinfo[*pRange++];
+				AnimatingTexturesV[i][j][0] = tex->v1;
+			}
+		}
+	}
+
+	long S_LoadLevelFile(long num)
+	{
+		char name[80];
+
+		Log(2, "S_LoadLevelFile");
+
+		// se c'e' immagine background per load level allocare adesso immagine e creare memhdc
+		if (*trng::AdrGlobali.pLevelNow)
+			trng::GlobTomb4.TestFirstLoadTitle = false;
+
+		if (trng::GlobTomb4.BaseImgLoadingLevel.TestEnabled)
+			trng::AllocaImgLoadingLevel();
+
+		strcpy_s(name, &gfFilenameWad[gfFilenameOffset[num]]);
+		strcat_s(name, ".TR4");
+		LevelLoadingThread.active = 1;
+		LevelLoadingThread.ended = 0;
+		LevelLoadingThread.handle = _beginthreadex(0, 0, &LoadLevel, name, 0, (unsigned int*)&LevelLoadingThread.address);
+
+		do Sleep(10); while (LevelLoadingThread.active);
+
+		return 1;
+	}
+
+	unsigned int __stdcall LoadLevel(void* name)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_File(bool replace)
@@ -284,4 +364,8 @@ void Inject_File(bool replace)
 //	ProcessInject(0x471FD0, (unsigned int)tomb4::FileOpen, replace);
 	ProcessInject(0x472060, (unsigned int)tomb4::FileSize, replace);
 //	ProcessInject(0x472040, (unsigned int)tomb4::FileClose, replace);
+	ProcessInject(0x474460, (unsigned int)tomb4::LoadAIInfo, replace);
+	ProcessInject(0x474670, (unsigned int)tomb4::S_GetUVRotateTextures, replace);
+	ProcessInject(0x474B20, (unsigned int)tomb4::S_LoadLevelFile, replace);
+	ProcessInject(0x4746D0, (unsigned int)tomb4::LoadLevel, false);
 }

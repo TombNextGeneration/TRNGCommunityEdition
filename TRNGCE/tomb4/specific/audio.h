@@ -8,12 +8,14 @@ namespace tomb4
 	extern long &audio_play_mode;
 	extern trng::StrListaWav (&TrackFileNames)[256];
 	extern HANDLE &NotificationThreadHandle;
+	extern bool &acm_ready;
 
 	void S_CDStop();
 	void ACMSetVolume();
 	void S_CDPlay(long track, long mode);
 	long ACMSetupNotifications();
 	ulong __stdcall ACMHandleNotifications(void* ptr);
+	void ACMEmulateCDPlay(long track, long mode);
 }
 
 void Inject_Audio(bool replace);

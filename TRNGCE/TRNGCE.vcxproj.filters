@@ -273,6 +273,9 @@
     <ClInclude Include="tomb4\game\objlight.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\d3dmatrix.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -515,6 +518,9 @@
     </ClCompile>
     <ClCompile Include="tomb4\game\objlight.cpp">
       <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\d3dmatrix.cpp">
+      <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

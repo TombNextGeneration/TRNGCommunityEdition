@@ -305,6 +305,9 @@ namespace trng {
 	int DistanzaPrecisaXZ(DWORD X1, DWORD Z1, DWORD X2, DWORD Z2);
 	void AggiungiItemMosso(WORD Indice);
 	void FineLoadSavegame(HANDLE HFile);
+	int FloatCord2Int(float Cord);
+	float IntCord2Float(int Cord);
+	void AggiornaColorWhiteMod(void);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

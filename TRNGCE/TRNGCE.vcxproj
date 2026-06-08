@@ -160,6 +160,7 @@
     <ClInclude Include="tomb4\specific\3dmath.h" />
     <ClInclude Include="tomb4\specific\audio.h" />
     <ClInclude Include="tomb4\specific\cmdline.h" />
+    <ClInclude Include="tomb4\specific\d3dmatrix.h" />
     <ClInclude Include="tomb4\specific\drawroom.h" />
     <ClInclude Include="tomb4\specific\dxshell.h" />
     <ClInclude Include="tomb4\specific\file.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="tomb4\specific\3dmath.cpp" />
     <ClCompile Include="tomb4\specific\audio.cpp" />
     <ClCompile Include="tomb4\specific\cmdline.cpp" />
+    <ClCompile Include="tomb4\specific\d3dmatrix.cpp" />
     <ClCompile Include="tomb4\specific\drawroom.cpp" />
     <ClCompile Include="tomb4\specific\dxshell.cpp" />
     <ClCompile Include="tomb4\specific\file.cpp" />

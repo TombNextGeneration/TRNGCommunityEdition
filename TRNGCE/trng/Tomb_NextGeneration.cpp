@@ -3992,15 +3992,14 @@ namespace trng {
 
 		pInv = &tomb4::inventry_objects_list[tomb4::INV_QUEST1_ITEM];
 		switch (TipoDetector) {
-		case TD_AMULETO:
-		default:
-			pSrc = VetOriginali;
-			break;
 		case TD_BIG_DETECTOR:
 			pSrc = VetDetectorBig;
 			break;
 		case TD_LITTLE_DETECTOR:
 			pSrc = VetDetectorLittle;
+			break;
+		default:
+			pSrc = VetOriginali;
 			break;
 		}
 
@@ -4320,12 +4319,11 @@ namespace trng {
 			return 0;
 
 		switch (FromPlug) {
-		case PLUG_FROM_SCRIPT:
-		default:
-			pSource = "script";
-			break;
 		case PLUG_FROM_NGLE:
 			pSource = "ngle/tr4";
+			break;
+		default:
+			pSource = "script";
 			break;
 		}
 
@@ -4623,7 +4621,18 @@ namespace trng {
 			case BKGDT_LASER_SIGHT:
 
 				switch (n) {
-					case BKGDT_LOADING_LEVEL:
+					case BKGDT_TITLE:
+						InviaLog("Found BKGDT_TITLE");
+						pBack = &GlobTomb4.BaseImgTitle;
+						break;
+					case BKGDT_BINOCULAR:
+						InviaLog("Found BKGDT_BINOCULAR");
+						pBack = &GlobTomb4.BaseImgBinocular;
+						break;
+					case BKGDT_LASER_SIGHT:
+						InviaLog("Found BKGDT_LASER_SIGHT");
+						pBack = &GlobTomb4.BaseImgLaserSight;
+						break;
 					default:
 						InviaLog("Found BKGDT_LOADING_LEVEL");
 						pBack = &GlobTomb4.BaseImgLoadingLevel;
@@ -4639,18 +4648,6 @@ namespace trng {
 								pBack->ImageNumber = 0;
 							}
 						}
-						break;
-					case BKGDT_TITLE:
-						InviaLog("Found BKGDT_TITLE");
-						pBack = &GlobTomb4.BaseImgTitle;
-						break;
-					case BKGDT_BINOCULAR:
-						InviaLog("Found BKGDT_BINOCULAR");
-						pBack = &GlobTomb4.BaseImgBinocular;
-						break;
-					case BKGDT_LASER_SIGHT:
-						InviaLog("Found BKGDT_LASER_SIGHT");
-						pBack = &GlobTomb4.BaseImgLaserSight;
 						break;
 				}
 
@@ -16990,6 +16987,57 @@ Concludi:
 			GlobTomb4.AudioSospeso.VetSospeso[0].NumeroCD = *GlobTomb4.pAdr->pAudioTrackLoop;
 		}
 	}
+
+	// converte coordinata float di game engine tomb4 in valore pixel
+	// (questo funziona quantomeno per dimensione texture e posizione)
+	int FloatCord2Int(float Cord)
+	{
+		float Temp;
+
+		Temp = 256 * Cord;
+		return (int) Temp;
+	}
+
+	// funzione inversa alla precedente: trasforma un valore intero in pixel
+	// nel corrispondente valore float nella forma n/256
+	float IntCord2Float(int Cord)
+	{
+		float Temp;
+
+		Temp = ((float) Cord) / 256;
+
+		return Temp;
+	}
+
+	void AggiornaColorWhiteMod(void)
+	{
+		short Val;
+		short Incremento;
+		BYTE Single;
+
+		Incremento = GlobTomb4.ColorWhiteStep;
+
+		Val = GlobTomb4.ColorGradientNow;
+		Val += Incremento;
+
+		if (Incremento < 0) {
+			if (Val <= 0) {
+				Val = 0;
+				Incremento = -Incremento;
+			}
+		} else {
+			if (Val >= 255) {
+				Val = 255;
+				Incremento = -Incremento;
+			}
+		}
+
+		Single = Val & 0xff;
+		GlobTomb4.ColorGradientNow = Val;
+		GlobTomb4.ColorWhiteStep = Incremento;
+
+		GlobTomb4.VetTextColors[1] = (GlobTomb4.VetTextColors[1] & 0xFF000000) | (((Single << 8) | Single) << 8) | Single;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17236,4 +17284,7 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1007E016, (unsigned int)trng::DistanzaPrecisaXZ, replace);
 	ProcessInject(0x1004AA12, (unsigned int)trng::AggiungiItemMosso, replace);
 	ProcessInject(0x1007F3F5, (unsigned int)trng::FineLoadSavegame, replace);
+	ProcessInject(0x100814A1, (unsigned int)trng::FloatCord2Int, replace);
+	ProcessInject(0x100814BA, (unsigned int)trng::IntCord2Float, replace);
+	ProcessInject(0x1005F582, (unsigned int)trng::AggiornaColorWhiteMod, replace);
 }

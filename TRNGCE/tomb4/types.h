@@ -3296,5 +3296,20 @@ namespace tomb4
 		uchar Segments;
 		uchar Pad[3];
 	};
+
+	struct TEXTURESTRUCT
+	{
+		ushort drawtype;
+		ushort tpage;
+		ushort flag;
+		float u1;
+		float v1;
+		float u2;
+		float v2;
+		float u3;
+		float v3;
+		float u4;
+		float v4;
+	};
 #pragma pack(pop)
 }

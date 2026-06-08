@@ -31,6 +31,8 @@ namespace trng {
 	extern char (&DatiMoveables)[0x7DE5];
 	extern int (&VetEnabledFlipMaps)[32];
 	extern int (&VetButtonFlipMaps)[32];
+	extern StrRoomTr4 *&pInsRecordRoom;
+	extern DWORD &StartLoadingTime;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -128,6 +130,12 @@ namespace trng {
 	void ControllaTrapDoor(StrItemTr4 *pTrap);
 	int TrovaFrameArmaPesante(void);
 	void StopSuScatto(void);
+	void InitTextureAnimateTomb4(void);
+	void CorreggiRemapTail(void);
+	int TailTr4ToTom(int IndiceTr4);
+	int TailTomToTr4(int IndiceTom);
+	void AllocaImgLoadingLevel(void);
+	void RefreshImgLoadingLevel(void);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

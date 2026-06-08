@@ -2295,6 +2295,12 @@ namespace trng {
 	inline constexpr int FISH_BUBBLES = 6;
 	inline constexpr int FISH_ESCAPE_FROM_LARA = 7;
 
+	// flag per tabella di remap tail
+	inline constexpr int REMAP_FRAMMENTO = 0x400;
+	inline constexpr int REMAP_TRIANGOLO = 0x1000;
+	inline constexpr int REMAP_TRASPARENTE = 0x2000;
+	inline constexpr int REMAP_SPECULARE = 0x4000;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -6423,6 +6429,13 @@ namespace trng {
 
 	struct StrRettangolo {
 		StrMioPuntoInt VetVertici[4];
+	};
+
+	struct StrRiverRange {
+		int TotTexture;
+		WORD SettingFps;
+		int IndiceRangeNG;
+		WORD VetIndiciTail[50];
 	};
 #pragma pack(pop)
 }

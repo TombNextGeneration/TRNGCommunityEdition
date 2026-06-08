@@ -52,6 +52,8 @@ namespace tomb4
 	ulong &GameTimer = *reinterpret_cast<decltype(&GameTimer)>(0x7FD138);
 	long &menu_to_display = *reinterpret_cast<decltype(&menu_to_display)>(0x4BF54C);
 	uchar* &gfScriptFile = *reinterpret_cast<decltype(&gfScriptFile)>(0x7FD18C);
+	ushort* &gfFilenameOffset = *reinterpret_cast<decltype(&gfFilenameOffset)>(0x7FD1CC);
+	char* &gfFilenameWad = *reinterpret_cast<decltype(&gfFilenameWad)>(0x7FD16C);
 
 	void DoGameflow()
 	{

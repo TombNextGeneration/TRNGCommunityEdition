@@ -20,11 +20,13 @@
 #include "../../flep/PlugIn_trng.h"
 #include "../../flep/structures_mine.h"
 #include "laraswim.h"
+#include "../specific/specificfx.h"
 
 namespace tomb4
 {
 	static short &bikefspeed = *reinterpret_cast<decltype(&bikefspeed)>(0x4BFADC);
 	static char &dont_exit_bike = *reinterpret_cast<decltype(&dont_exit_bike)>(0x4BFAF8);
+	static ITEM_INFO* &GlobalBikeItem = *reinterpret_cast<decltype(&GlobalBikeItem)>(0x7F4F2C);
 
 	long &bike_booster_object = *reinterpret_cast<decltype(&bike_booster_object)>(0x463922);
 	uchar &bike_explode_in_water = *reinterpret_cast<decltype(&bike_explode_in_water)>(0x465B09);
@@ -127,7 +129,40 @@ namespace tomb4
 
 	void TriggerBikeBeam(ITEM_INFO* item)
 	{
-		__try { throw __func__; } __finally {}
+		BIKEINFO* bike;
+		PHD_VECTOR s;
+		PHD_VECTOR d;
+		long intensity;
+
+		if (flep::pPatchMap[flep::PATCH_LIGHT_CUSTOMIZER_TURN_OFF_MOTORBIKE_HEADLIGHTS])
+			return;
+
+		if (item->object_number == MOTORBIKE)
+		{
+			// e' sidecar
+			// nota: se e' jeep la selezione avvene primadi chaiare uesta procedura
+			if (item->trigger_flags & 1)
+				return;
+		}
+
+		// record speciale
+		bike = (BIKEINFO*)item->data;
+		s.x = 0;
+		s.y = -470;
+		s.z = 1836;
+		GetJointAbsPosition(item, &s, 0);
+
+		//prima calcola punto destinazione
+		d.x = 0;
+		d.y = -470;
+		d.z = 20780;
+		GetJointAbsPosition(item, &d, 0);
+		intensity = (bike->light_intensity << 1) - (GetRandomControl() & 0xF);
+
+		if (intensity > 0)
+			LaraTorch(&s, &d, item->pos.y_rot, intensity);
+		else
+			bLaraTorch = 0;
 	}
 
 	long GetOnBike(short item_number, COLL_INFO* coll)
@@ -539,6 +574,26 @@ namespace tomb4
 		item->hit_points = 1;
 		bike->unused1 = 0;
 	}
+
+	void DrawBikeExtras(ITEM_INFO* item)
+	{
+		if (item->object_number == MOTORBIKE)
+		{
+			// e' moto: se pero' la moto e' esplosa, non mostrare neanche il fnaale.
+			if (lara.vehicle == NO_ITEM)
+				return;
+
+			DrawBikeSpeedo(phd_winwidth - 64, phd_winheight - 16, ((BIKEINFO*)item->data)->velocity, 0x8000, 0xC000, 32, 0);
+		}
+
+		// disegna bikebeam
+		DrawBikeBeam(GlobalBikeItem);
+	}
+
+	void DrawBikeBeam(ITEM_INFO* item)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Bike(bool replace)
@@ -550,7 +605,7 @@ void Inject_Bike(bool replace)
 
 	ProcessInject(0x4643A0, (unsigned int)tomb4::BikeTriggerExhaustSmoke, false);
 	ProcessInject(0x463820, (unsigned int)tomb4::BikeCollision, replace);
-	ProcessInject(0x4639F0, (unsigned int)tomb4::TriggerBikeBeam, false);
+	ProcessInject(0x4639F0, (unsigned int)tomb4::TriggerBikeBeam, replace);
 	ProcessInject(0x463A90, (unsigned int)tomb4::GetOnBike, false);
 	ProcessInject(0x463E00, (unsigned int)tomb4::BikeControl, replace);
 	ProcessInject(0x464850, (unsigned int)tomb4::BikeDynamics, false);
@@ -558,4 +613,6 @@ void Inject_Bike(bool replace)
 	ProcessInject(0x466EE0, (unsigned int)tomb4::TestHeight, false);
 	ProcessInject(0x465740, (unsigned int)tomb4::AnimateBike, replace);
 	ProcessInject(0x466120, (unsigned int)tomb4::BikeStart, replace);
+	ProcessInject(0x463DB0, (unsigned int)tomb4::DrawBikeExtras, replace);
+	ProcessInject(0x463BD0, (unsigned int)tomb4::DrawBikeBeam, false);
 }

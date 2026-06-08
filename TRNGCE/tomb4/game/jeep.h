@@ -4,6 +4,7 @@
 namespace tomb4
 {
 	void JeepExplode(ITEM_INFO* item);
+	void DrawJeepExtras(ITEM_INFO* item);
 }
 
 void Inject_Jeep(bool replace);

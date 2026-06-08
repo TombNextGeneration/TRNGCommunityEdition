@@ -673,6 +673,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	HRESULT DXShowFrame()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Dxshell(bool replace)
@@ -685,4 +690,5 @@ void Inject_Dxshell(bool replace)
 	ProcessInject(0x48F8D0, (unsigned int)tomb4::DXGetInfo, replace);
 	ProcessInject(0x48FC30, (unsigned int)tomb4::DXEnumDirectDraw, false);
 	ProcessInject(0x48F930, (unsigned int)tomb4::DXEnumDirectSound, false);
+	ProcessInject(0x491B40, (unsigned int)tomb4::DXShowFrame, false);
 }
