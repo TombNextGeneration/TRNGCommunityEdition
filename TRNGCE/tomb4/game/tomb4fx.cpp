@@ -1,6 +1,15 @@
 #include "tomb4fx.h"
 #include "../../inject.h"
 #include "../specific/function_stubs.h"
+#include "sound.h"
+#include "delstuff.h"
+#include "gameflow.h"
+#include "../../trng/Tomb_NextGeneration.h"
+#include "../../trng/zPatchesTomb4.h"
+#include "../specific/3dmath.h"
+#include "../specific/output.h"
+#include "control.h"
+#include "objects.h"
 
 namespace tomb4
 {
@@ -91,7 +100,6 @@ namespace tomb4
 	LIGHTNING_STRUCT* TriggerLightning(PHD_VECTOR* s, PHD_VECTOR* d, char variation, long rgb, uchar flags, uchar size, uchar segments)
 	{
 		LIGHTNING_STRUCT* lptr;
-		char* vptr;
 
 		for (int i = 0; i < 16; i++)
 		{
@@ -111,17 +119,24 @@ namespace tomb4
 				lptr->Point[3].x = d->x;
 				lptr->Point[3].y = d->y;
 				lptr->Point[3].z = d->z;
-				vptr = &lptr->Xvel1;
+				lptr->Xvel1 = (GetRandomControl() % variation) - (variation >> 1);
+				lptr->Yvel1 = (GetRandomControl() % variation) - (variation >> 1);
+				lptr->Zvel1 = (GetRandomControl() % variation) - (variation >> 1);
+				lptr->Xvel2 = (GetRandomControl() % variation) - (variation >> 1);
+				lptr->Yvel2 = (GetRandomControl() % variation) - (variation >> 1);
+				lptr->Zvel2 = (GetRandomControl() % variation) - (variation >> 1);
 
-				for (int j = 0; j < 6; j++)
-					*vptr++ = (GetRandomControl() % variation) - (variation >> 1);
-
-				for (int j = 0; j < 3; j++)
+				if (flags & 2)
 				{
-					if (flags & 2)
-						*vptr++ = (GetRandomControl() % variation) - (variation >> 1);
-					else
-						*vptr++ = 0;
+					lptr->Xvel3 = (GetRandomControl() % variation) - (variation >> 1);
+					lptr->Yvel3 = (GetRandomControl() % variation) - (variation >> 1);
+					lptr->Zvel3 = (GetRandomControl() % variation) - (variation >> 1);
+				}
+				else
+				{
+					lptr->Xvel3 = 0;
+					lptr->Yvel3 = 0;
+					lptr->Zvel3 = 0;
 				}
 
 				lptr->Flags = flags;
@@ -134,6 +149,78 @@ namespace tomb4
 		}
 
 		return 0;
+	}
+
+	void LaraBubbles(ITEM_INFO* item)
+	{
+		PHD_VECTOR pos;
+
+		if (!trng::BaseCustomize.TestDisableMissingSounds)
+			SoundEffect(SFX_LARA_BUBBLES, &item->pos, SFX_WATER);
+
+		pos.x = 0;
+		pos.y = -4;
+		pos.z = 64;
+		GetLaraJointPos(&pos, 8);
+		trng::GlobTomb4.BaseMirror.IndiceNow = -1;
+
+		for (int i = (GetRandomControl() & 1) + 2; i > 0; i--)
+		{
+			CreateBubble((PHD_3DPOS*)&pos, item->room_number, 8, 7);
+
+			if (gfLevelFlags & GF_MIRROR)
+			{
+				// qui fare duplicati di bubble per tutti i mirror
+				while (1)
+				{
+					trng::CercaRecordMirror(item->room_number, trng::GlobTomb4.BaseMirror.IndiceNow + 1);
+
+					if (!trng::GlobTomb4.BaseMirror.pRecNow)
+						break;
+
+					trng::CalcolaCordMirror((trng::StrPosizione*)&pos);
+					CreateBubble((PHD_3DPOS*)&trng::GlobTomb4.BaseMirror.CordX, item->room_number, 8, 7);
+				}
+			}
+		}
+	}
+
+	void CreateBubble(PHD_3DPOS* pos, short room_number, long size, long biggest)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void DrawWeaponMissile(ITEM_INFO* item)
+	{
+		phd_PushMatrix();
+		phd_TranslateAbs(item->pos.x_pos, item->pos.y_pos, item->pos.z_pos);
+		phd_RotYXZ(item->pos.y_rot, item->pos.x_rot, item->pos.z_rot);
+		phd_PutPolygons_train(meshes[objects[item->object_number].mesh_index], 0);
+		phd_PopMatrix();
+
+		if (gfLevelFlags & GF_MIRROR)
+		{
+			trng::GlobTomb4.BaseMirror.IndiceNow = -1;
+
+			while (1)
+			{
+				trng::CercaRecordMirror(item->room_number, trng::GlobTomb4.BaseMirror.IndiceNow + 1);
+
+				if (!trng::GlobTomb4.BaseMirror.pRecNow)
+					break;
+
+				// c'e' un altro mirror
+				trng::CalcolaCordMirror((trng::StrPosizione*)&item->pos);
+				trng::CalcolaOrientMirror((trng::StrOrient*)&item->pos.x_rot, false, false);
+
+				// codice per visualizzare mesh
+				phd_PushMatrix();
+				phd_TranslateAbs(trng::GlobTomb4.BaseMirror.CordX, trng::GlobTomb4.BaseMirror.CordY, trng::GlobTomb4.BaseMirror.CordZ);
+				phd_RotYXZ(trng::GlobTomb4.BaseMirror.OrientH, trng::GlobTomb4.BaseMirror.OrientV, trng::GlobTomb4.BaseMirror.OrientR);
+				phd_PutPolygons_train(meshes[objects[item->object_number].mesh_index], 0);
+				phd_PopMatrix();
+			}
+		}
 	}
 }
 
@@ -155,4 +242,7 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x439740, (unsigned int)tomb4::SetScreenFadeOut, false);
 	ProcessInject(0x43A030, (unsigned int)tomb4::ExplodingDeath2, false);
 	ProcessInject(0x43A7E0, (unsigned int)tomb4::TriggerLightning, replace);
+	ProcessInject(0x439250, (unsigned int)tomb4::LaraBubbles, replace);
+	ProcessInject(0x4391A0, (unsigned int)tomb4::CreateBubble, false);
+	ProcessInject(0x43AFC0, (unsigned int)tomb4::DrawWeaponMissile, replace);
 }

@@ -3311,7 +3311,7 @@ namespace trng {
 									// di indice del trigger (se pero' e' flipeffect dovrebbe essere evitato)
 									if ((pTrigger->Flags & TGROUP_FLIPEFFECT) == 0) {
 										// non e' flipeffect
-										if ((pTrigger->Flags & (TGROUP_USE_FOUND_ITEM_INDEX + TGROUP_USE_OWNER_ANIM_ITEM_INDEX + TGROUP_USE_EXECUTOR_ITEM_INDEX + TGROUP_USE_ITEM_USED_BY_LARA_INDEX)) == 0) {
+										if ((pTrigger->Flags & (TGROUP_USE_FOUND_ITEM_INDEX | TGROUP_USE_OWNER_ANIM_ITEM_INDEX | TGROUP_USE_EXECUTOR_ITEM_INDEX | TGROUP_USE_ITEM_USED_BY_LARA_INDEX)) == 0) {
 
 											pTrigger->Flags |= TGROUP_USE_TRIGGER_ITEM_INDEX;
 										}
@@ -4159,7 +4159,7 @@ namespace trng {
 		// settings per acqua fredda
 		pDamage = &GlobTomb4.DamageColdWater;
 		pDamage->Colore = 0xfff924f1; // rosa
-		pDamage->Flags = DMG_INDIRECT_BAR + DMG_SLOW_DISAPPEARING + DMG_ALERT_BEEP + DMG_COLD_WATER;
+		pDamage->Flags = DMG_INDIRECT_BAR | DMG_SLOW_DISAPPEARING | DMG_ALERT_BEEP | DMG_COLD_WATER;
 		pDamage->IndiceStringa = -1;
 		pDamage->SecondiMorte = 10;
 		pDamage->DamValue = 10000;
@@ -4172,7 +4172,7 @@ namespace trng {
 		// settings per generica room damage
 		pDamage = &GlobTomb4.DamageRoom;
 		pDamage->Colore = 0xFFF6F923; // giallo
-		pDamage->Flags = DMG_INDIRECT_BAR + DMG_SLOW_DISAPPEARING + DMG_ALERT_BEEP;
+		pDamage->Flags = DMG_INDIRECT_BAR | DMG_SLOW_DISAPPEARING | DMG_ALERT_BEEP;
 		pDamage->IndiceStringa = -1;
 		pDamage->SecondiMorte = 16;
 		pDamage->SecondiRicrescita = 6;
@@ -5777,7 +5777,7 @@ namespace trng {
 			Numero = FT_HALF_SIZEY;
 			break;
 		case SC_HALF_SIZE:
-			Numero = FT_HALF_SIZEX + FT_HALF_SIZEY;
+			Numero = FT_HALF_SIZEX | FT_HALF_SIZEY;
 			break;
 		case SC_DOUBLE_WIDTH:
 			Numero = FT_DOUBLE_SIZEX;
@@ -5786,7 +5786,7 @@ namespace trng {
 			Numero = FT_DOUBLE_SIZEY;
 			break;
 		case SC_DOUBLE_SIZE:
-			Numero = FT_DOUBLE_SIZEX + FT_DOUBLE_SIZEY;
+			Numero = FT_DOUBLE_SIZEX | FT_DOUBLE_SIZEY;
 			break;
 		default:
 			Numero = 0;
@@ -7586,7 +7586,7 @@ Concludi:
 			pAzione->ItemIndex = IndiceCamera;
 			pAzione->Arg1 = 0;
 			// salvare i flag originali
-			GlobTomb4.OldDFPerCamera = GlobTomb4.TestDisableFeatures & (DF_GUARDA + DF_COMBAT_CAMERA);
+			GlobTomb4.OldDFPerCamera = GlobTomb4.TestDisableFeatures & (DF_GUARDA | DF_COMBAT_CAMERA);
 			if (IndiceCamera != -1) {
 				// controllare se e' fissa
 				if (GlobTomb4.pAdr->Camera.pVetCamera[IndiceCamera].Flags & 0x1) {
@@ -8763,7 +8763,7 @@ Concludi:
 				break;
 			}
 			// aggiornare flag allineamento
-			pAzione->VetArgWord[2] &= (FTS_STRETCH_TEXT + FTS_BLINK);
+			pAzione->VetArgWord[2] &= (FTS_STRETCH_TEXT | FTS_BLINK);
 			pAzione->VetArgWord[2] |= Flags;
 		}
 		// salvare valori cord
@@ -8983,6 +8983,9 @@ Concludi:
 	int ConvertiTombItemIndex2NgleIndex(int TombIndex)
 	{
 		int i;
+
+		if (TombIndex < 0 || TombIndex >= 4096)
+			return -1;
 
 		i = GlobTomb4.VetRemapInverseObjects[TombIndex];
 		if (i == -1) {
@@ -11533,8 +11536,6 @@ Concludi:
 	{
 		StrCordDetectors *pCord;
 		DWORD TempoNow;
-		float *pFloat;
-		int *pInt;
 
 		pCord = &GlobTomb4.BaseCordDetector;
 		TempoNow = (DWORD) GetTickCount64();
@@ -11558,24 +11559,89 @@ Concludi:
 		}
 
 		switch (pCord->IndiceAttivo) {
-		case 2:
-		case 3:
-		case 7:
-			// valori float
-			pFloat = (float*) &pCord->DetOrgY;
-
+		case 0:
 			if (TastoVKPremuto('Y'))
-				pFloat[pCord->IndiceAttivo] -= 1.0f;
+				pCord->DetOrgY--;
 			if (TastoVKPremuto('U'))
-				pFloat[pCord->IndiceAttivo] += 1.0f;
+				pCord->DetOrgY++;
+			break;
+		case 1:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTargetY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTargetY++;
+			break;
+		case 2:
+			if (TastoVKPremuto('Y'))
+				pCord->SizeTestoX -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->SizeTestoX += 1.0f;
+			break;
+		case 3:
+			if (TastoVKPremuto('Y'))
+				pCord->SizeTestoY -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->SizeTestoY += 1.0f;
+			break;
+		case 4:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseVLineX--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseVLineX++;
+			break;
+		case 5:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseVLineY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseVLineY++;
+			break;
+		case 6:
+			if (TastoVKPremuto('Y'))
+				pCord->GapVLineX--;
+			if (TastoVKPremuto('U'))
+				pCord->GapVLineX++;
+			break;
+		case 7:
+			if (TastoVKPremuto('Y'))
+				pCord->GapVLineY -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->GapVLineY += 1.0f;
+			break;
+		case 8:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTextX--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTextX++;
+			break;
+		case 9:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTextY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTextY++;
+			break;
+		case 10:
+			if (TastoVKPremuto('Y'))
+				pCord->CompassLineY--;
+			if (TastoVKPremuto('U'))
+				pCord->CompassLineY++;
+			break;
+		case 11:
+			if (TastoVKPremuto('Y'))
+				pCord->KeyPadX--;
+			if (TastoVKPremuto('U'))
+				pCord->KeyPadX++;
+			break;
+		case 12:
+			if (TastoVKPremuto('Y'))
+				pCord->KeyPadY--;
+			if (TastoVKPremuto('U'))
+				pCord->KeyPadY++;
 			break;
 		default:
-			pInt = &pCord->DetOrgY;
-
 			if (TastoVKPremuto('Y'))
-				pInt[pCord->IndiceAttivo]--;
+				pCord->KeyPadTextY--;
 			if (TastoVKPremuto('U'))
-				pInt[pCord->IndiceAttivo]++;
+				pCord->KeyPadTextY++;
 			break;
 		}
 	}
@@ -15499,6 +15565,7 @@ Concludi:
 
 				pVetExtra = (WORD*) realloc(pVetExtra, SizeMem);
 
+				// NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
 				pVetExtra[NWords++] = NumeroWords;
 				pVetExtra[NWords++] = NGTAG_SALVA_TIMER_OGGETTI;
 				pVetExtra[NWords++] = Tot;

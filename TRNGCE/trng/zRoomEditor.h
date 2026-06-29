@@ -27,6 +27,7 @@ namespace trng {
 	char *PrendiLinea(char *pBufLinea, DWORD *pIndice);
 	int GetArgNumerico(char *StrNumero, bool *TestErrore);
 	char *Trim(char *pStringa);
+	void SelezionaComboValore(HWND WindCombo, int Valore);
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace);

@@ -32,7 +32,9 @@ namespace flep
 	}
 }
 
+// NOLINTBEGIN(clang-analyzer-core.FixedAddressDereference)
 void Inject_Vehicles(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C164, (unsigned int)flep::SaveVehicle, replace);
 }
+// NOLINTEND(clang-analyzer-core.FixedAddressDereference)

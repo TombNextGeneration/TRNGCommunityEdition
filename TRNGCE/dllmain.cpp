@@ -77,6 +77,7 @@
 #include "tomb4/game/switch.h"
 #include "tomb4/game/objlight.h"
 #include "tomb4/specific/d3dmatrix.h"
+#include "tomb4/specific/cmdline.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -652,6 +653,7 @@ static void Inject(bool replace) {
 	Inject_Switch(replace);
 	Inject_Objlight(replace);
 	Inject_D3dmatrix(replace);
+	Inject_Cmdline(replace);
 }
 
 static LPSTR __stdcall CallInject() {

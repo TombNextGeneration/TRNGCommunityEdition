@@ -3311,5 +3311,26 @@ namespace tomb4
 		float u4;
 		float v4;
 	};
+
+	struct D3DTLBUMPVERTEX
+	{
+		D3DVALUE sx;
+		D3DVALUE sy;
+		D3DVALUE sz;
+		D3DVALUE rhw;
+		D3DCOLOR color;
+		D3DCOLOR specular;
+		D3DVALUE tu;
+		D3DVALUE tv;
+		D3DVALUE tx;
+		D3DVALUE ty;
+	};
+
+	struct TEXTUREBUCKET
+	{
+		long tpage;
+		long nVtx;
+		D3DTLBUMPVERTEX vtx[544];
+	};
 #pragma pack(pop)
 }

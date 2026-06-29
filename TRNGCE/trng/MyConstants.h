@@ -172,4 +172,24 @@ namespace trng {
 	inline constexpr int FSAV_LARA_OFF_TORCH = 0x0004;
 	inline constexpr int FSAV_LARA_BURNING_TORCH = 0x0008;
 	inline constexpr int FSAV_OLD_FORMAT = 0x0010;
+
+	// costanti per nuovi controlli di finestra setup tomb4
+	inline constexpr int ID_SETUP_COMBO_SETTING_DD = 1000;
+	inline constexpr int ID_SETUP_COMBO_SETTTING_D3D = 1003;
+	inline constexpr int ID_SETUP_COMBO_VIDEO_MODE = 1004;
+	inline constexpr int ID_SETUP_COMBO_TIPO_TEX = 1006;
+	inline constexpr int ID_SETUP_COMBO_AUDIO_DEVICES = 1005;
+	inline constexpr int ID_SETUP_CHECK_DISATTIVA_AUDIO = 1018;
+	inline constexpr int ID_SETUP_CHECK_VOLUMETRIC = 1029;
+	inline constexpr int ID_SETUP_CHECK_BILINEAR = 1012;
+	inline constexpr int ID_SETUP_CHECK_BUMP_MAP = 1016;
+	inline constexpr int ID_SETUP_CHECK_LOW_TEX = 1014;
+	inline constexpr int ID_SETUP_CHECK_LOW_BUMP = 1015;
+	inline constexpr int ID_SETUP_CHECK_DISABLE_FMV = 1030;
+	inline constexpr int ID_SETUP_CHECK_WINDOWED = 1025;
+	inline constexpr int ID_SETUP_RADIO_HARDWARE = 1010;
+	inline constexpr int ID_SETUP_RADIO_SOFTWARE = 1011;
+	inline constexpr int ID_SETUP_DISABLED = 1050;
+	inline constexpr int ID_SETUP_SOFT_FULL_SCREEN = 1051;
+	inline constexpr int ID_SETUP_NO_WAITING_REFRESH = 1052;
 }

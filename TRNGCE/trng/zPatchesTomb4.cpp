@@ -43,6 +43,7 @@
 #include "../tomb4/game/jeep.h"
 #include "../tomb4/game/items.h"
 #include "../tomb4/specific/output.h"
+#include "../tomb4/specific/cmdline.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -75,6 +76,7 @@ namespace trng {
 	int (&VetButtonFlipMaps)[32] = *reinterpret_cast<decltype(&VetButtonFlipMaps)>(0x4598D8);
 	StrRoomTr4 *&pInsRecordRoom = *reinterpret_cast<decltype(&pInsRecordRoom)>(0x10682064);
 	DWORD &StartLoadingTime = *reinterpret_cast<decltype(&StartLoadingTime)>(0x10679F44);
+	HWND &WindSetup = *reinterpret_cast<decltype(&WindSetup)>(0x1068205C);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -491,7 +493,7 @@ namespace trng {
 		pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[0];
 
 		for (i = 0; i < TotEnemy; i++) {
-			if (SlotId == pEnemy->SlotId && (pEnemy->FlagsNEF & (NEF_EXPLODE_AFTER + NEF_EXPLODE + NEF_ONLY_EXPLODE)) != 0) {
+			if (SlotId == pEnemy->SlotId && (pEnemy->FlagsNEF & (NEF_EXPLODE_AFTER | NEF_EXPLODE | NEF_ONLY_EXPLODE)) != 0) {
 				return true;
 			}
 			// fixed bug
@@ -1715,12 +1717,12 @@ namespace trng {
 			}
 			// usare dati id import file = i
 			pImpFile = &pImport->VetFiles[i];
-			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE + Flags);
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE | Flags);
 			if (pBass->StartOffset > 0) {
 				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
 			}
 		} else {
-			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE + Flags);
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE | Flags);
 			if (pBass->StartOffset > 0) {
 				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
 			}
@@ -6017,7 +6019,7 @@ namespace trng {
 					IndiceVerticeTop = 1;
 					AltoY = 2;
 					BassoY = -1;
-					pVetVertici = &pTex->TopLeft[0];
+					pVetVertici = &pTex->VetVertici[0];
 					for (j = 1; j < 6; j += 2) {
 						// se questo range e' di tipo full scroll
 						// diminuire dellameta' tutte le cordy
@@ -6352,6 +6354,370 @@ namespace trng {
 
 		pBase->TestHdcBack = false;
 	}
+
+	// verifica se stanza RoomSorgente corrisponde ad una delle stanze
+	// di fronte a mirror
+	// se lo e' restituisce inserisce in
+	// GlobTomb4.BaseMirror.pRecNow il puntatore al record attuale
+	// effettua la ricerca a partire da IndiceStart
+	// e poi salva l'indice trovfato in GlobTomb4.BaseMirror.IndiceNow
+	void CercaRecordMirror(WORD RoomSorgente, int IndiceStart)
+	{
+		int TotMirror;
+		RecordMirror *pRec;
+		int i;
+
+		GlobTomb4.BaseMirror.pRecNow = NULL;
+		GlobTomb4.BaseMirror.IndiceNow = -100;
+
+		if (IndiceStart < 0)
+			return;
+
+		TotMirror = GlobTomb4.BaseMirror.TotMirror;
+
+		if (TotMirror == 0)
+			return;
+		pRec = &GlobTomb4.BaseMirror.VetMirror[IndiceStart];
+
+		for (i = IndiceStart; i < TotMirror; i++) {
+			if (pRec->MirrorRoom == RoomSorgente && pRec->TestAttivo) {
+				GlobTomb4.BaseMirror.IndiceNow = i;
+				GlobTomb4.BaseMirror.pRecNow = pRec;
+				GlobTomb4.BaseMirror.MirrorType = pRec->MirrorType;
+				return;
+			}
+			pRec++;
+		}
+	}
+
+	// riceve in input la coordinata del rollingbal
+	// il tasto action e' premuto e lara e' ferma e non ha niente in mano
+	// insomma tutto e' a posto, ora bisogna vedere se lara e' allineata
+	// e distante nel modo giusto
+	// se e' tutto ok imposta animazione di spinta e restituisce true
+	// se non puo' resitutisce false
+	bool ControllaSpintaRollingBall(StrItemTr4 *pItem, short IndiceRolling)
+	{
+		WORD OrientAlign;
+		int Differenza;
+		int IndiceAzione;
+		StrProgressiveAction *pAzione;
+		WORD FlagsEnv;
+		int Distanza;
+		int IncX, IncZ;
+		int Speed;
+		DWORD CordX, CordZ;
+		int CordY;
+		int RollY;
+		int DiffX, DiffY, DiffZ;
+		int FirstX, FirstZ;
+
+		FlagsEnv = ENV_POS_HORTOGONAL | ENV_POS_STRIP_1;
+
+		if (ControllaENVFlags(FlagsEnv)	== false)
+			return false;
+
+		Distanza = GlobTomb4.pBaseCustomize->RollingBallPush.Distance;
+
+		CalcolaIncremento(GlobTomb4.pAdr->pLara->OrientationH, &IncX, &IncZ, Distanza);
+
+		CordX = GlobTomb4.pAdr->pLara->CordX;
+		CordY = GlobTomb4.pAdr->pLara->CordY;
+		CordZ = GlobTomb4.pAdr->pLara->CordZ;
+
+		CordX += IncX;
+		CordZ += IncZ;
+		RollY = pItem->CordY + 0x200;
+
+		// ora controllo per coordinate
+		DiffX = abs((int)(CordX - pItem->CordX));
+		DiffY = abs(CordY - RollY);
+		DiffZ = abs((int)(CordZ - pItem->CordZ));
+
+		if (DiffX > 128 || DiffY > 512 || DiffZ > 128)
+			return false;
+
+		// salvare indice di rolling ball con cui lara sta interagendo
+		GlobTomb4.ItemIndexUsedByLara = IndiceRolling;
+
+		// adesso sembra tutto giusto
+		// bisogna impostare animazione per lara e anche l'azione progressiva
+		// ma prima vedere se c'e' spazio oltre il rollingball attuale
+		if (TrovaOggettoDavanti(pItem, GlobTomb4.pAdr->pLara->OrientationH, 1024) == true) {
+			// c'e' qualche moveable che impedisce
+
+			EseguiAnimazione(GlobTomb4.pBaseCustomize->RollingBallPush.AnimFallito, 0, false);
+			return false;
+		}
+
+		EseguiAnimazione(GlobTomb4.pBaseCustomize->RollingBallPush.Animation, 0, true);
+		OrientAlign = GetAlignedOrient(GlobTomb4.pAdr->pLara->OrientationH, true, &Differenza);
+		IncX = 0;
+		IncZ = 0;
+		FirstX = 0;
+		FirstZ = 0;
+		Speed = GlobTomb4.pBaseCustomize->RollingBallPush.SpeedPushing;
+
+		switch (OrientAlign) {
+		case 0:
+			// verso est
+			IncZ = Speed;
+			FirstZ = 256;
+			break;
+		case 0x4000:
+			// verso sud
+			IncX = Speed;
+			FirstX = 256;
+			break;
+		case 0x8000:
+			// verso ovest
+			IncZ = -Speed;
+			FirstZ = -256;
+			break;
+		case 0xC000:
+			// verso nord
+			IncX = -Speed;
+			FirstX = -256;
+			break;
+		}
+		// creare azione progressiva in modo da far partire
+		// rollingball solo nel momento giusto
+
+		IndiceAzione = CreaNuovaAzioneProgressiva();
+		pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+		pAzione->ActionType = AZ_MOVE_ROLLINGBALL;
+		AggiungiItemMosso(IndiceRolling);
+		pAzione->ItemIndex = IndiceRolling;
+		pAzione->Arg1 = OrientAlign;
+		pAzione->Arg2 = GlobTomb4.pBaseCustomize->RollingBallPush.FrameInvulnerabile; // ritardo prima di ferire lara
+		pAzione->VetArg[0] = IncX;
+		pAzione->VetArg[1] = IncZ;
+		pAzione->VetArg[2] = FirstX;
+		pAzione->VetArg[3] = FirstZ;
+
+		return true;
+	}
+
+	// questa procedura conrolla se davanti (in direzione orient e con distanza)
+	// c'e' un oggetto moveable che crea collisione
+	bool TrovaOggettoDavanti(StrItemTr4 *pItem, short Orient, int Distanza)
+	{
+		DWORD CordX;
+		DWORD CordZ;
+		int IncX, IncZ;
+		int TotTrovati;
+		StrItemTr4 *VetTrovati[20];
+		bool TestEsito;
+		int i;
+
+		CalcolaIncremento(Orient, &IncX, &IncZ, Distanza);
+
+		CordX = pItem->CordX + IncX;
+		CordZ = pItem->CordZ + IncZ;
+
+		TotTrovati = TrovaOggettoInSettore(VetTrovati, CordX, pItem->CordY, CordZ, pItem->Room, 512);
+
+		TestEsito = false;
+		for (i = 0; i < TotTrovati; i++) {
+
+			if (VetTrovati[i] != pItem && VetTrovati[i]->SlotID != 0x96 && VetTrovati[i]->SlotID != 0x8a) {
+
+				TestEsito = true;
+				break;
+			}
+		}
+
+		return TestEsito;
+	}
+
+	// trova tutti gli oggetti piazzati nel settore che corrisponde
+	// a cordx cordz di stanza room
+	// inserisce i record in pVetFounds[] e restituisce il numero di oggetti
+	// trovati
+	int TrovaOggettoInSettore(StrItemTr4* pVetFounds[], DWORD CordX, int CordY, DWORD CordZ, short Room, int RangeY)
+	{
+		StrRoomTr4 *pRoom;
+		DWORD GridX, GridZ;
+		DWORD PosX, PosZ;
+		int IndiceNow;
+		int TotTrovati;
+		StrItemTr4 *pItem;
+		short NumeroRoom;
+
+		// prima localizzare stanza
+		NumeroRoom = Room;
+		tomb4::GetFloor(CordX, CordY, CordZ, &NumeroRoom);
+
+		GridX = CordX >> 10;
+		GridZ = CordZ >> 10;
+
+		TotTrovati = 0;
+
+		pRoom = &GlobTomb4.pAdr->pVetRooms[NumeroRoom];
+
+		// ora scandire gli oggetti in questa room
+		IndiceNow = pRoom->FirstItemIndex;
+		while (IndiceNow != -1) {
+			pItem = &GlobTomb4.pAdr->pVetItems[IndiceNow];
+
+			// vedere se e' nella coordinata giusta
+			// prima controllare gapy
+			if (abs(pItem->CordY - CordY) <= RangeY) {
+				PosX = pItem->CordX >> 10;
+				PosZ = pItem->CordZ >> 10;
+
+				if (PosX == GridX && PosZ == GridZ) {
+					pVetFounds[TotTrovati++] = pItem;
+				}
+			}
+			IndiceNow = pItem->ItemIndexNext;
+
+		}
+
+		return TotTrovati;
+	}
+
+	void CambiaTitoloSetup(HWND hDialogo)
+	{
+		char Buffer[256];
+
+		if (MexNewWindowTitle[0] == 0)
+			return;
+		sprintf_s(Buffer, " Setup - %s", MexNewWindowTitle);
+		SetWindowText(hDialogo, Buffer);
+	}
+
+	// chiamata una sola volta (INIT_DIALOG) quando si crea finestra setup
+	// inizializza i controlli della finestra setup ai valori effettivi del registro
+	void InitControlliSetup(HWND hWind)
+	{
+		static int *pSetting_DD = (int *) &tomb4::App.DXInfo.nDD;
+		static int *pSetting_D3D = (int *) &tomb4::App.DXInfo.nD3D;
+		static int *Setting_VMode = (int *) &tomb4::App.DXInfo.nDisplayMode;
+		static int *pSetting_TFormat = (int *) &tomb4::App.DXInfo.nTexture;
+		static int *pSetting_DS = (int *) &tomb4::App.DXInfo.nDS;
+		static BYTE *pSetting_BumpMap = (BYTE*) &tomb4::App.BumpMapping;
+		static BYTE *pSetting_Filter = (BYTE *) &tomb4::App.Filtering;
+		static BYTE *pSetting_Volumetric = (BYTE *) &tomb4::App.Volumetric;
+		static BYTE *pSetting_DisableSound = (BYTE*) &tomb4::App.SoundDisabled;
+		static BYTE *pSetting_NoFMV = (BYTE*) &tomb4::fmvs_disabled;
+		static int *pFlagsSettingRegistro = (int *) &tomb4::App.StartFlags;
+
+		DWORD ID_Now;
+		int *pSetting_TextLow;
+		int *pSetting_BumpLow;
+		bool TestForced;
+		HWND WindControl;
+
+		pSetting_TextLow = (int*) &tomb4::App.TextureSize;;
+		pSetting_BumpLow = (int*) &tomb4::App.BumpMapSize;
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_SETTING_DD);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_DD, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_SETTTING_D3D);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_D3D, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_VIDEO_MODE);
+		SelezionaComboValore(WindControl, *Setting_VMode);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_TIPO_TEX);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_TFormat, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_AUDIO_DEVICES);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_DS, 0);
+
+		if (*pSetting_DisableSound) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISATTIVA_AUDIO, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISATTIVA_AUDIO, BST_UNCHECKED);
+		}
+
+		if (*pSetting_Volumetric) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_VOLUMETRIC, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_VOLUMETRIC, BST_UNCHECKED);
+		}
+
+		if (*pSetting_Filter) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BILINEAR, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BILINEAR, BST_UNCHECKED);
+		}
+
+		if (*pSetting_BumpMap) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BUMP_MAP, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BUMP_MAP, BST_UNCHECKED);
+		}
+
+		if (*pSetting_TextLow == 0x80) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_TEX, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_TEX, BST_UNCHECKED);
+		}
+
+		if (*pSetting_BumpLow == 0x80) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_BUMP, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_BUMP, BST_UNCHECKED);
+		}
+
+		if (*pSetting_NoFMV) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISABLE_FMV, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISABLE_FMV, BST_UNCHECKED);
+		}
+
+		if ((*pFlagsSettingRegistro & 0x90) == 0x90) {
+			CheckRadioButton(hWind, ID_SETUP_RADIO_HARDWARE, ID_SETUP_RADIO_SOFTWARE, ID_SETUP_RADIO_HARDWARE);
+		} else {
+			CheckRadioButton(hWind, ID_SETUP_RADIO_HARDWARE, ID_SETUP_RADIO_SOFTWARE, ID_SETUP_RADIO_SOFTWARE);
+		}
+
+		if (*pFlagsSettingRegistro & 0x02) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_WINDOWED, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_WINDOWED, BST_UNCHECKED);
+		}
+
+		// se ci sono impostazioni di script forzare quei valori
+		TestForced = false;
+		if (GlobTomb4.Settings & SET_FORCE_SOFT_FULL_SCREEN) {
+			GlobTomb4.EmergencySettings = ES_SOFT_FULL_SCREEN;
+			TestForced = true;
+		} else {
+			if (GlobTomb4.Settings & SET_FORCE_NO_WAITING_REFRESH) {
+				GlobTomb4.EmergencySettings = ES_NO_WAITING_REFRESH;
+				TestForced = true;
+			}
+		}
+
+		switch (GlobTomb4.EmergencySettings) {
+		case ES_SOFT_FULL_SCREEN:
+			ID_Now = ID_SETUP_SOFT_FULL_SCREEN;
+			break;
+		case ES_NO_WAITING_REFRESH:
+			ID_Now = ID_SETUP_NO_WAITING_REFRESH;
+			break;
+		default:
+			ID_Now = ID_SETUP_DISABLED;
+			break;
+		}
+
+		CheckRadioButton(hWind, ID_SETUP_DISABLED, ID_SETUP_NO_WAITING_REFRESH, ID_Now);
+		// ora disattivarlo in modo che non possa essere modificato
+		if (TestForced) {
+			WindControl = GetDlgItem(hWind, ID_SETUP_DISABLED);
+			EnableWindow(WindControl, FALSE);
+
+			WindControl = GetDlgItem(hWind, ID_SETUP_SOFT_FULL_SCREEN);
+			EnableWindow(WindControl, FALSE);
+
+			WindControl = GetDlgItem(hWind, ID_SETUP_NO_WAITING_REFRESH);
+			EnableWindow(WindControl, FALSE);
+		}
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -6469,4 +6835,10 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100B4BC9, (unsigned int)trng::TailTomToTr4, replace);
 	ProcessInject(0x100D20CA, (unsigned int)trng::AllocaImgLoadingLevel, replace);
 	ProcessInject(0x100D23B0, (unsigned int)trng::RefreshImgLoadingLevel, replace);
+	ProcessInject(0x100C0391, (unsigned int)trng::CercaRecordMirror, replace);
+	ProcessInject(0x100C5E64, (unsigned int)trng::ControllaSpintaRollingBall, replace);
+	ProcessInject(0x100C5CA6, (unsigned int)trng::TrovaOggettoDavanti, replace);
+	ProcessInject(0x100C5BBD, (unsigned int)trng::TrovaOggettoInSettore, replace);
+	ProcessInject(0x100D3B49, (unsigned int)trng::CambiaTitoloSetup, replace);
+	ProcessInject(0x100D09E1, (unsigned int)trng::InitControlliSetup, replace);
 }
