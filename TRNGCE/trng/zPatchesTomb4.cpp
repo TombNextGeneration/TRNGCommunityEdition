@@ -43,6 +43,7 @@
 #include "../tomb4/game/jeep.h"
 #include "../tomb4/game/items.h"
 #include "../tomb4/specific/output.h"
+#include "../tomb4/specific/cmdline.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -73,6 +74,9 @@ namespace trng {
 	char (&DatiMoveables)[0x7DE5] = *reinterpret_cast<decltype(&DatiMoveables)>(0x45982B);
 	int (&VetEnabledFlipMaps)[32] = *reinterpret_cast<decltype(&VetEnabledFlipMaps)>(0x4598AF);
 	int (&VetButtonFlipMaps)[32] = *reinterpret_cast<decltype(&VetButtonFlipMaps)>(0x4598D8);
+	StrRoomTr4 *&pInsRecordRoom = *reinterpret_cast<decltype(&pInsRecordRoom)>(0x10682064);
+	DWORD &StartLoadingTime = *reinterpret_cast<decltype(&StartLoadingTime)>(0x10679F44);
+	HWND &WindSetup = *reinterpret_cast<decltype(&WindSetup)>(0x1068205C);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -489,7 +493,7 @@ namespace trng {
 		pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[0];
 
 		for (i = 0; i < TotEnemy; i++) {
-			if (SlotId == pEnemy->SlotId && (pEnemy->FlagsNEF & (NEF_EXPLODE_AFTER + NEF_EXPLODE + NEF_ONLY_EXPLODE)) != 0) {
+			if (SlotId == pEnemy->SlotId && (pEnemy->FlagsNEF & (NEF_EXPLODE_AFTER | NEF_EXPLODE | NEF_ONLY_EXPLODE)) != 0) {
 				return true;
 			}
 			// fixed bug
@@ -1713,12 +1717,12 @@ namespace trng {
 			}
 			// usare dati id import file = i
 			pImpFile = &pImport->VetFiles[i];
-			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE + Flags);
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(TRUE, pImpFile->pData, 0, pImpFile->Size, BASS_STREAM_AUTOFREE | Flags);
 			if (pBass->StartOffset > 0) {
 				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
 			}
 		} else {
-			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE + Flags);
+			pCanale->Canale = pBass->Proc.BASS_StreamCreateFile(0, NomeFile, 0, 0, BASS_STREAM_AUTOFREE | Flags);
 			if (pBass->StartOffset > 0) {
 				ImpostaPosizioneSuono(pCanale, pBass->StartOffset);
 			}
@@ -5512,6 +5516,1208 @@ namespace trng {
 	{
 		EseguiAnimazione(53, 0, true);
 	}
+
+	// inizializza dati globali per animare texture, sia frame che uv
+	void InitTextureAnimateTomb4(void)
+	{
+		static WORD VetTriangoli[4096];
+		static int VetSpeculari[4096];
+		static int VetTrasparenti[4096];
+		static WORD VetParziali[4096];
+
+		WORD *VetAnimatedTextures;
+		char *pScript_UV_Rotate;
+		int IndiceTail;
+		int k;
+		int i;
+		int Indice;
+		WORD TempWord;
+		int TotRiverRange;
+		StrRiverRange VetRiverRange[40];
+		WORD SalvaTipo;
+		bool TestGiaFatto;
+		bool TestSalta;
+		float *pVetVertici;
+		int n;
+		float AltoY, BassoY;
+		int TrianglesAmount;
+		float OrgX, OrgY, FSizeX, FSizeY, OffX, OffY;
+		StrBaseAnimTr4 *pAnimTr4;
+		int IndiceFull, IndiceParziale;
+		int IndiceTom;
+		int z;
+		int SizeTex_X;
+		int TotRanges;
+		int NumTex;
+		int IndiceRange;
+		int j;
+		int SizeTex_Y;
+		int SettingUvRotate;
+		int SettingDelay;
+		int TotSpeculari;
+		StrTexInfoTr4 *pTex;
+		StrTexInfoTr4 *pTexFull;
+		StrTexParziali *pParziale;
+		WORD WordSettings;
+		StrAnimUVRotate *pMyRotate;
+		StrAnimUVRotate *pMyNewRotate;
+		StrAnimFrame *pMyFrame;
+		POINT TopLeft;
+		POINT TopRight;
+		POINT BottomRight;
+		POINT BottomLeft;
+		WORD SettingTipoAnim;
+		bool TestScrolling;
+		StrDatiExtraAnimazioni *pExtra;
+		int IndiceRangeNG;
+		int IndiceVerticeTop;
+		int TotTrasparenti;
+		int TotParziali;
+
+		pScript_UV_Rotate = &tomb4::gfUVRotate;
+
+		// NOTA: impostare indirizzo globale per texinfo perche
+		// questa procedura viene chiamata prima di InizializzaStartLivello
+
+		GlobTomb4.pAdr->VetTexInfo = (StrTexInfoTr4 *) tomb4::textinfo;
+
+		// perfezione flag per conversione
+		CorreggiRemapTail();
+
+		pExtra = &GlobTomb4.TexAnimate;
+		pAnimTr4 = &GlobTomb4.BaseAnimTr4;
+
+		VetAnimatedTextures = (WORD *) tomb4::aranges;
+
+		i = 0;
+		TotRanges = VetAnimatedTextures[i++];
+
+		GlobTomb4.BaseAnimTr4.TotUvRanges = 0;
+		GlobTomb4.BaseAnimTr4.TotFrameRanges = 0;
+
+		IndiceRangeNG = 0;
+		TotRiverRange = 0;
+
+		for (IndiceRange = 0; IndiceRange < TotRanges; IndiceRange++) {
+			// calcolare se bisogna incrementare indicenow per
+			// riferito a record animation di dati ng
+
+			//  se questo range risulta essere di tipo scroll
+			//  e contiene un triangolo ignoranrlo del tutto.
+			// guardare
+			// ora VetAnimatedTexutres[i] piunta a numero di texture
+			// che seguono del range attuale
+
+			// eliminare tutti gl ieventuali frame range creati
+			// da tomc2pc su texture scrolling
+			do {
+				TestSalta = false;
+				for (z = 0; z <= VetAnimatedTextures[i]; z++) {
+					IndiceTail = VetAnimatedTextures[z + i + 1];
+
+					// prima controllare se questa tex e' un triangolo
+					IndiceTom = TailTr4ToTom(IndiceTail);
+					if (IndiceTom != -1) {
+						if ((IndiceTom & REMAP_TRIANGOLO) || (IndiceTom & REMAP_TRASPARENTE) || (IndiceTom & REMAP_SPECULARE)) {
+
+							// e' una texture triangolare  trasparente
+							// o speculare
+							// ora vedere se  fa parte
+							// di una tail che e' inclusa in un range scroll
+							SalvaTipo = (WORD) IndiceTom;
+							IndiceTom &= 0x3ff;
+
+							// ok, ora vedre se IndiceFull e' una d quelle
+							// di qualche range scroll
+							for (j = 0; j < pExtra->Tot_UV_Rotate; j++) {
+								if (IndiceTom >= pExtra->VetFromTex[j] && IndiceTom <= pExtra->VetToTex[j]) {
+									// se il tipo indice tom e' transparent
+									// e il range attuale e' di tipo river
+									// allora salvarlo in modo da aggiungerlo
+									// dopo alla fine
+									if ((pExtra->VetInfoRangeAnim[j] & FAN_MASK_ANIM) == FAN_RIVER_ROTATE && (SalvaTipo & REMAP_TRASPARENTE) != 0) {
+										// salvare i dati di questo range
+										VetRiverRange[TotRiverRange].TotTexture = VetAnimatedTextures[i] + 1;
+										VetRiverRange[TotRiverRange].IndiceRangeNG = IndiceRangeNG;
+
+										// inserire il valore di frame
+										TempWord = pExtra->VetInfoRangeAnim[j];
+										TempWord &= FAN_MASK_FPS_UV;
+										TempWord = TempWord >> 8;
+										if (TempWord) {
+											// se diverso da zero
+											// convertirlo in tickcount
+											TempWord = 1000 / TempWord;
+										}
+
+										VetRiverRange[TotRiverRange].SettingFps = TempWord;
+
+										for (k = 0; k <= VetAnimatedTextures[i]; k++) {
+											VetRiverRange[TotRiverRange].VetIndiciTail[k] = VetAnimatedTextures[i + k + 1];
+										}
+										TotRiverRange++;
+									}
+
+									TestSalta = true;
+									break;
+								}
+							}
+							if (TestSalta == true)
+								break;
+						}
+					}
+				}
+
+				if (TestSalta == true) {
+					// saltare del tutto il range attuale da tr4
+					i = i + VetAnimatedTextures[i] + 2;
+
+					IndiceRange++;
+				}
+			} while (TestSalta == true);
+			// come prima cosa calcolare se questo range
+			// e' relativo a uvscroll oppure a frame
+			// impostare indice preciso e TestScrolling
+			TestScrolling = false;
+			IndiceRangeNG = -1;
+			for (z = 0; z <= VetAnimatedTextures[i]; z++) {
+				IndiceTail = VetAnimatedTextures[z + i + 1];
+				IndiceTom = TailTr4ToTom(IndiceTail);
+
+				IndiceTom &= 0x3ff;
+
+				// ok, ora vedre se IndiceFull e' una d quelle
+				// di qualche range scroll
+				for (j = 0; j < pExtra->TotaleRangeNG; j++) {
+					if (IndiceTom >= pExtra->VetFromTex[j] && IndiceTom <= pExtra->VetToTex[j]) {
+						// trovato range di appartenenza
+						if (j >= pExtra->Tot_UV_Rotate)
+							TestScrolling = false;
+						else
+							TestScrolling = true;
+
+						IndiceRangeNG = j;
+						break;
+					}
+				}
+				if (IndiceRangeNG != -1)
+					break;
+			}
+
+			if (IndiceRangeNG == -1) {
+				if (MyGlobPrivate.TestNG_NoTr4 == false) {
+					sprintf_s(BufferLog, "ERROR: cann't locate ng frame range for texture of %dth anim range of tr4 file", IndiceRange);
+					InviaLog(BufferLog);
+				}
+				// imposta valori generici per agire come animaione frame
+				TestScrolling = false;
+				IndiceRangeNG = -1;
+			}
+
+			NumTex = VetAnimatedTextures[i++];
+
+			if (TestScrolling == true) {
+				if (IndiceRangeNG != -1) {
+					WordSettings = pExtra->VetInfoRangeAnim[IndiceRangeNG];
+				} else {
+					WordSettings = 0;
+				}
+				// e' un range di tipo UV: impostare tutto
+				pMyRotate = &GlobTomb4.BaseAnimTr4.VetUVRanges[GlobTomb4.BaseAnimTr4.TotUvRanges];
+
+				TotParziali = 0;
+				TrianglesAmount = 0;
+				TotTrasparenti = 0;
+				TotSpeculari = 0;
+				pMyRotate->IndiceRangeNG = IndiceRangeNG;
+				SizeTex_Y = 0;
+
+				for (j = 0; j <= NumTex; j++) {
+					IndiceTail = VetAnimatedTextures[i++];
+					pTex = &GlobTomb4.pAdr->VetTexInfo[IndiceTail];
+
+					// copiare TopY  per conoscere origine y (lasciare float)
+					pMyRotate->VetOrgY[j] = pTex->TopLeft[1];
+					pMyRotate->VetTailIndex[j] = (WORD) IndiceTail;
+
+					// ora bisogna scoprire l'altezza originale della texture
+					TopLeft.x = FloatCord2Int(pTex->TopLeft[0]);
+					TopLeft.y = FloatCord2Int(pTex->TopLeft[1]);
+
+					TopRight.x = FloatCord2Int(pTex->TopRight[0]);
+					TopRight.y = FloatCord2Int(pTex->TopRight[1]);
+
+					BottomRight.x = FloatCord2Int(pTex->BottomRight[0]);
+					BottomRight.y = FloatCord2Int(pTex->BottomRight[1]);
+
+					BottomLeft.x = FloatCord2Int(pTex->BottomLeft[0]);
+					BottomLeft.y = FloatCord2Int(pTex->BottomLeft[1]);
+
+					SizeTex_Y = BottomRight.y - TopRight.y + 1;
+
+					// adesso cercare texture associate:
+					// come frammenti,come triangoli o come trasparenti
+
+					// ora cercare in texparziali per
+					// vedere se ci sono frammenti per questa texture
+					IndiceTom = TailTr4ToTom(IndiceTail);
+					if (IndiceTom != -1) {
+						//ok, ora cercare se ci sono tex parziali
+						// per questa indice tail
+						for (z = 0; z < GlobTomb4.BaseTexParziali.TotRecords; z++) {
+							if (GlobTomb4.BaseTexParziali.VetParziali[z].IndiceFull == IndiceTom) {
+								// trovato, salvarlo
+								VetParziali[TotParziali++] = (WORD) z;
+							}
+						}
+					}
+
+					// ora cercare se ci sono triangoli o trasparenti o speculari
+					 // che corrispondo a indicetail attuale
+					for (z = 0; z < GlobTomb4.BaseRemapTail.TotTails; z++) {
+						TestGiaFatto = false;
+						if (GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom & REMAP_TRIANGOLO) {
+							// trovato un triangolo
+							// ora se l'indice tr4 corrispondnte
+							// e' la IndiceTail attuale, allora
+							// salvare questo indice
+							IndiceTom = GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom;
+							if (TailTomToTr4(IndiceTom & (MAX_TAIL_INFOS - 1)) == IndiceTail) {
+
+								VetTriangoli[TrianglesAmount++] = (WORD) z;
+								TestGiaFatto = true;
+							}
+						}
+
+						if (TestGiaFatto == false) {
+
+							if (GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom & REMAP_TRASPARENTE) {
+								// vedere se corrisponde a indicetail attuale
+								IndiceTom = GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom;
+
+								if (TailTomToTr4(IndiceTom & 0x3ff) == IndiceTail) {
+									TestGiaFatto = true;
+									VetTrasparenti[TotTrasparenti++] = GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTr4;
+								}
+							}
+						}
+
+						if (TestGiaFatto == false) {
+							// vedere se e' una tex speculare
+							if (GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom & REMAP_SPECULARE) {
+								// vedere se corrisponde a indicetail attuale
+								IndiceTom = GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTom;
+
+								if (TailTomToTr4(IndiceTom & 0x3ff) == IndiceTail) {
+									VetSpeculari[TotSpeculari++] = GlobTomb4.BaseRemapTail.VetRemapTail[z].IndiceTr4;
+								}
+							}
+						}
+
+					}
+
+				}
+
+				// ora impostare valori diversi a seconda
+				// se il tipo di animazione e' half-scroll o full-scroll
+				if (GlobTomb4.TexAnimate.TestPresente == false) {
+					// se non c'e' l'header considerare tutte le impostazioni
+					// come quelle standard
+					SettingUvRotate = *pScript_UV_Rotate;
+					SettingDelay = 0;
+					SettingTipoAnim = FAN_HALF_ROTATE;
+				} else {
+
+					TempWord = WordSettings & FAN_MASK_FPS_UV;
+					TempWord = TempWord >> 8;
+					if (TempWord) {
+						TempWord = 1000 / TempWord;
+					}
+					// se pero' questo range e' di tipo river
+					// allora mettere sempre valore massimo ossia ritardo 0
+
+					if ((WordSettings & FAN_MASK_ANIM) == FAN_RIVER_ROTATE)
+						TempWord = 0;
+					SettingDelay = TempWord;
+
+					SettingTipoAnim = WordSettings & FAN_MASK_ANIM;
+					// calcolo uvrotate
+					TempWord = WordSettings & FAN_MASK_UVROTATE;
+					SettingUvRotate = (char) TempWord;
+					if (SettingUvRotate == 0) {
+						// richiesta di uvrotate di script ,ossia default
+						SettingUvRotate = *pScript_UV_Rotate;
+						SettingTipoAnim |= 1;  // segnala uso default
+					}
+				}
+
+				// ora inizializzare valori globali per tutto questo range
+				pMyRotate->TestStop = false;
+				pMyRotate->LastTime = 0;
+				pMyRotate->DelayTime = SettingDelay;
+				pMyRotate->ScrollPos = 0;
+				pMyRotate->TestTriangolo = false;
+				// vedere se vanno aggiunte altre texture
+				// attenzione: (molto complicato)
+				// se questa tex trasparenti e' relativa
+				// ad animazione river, inserire in nuovi range
+				// scroll queste texture
+				n = NumTex + 1;
+				if (TotTrasparenti) {
+
+					if (IndiceRangeNG == -1 || (pExtra->VetInfoRangeAnim[IndiceRangeNG] & FAN_RIVER_ROTATE) != FAN_RIVER_ROTATE) {
+
+						// e' normale range trasparente: aggiungere
+						// solo le texture al range gia' presente
+
+						for (z = 0; z < TotTrasparenti; z++) {
+							IndiceTail = VetTrasparenti[z];
+							pMyRotate->VetOrgY[n] = GlobTomb4.pAdr->VetTexInfo[IndiceTail].TopLeft[1];
+							pMyRotate->VetTailIndex[n] = (WORD) IndiceTail;
+							n++;
+						}
+					}
+				}
+				// vedere se ci sono speculari
+				for (z = 0; z < TotSpeculari; z++) {
+					IndiceTail = VetSpeculari[z];
+					pMyRotate->VetOrgY[n] = GlobTomb4.pAdr->VetTexInfo[IndiceTail].TopLeft[1];
+					pMyRotate->VetTailIndex[n] = (WORD) IndiceTail;
+					n++;
+				}
+				pMyRotate->TotTextures = n;
+				pMyRotate->UvRotate = SettingUvRotate;
+				pMyRotate->TipoAnim = SettingTipoAnim;
+
+				// mezza rotazione. considerare spostamento di mezza tex
+				SizeTex_Y /= 2;
+
+				pMyRotate->Height = IntCord2Float(SizeTex_Y);
+				pMyRotate->Maschera = SizeTex_Y - 1;
+				// aumnentare numero di record range
+				GlobTomb4.BaseAnimTr4.TotUvRanges++;
+
+				// ora aggiungere tutti gli eventuali range
+				// necessari per tex parziali
+
+				for (z = 0; z < TotParziali; z++) {
+					j = VetParziali[z];
+					pParziale = &GlobTomb4.BaseTexParziali.VetParziali[j];
+
+					IndiceFull = TailTomToTr4(pParziale->IndiceFull);
+					IndiceParziale = TailTomToTr4(pParziale->IndiceFrammento);
+					OffX = IntCord2Float(pParziale->OffX);
+					OffY = IntCord2Float(pParziale->OffY);
+
+					pMyNewRotate = &GlobTomb4.BaseAnimTr4.VetUVRanges[GlobTomb4.BaseAnimTr4.TotUvRanges];
+
+					pMyNewRotate->IndiceRangeNG = IndiceRangeNG;
+
+					// per adesso copiare quasi tutti i dati
+					pTex = &GlobTomb4.pAdr->VetTexInfo[IndiceParziale];
+					pTexFull = &GlobTomb4.pAdr->VetTexInfo[IndiceFull];
+					// copiare TopY  per conoscere origine y (lasciare float)
+					pMyNewRotate->TotTextures = 1;
+					pMyNewRotate->VetOrgY[0] = pTexFull->TopLeft[1];
+					pMyNewRotate->VetTailIndex[0] = (WORD) IndiceParziale;
+
+					// ora bisogna scoprire l'altezza originale della texture
+					TopLeft.x = FloatCord2Int(pTex->TopLeft[0]);
+					TopLeft.y = FloatCord2Int(pTex->TopLeft[1]);
+
+					TopRight.x = FloatCord2Int(pTex->TopRight[0]);
+					TopRight.y = FloatCord2Int(pTex->TopRight[1]);
+
+					BottomRight.x = FloatCord2Int(pTex->BottomRight[0]);
+					BottomRight.y = FloatCord2Int(pTex->BottomRight[1]);
+
+					BottomLeft.x = FloatCord2Int(pTex->BottomLeft[0]);
+					BottomLeft.y = FloatCord2Int(pTex->BottomLeft[1]);
+
+					SizeTex_X = TopRight.x - TopLeft.x + 1;
+					SizeTex_Y = BottomRight.y - TopRight.y + 1;
+
+					FSizeX = IntCord2Float(SizeTex_X - 1);
+					FSizeY = IntCord2Float(SizeTex_Y - 1);
+					// bisogna alterare direttamente i valori
+					// della tail info parziale in modo da farla puntare
+					// sopra a texture full
+
+					pTex->Tail = pTexFull->Tail;
+					pTex->TopLeft[0] = pTexFull->TopLeft[0] + OffX;
+					pTex->TopLeft[1] = pTexFull->TopLeft[1] + OffY;
+
+					OrgX = pTex->TopLeft[0];
+					OrgY = pTex->TopLeft[1];
+
+					pTex->TopRight[0] = OrgX + FSizeX;
+					pTex->TopRight[1] = OrgY;
+
+					pTex->BottomRight[0] = OrgX + FSizeX;
+					pTex->BottomRight[1] = OrgY + FSizeY;
+
+					pTex->BottomLeft[0] = OrgX;
+					pTex->BottomLeft[1] = OrgY + FSizeY;
+					// ora inizializzare valori globali per tutto questo range
+					pMyNewRotate->TestStop = false;
+					pMyNewRotate->LastTime = 0;
+					pMyNewRotate->DelayTime = SettingDelay;
+
+					if ((SettingTipoAnim & FAN_MASK_ANIM) == FAN_HALF_ROTATE)
+						OffY = 0;
+
+					pMyNewRotate->ScrollPos = FloatCord2Int(OffY);
+
+					pMyNewRotate->UvRotate = SettingUvRotate;
+					pMyNewRotate->TipoAnim = SettingTipoAnim;
+
+					// per frammenti scroll considerare l'altezza
+					// effettiva del frammento
+					// mentre per la maschera di scorrimento
+					// usare la dimensione della dimensione di default
+					// diminuire la dimensione y solo e anche il tipo
+					// di scorrimento e' halfrotate
+					if ((SettingTipoAnim & FAN_MASK_ANIM) == FAN_HALF_ROTATE)
+						SizeTex_Y /= 2;
+
+					pMyNewRotate->Height = IntCord2Float(SizeTex_Y);
+
+					if ((SettingTipoAnim & FAN_MASK_ANIM) == FAN_HALF_ROTATE) {
+						j = SizeTex_Y;
+						j /= 2;
+					} else {
+						// scorrimento full
+						j = pExtra->SizeDefault;
+					}
+
+					pMyNewRotate->Maschera = j - 1;
+					// aumnentare numero di record range
+					GlobTomb4.BaseAnimTr4.TotUvRanges++;
+				}
+
+				// analisi per ricercare triangoli sovrapposti
+				// alle texture full di questo range
+				for (z = 0; z < TrianglesAmount; z++) {
+					Indice = VetTriangoli[z];
+					IndiceTom = GlobTomb4.BaseRemapTail.VetRemapTail[Indice].IndiceTom;
+					IndiceTom &= 0x3ff;
+					IndiceFull = TailTomToTr4(IndiceTom);
+					IndiceParziale = GlobTomb4.BaseRemapTail.VetRemapTail[Indice].IndiceTr4;
+					if (IndiceFull == -1) {
+						// errore
+						break;
+					}
+					pMyNewRotate = &GlobTomb4.BaseAnimTr4.VetUVRanges[GlobTomb4.BaseAnimTr4.TotUvRanges];
+
+					pTex = &GlobTomb4.pAdr->VetTexInfo[IndiceParziale];
+					pMyNewRotate->IndiceRangeNG = IndiceRangeNG;
+
+					pTexFull = &GlobTomb4.pAdr->VetTexInfo[IndiceFull];
+					// ora bisogna trovare il valore cordy massimo
+					// e minimo tra i primi tre campi
+					// si, ma forse mi serve solo per la l'altezza
+					IndiceVerticeTop = 1;
+					AltoY = 2;
+					BassoY = -1;
+					pVetVertici = &pTex->VetVertici[0];
+					for (j = 1; j < 6; j += 2) {
+						// se questo range e' di tipo full scroll
+						// diminuire dellameta' tutte le cordy
+						pVetVertici[j] /= 2;
+
+						if (pVetVertici[j] < AltoY) {
+							IndiceVerticeTop = j;
+							AltoY = pVetVertici[j];
+						}
+						if (pVetVertici[j] > BassoY) {
+							BassoY = pVetVertici[j];
+						}
+					}
+
+					pMyNewRotate->TestTriangolo = true;
+					pMyNewRotate->IndiceVerticeTop = IndiceVerticeTop;
+					pMyNewRotate->Maschera = pExtra->SizeDefault - 1;
+					pMyNewRotate->TotTextures = 1;
+					pMyNewRotate->VetOrgY[0] = pTexFull->TopLeft[1];
+					AltoY -= pMyNewRotate->VetOrgY[0];
+					pMyNewRotate->ScrollPos = FloatCord2Int(AltoY);
+					pMyNewRotate->VetTailIndex[0] = (WORD) IndiceParziale;
+
+					pMyNewRotate->TestStop = false;
+					pMyNewRotate->LastTime = 0;
+					pMyNewRotate->DelayTime = SettingDelay;
+
+					pMyNewRotate->UvRotate = SettingUvRotate;
+					pMyNewRotate->TipoAnim = SettingTipoAnim;
+
+					// aumnentare numero di record range
+					GlobTomb4.BaseAnimTr4.TotUvRanges++;
+
+				}
+
+			} else {
+				// e' un range Frame con dati in IndiceRangeNg
+
+				pMyFrame = &pAnimTr4->VetFrameRanges[pAnimTr4->TotFrameRanges];
+				pMyFrame->IndiceRangeNG = IndiceRangeNG;
+				pMyFrame->IndiceScrollRiver = -1;
+
+				for (j = 0; j <= NumTex; j++) {
+					IndiceTail = VetAnimatedTextures[i++];
+					// scoprire a che indice range originale
+					// corrisponde il range attuale
+
+					// copiare TopY  per conoscere origine y (lasciare float)
+					pMyFrame->VetTailIndex[j] = (WORD) IndiceTail;
+					pMyFrame->VetChangedPos[j] = (WORD) j;
+					pMyFrame->VetTexInfoRecords[j] = GlobTomb4.pAdr->VetTexInfo[IndiceTail];
+
+				}
+				pMyFrame->TotTextures = NumTex + 1;
+
+				if (IndiceRangeNG != -1) {
+					WordSettings = pExtra->VetInfoRangeAnim[IndiceRangeNG];
+				} else {
+					WordSettings = 0;
+				}
+				if (GlobTomb4.TexAnimate.TestPresente == true) {
+
+					SettingDelay = WordSettings;
+				} else
+					SettingDelay = 0;
+
+				pMyFrame->TipoAnim = SettingDelay & FAN_MASK_ANIM;
+				pMyFrame->FrameToSet = 0;
+				pMyFrame->LastTime = 0;
+				pMyFrame->IndiceToSet = 0;
+
+				if (pMyFrame->TipoAnim == FAN_P_FRAMES)
+					pMyFrame->TestStop = true;
+				else
+					pMyFrame->TestStop = false;
+
+				pMyFrame->DelayTime = SettingDelay & 0x3fff;
+				GlobTomb4.BaseAnimTr4.TotFrameRanges++;
+			}
+
+		}
+
+		// aggiungere eventuali range frame per animazione di tipo river
+		for (i = 0; i < TotRiverRange; i++) {
+			// creare un nuvoo range ng
+
+			pExtra->VetInfoRangeAnim[pExtra->TotaleRangeNG] = VetRiverRange[i].SettingFps;
+
+			pExtra->TotaleRangeNG++;
+			IndiceRangeNG = VetRiverRange[i].IndiceRangeNG;
+
+			pMyFrame = &pAnimTr4->VetFrameRanges[pAnimTr4->TotFrameRanges];
+			pMyFrame->IndiceRangeNG = IndiceRangeNG;
+
+			pAnimTr4->TotFrameRanges++;
+
+			// ora inserire i dati
+			for (j = 0; j < VetRiverRange[i].TotTexture; j++) {
+				IndiceTail = VetRiverRange[i].VetIndiciTail[j];
+				pMyFrame->VetTailIndex[j] = (WORD) IndiceTail;
+
+				pMyFrame->VetTexInfoRecords[j] = GlobTomb4.pAdr->VetTexInfo[IndiceTail];
+			}
+			pMyFrame->DelayTime = VetRiverRange[i].SettingFps;
+			pMyFrame->TestStop = false;
+			pMyFrame->TipoAnim = FAN_FRAMES;
+			pMyFrame->TotTextures = VetRiverRange[i].TotTexture;
+			pMyFrame->IndiceScrollRiver = GlobTomb4.BaseAnimTr4.TotUvRanges;
+
+			// ---- ora creare range scrolling con stesse texture ----
+
+			pMyRotate = &GlobTomb4.BaseAnimTr4.VetUVRanges[GlobTomb4.BaseAnimTr4.TotUvRanges];
+			GlobTomb4.BaseAnimTr4.TotUvRanges++;
+			pMyRotate->IndiceRangeNG = IndiceRangeNG;
+
+			pMyRotate->TotTextures = VetRiverRange[i].TotTexture;
+			for (j = 0; j < VetRiverRange[i].TotTexture; j++) {
+
+				IndiceTail = VetRiverRange[i].VetIndiciTail[j];
+				pMyRotate->VetTailIndex[j] = (WORD) IndiceTail;
+				pMyRotate->VetOrgY[j] = GlobTomb4.pAdr->VetTexInfo[IndiceTail].TopLeft[1];
+			}
+			IndiceTail = pMyRotate->VetTailIndex[0];
+
+			pTex = &GlobTomb4.pAdr->VetTexInfo[IndiceTail];
+			TopRight.y = FloatCord2Int(pTex->TopRight[1]);
+			BottomRight.y = FloatCord2Int(pTex->BottomRight[1]);
+			SizeTex_Y = BottomRight.y - TopRight.y + 1;
+			if (IndiceRangeNG != -1) {
+				WordSettings = pExtra->VetInfoRangeAnim[IndiceRangeNG];
+			} else {
+				WordSettings = 0;
+			}
+			// calcolo uvrotate
+			TempWord = WordSettings & FAN_MASK_UVROTATE;
+			SettingUvRotate = (char) TempWord;
+			if (SettingUvRotate == 0) {
+				// richiesta di uvrotate di script ,ossia default
+				SettingUvRotate = *pScript_UV_Rotate;
+				SettingTipoAnim |= 1;  // segnala uso default
+			}
+			SizeTex_Y /= 2;
+
+			pMyRotate->Height = IntCord2Float(SizeTex_Y);
+			pMyRotate->Maschera = SizeTex_Y - 1;
+			pMyRotate->UvRotate = SettingUvRotate;
+			pMyRotate->TipoAnim = SettingTipoAnim;
+
+			pMyRotate->TestStop = false;
+			pMyRotate->LastTime = 0;
+			pMyRotate->DelayTime = 0;
+
+			pMyRotate->ScrollPos = 0;
+			pMyRotate->TestTriangolo = false;
+
+		}
+	}
+
+	// aggiunge flag in campo IndiceTom per texture particolare in
+	// apparenza duplicate rispetto al sorgente ngle
+	void CorreggiRemapTail(void)
+	{
+		StrBaseRemapTailInfo *pRemap;
+		int i;
+		int IndiceTr4;
+		StrTexInfoTr4 *pTex;
+
+		pRemap = &GlobTomb4.BaseRemapTail;
+
+		for (i = 0; i < pRemap->TotTails; i++) {
+			IndiceTr4 = pRemap->VetRemapTail[i].IndiceTr4;
+			pTex = &GlobTomb4.pAdr->VetTexInfo[IndiceTr4];
+
+			if (pTex->Attribute & 0x002) {
+				// texture trasparente (credo)
+				// aggiungere flag 0x2000 a indice tom
+				// e se invece il flag 2 fosse solo pe rdoppia faccia?
+				pRemap->VetRemapTail[i].IndiceTom |= REMAP_TRASPARENTE;
+			}
+			if (pTex->Flags & 0x0001) {
+				// texture speculare
+				pRemap->VetRemapTail[i].IndiceTom |= REMAP_SPECULARE;
+			}
+
+		}
+	}
+
+	// usando vettore remap trova indicetom corrispondente
+	// indice tail tr4
+	// se non la trova restituisce -1
+
+	int TailTr4ToTom(int IndiceTr4)
+	{
+		int i;
+
+		for (i = 0; i < GlobTomb4.BaseRemapTail.TotTails; i++) {
+			if (GlobTomb4.BaseRemapTail.VetRemapTail[i].IndiceTr4 == IndiceTr4) {
+				return GlobTomb4.BaseRemapTail.VetRemapTail[i].IndiceTom;
+			}
+		}
+		return -1;
+	}
+
+	int TailTomToTr4(int IndiceTom)
+	{
+		int i;
+
+		for (i = 0; i < GlobTomb4.BaseRemapTail.TotTails; i++) {
+			if (GlobTomb4.BaseRemapTail.VetRemapTail[i].IndiceTom == IndiceTom)
+				return GlobTomb4.BaseRemapTail.VetRemapTail[i].IndiceTr4;
+		}
+		return -1;
+	}
+
+	// chiamata un attimo prima di creare thread per load level
+	void AllocaImgLoadingLevel(void)
+	{
+		StrShowImage *pBase;
+		StrBaseImgBackGround *pBack;
+		BLENDFUNCTION Blend;
+
+		sprintf_s(BufferLog, "AllocaImgLoadingLevel(): CurrentLevel=%d  NextLevel=%d", *GlobTomb4.pAdr->pLevelNow, *GlobTomb4.pAdr->pLevelNext);
+		InviaLog(BufferLog);
+
+		if (GlobTomb4.TestFirstLoadTitle == true) {
+			InviaLog("Skip AllocaImgLoadingLevel()");
+			return;
+		}
+
+		pBase = &GlobTomb4.BaseImages;
+		pBack = &GlobTomb4.BaseImgLoadingLevel;
+
+		if (pBack->Flags & BKGDF_MINIMAL_LOADING_TIME) {
+			StartLoadingTime = (DWORD) GetTickCount64();
+		}
+
+		// ora allocare hdc tomb solo per copiare immagine originale in hdctemp
+
+		if (AllocaHdcTomb(pBase, true, false) == false) {
+
+			pBack->TestEnabled = false;
+			return;
+		}
+
+		if ((pBack->Flags & BKGDF_KEEP_GAME_SCREEN) == 0) {
+
+			if (AllocaImmagine(pBack->ImageNumber, &pBase->ImageLoadLevel, -1, -1) == false) {
+				pBack->TestEnabled = false;
+				LiberaHdcTomb(pBase, false);
+				return;
+			}
+
+			// ok, adesso in temp.hdc  c'e' la copia dell'immafgine di tomb raider originale
+			// adesso copiare in questo temp con trasparenza l'immagine di monoscreen
+			SetStretchBltMode(pBase->Temp.MemHdc, COLORONCOLOR);
+
+			if (pBack->TestTransparent) {
+				TransparentBlt(pBase->Temp.MemHdc, 0, 0, pBase->Temp.SizeX, pBase->Temp.SizeY, pBase->ImageLoadLevel.MemHdc, 0, 0, pBase->ImageLoadLevel.SizeX, pBase->ImageLoadLevel.SizeY, 0xff00ff);
+			} else {
+
+				StretchBlt(pBase->Temp.MemHdc, 0, 0, pBase->Temp.SizeX, pBase->Temp.SizeY, pBase->ImageLoadLevel.MemHdc, 0, 0, pBase->ImageLoadLevel.SizeX, pBase->ImageLoadLevel.SizeY, SRCCOPY);
+			}
+
+			// ora si puo' rilasciare anche l'immagine monoscreen
+			LiberaImmagine(&pBase->ImageLoadLevel);
+
+		} else {
+			if (pBack->Flags & BKGDF_SEMI_TRANSPARENT) {
+				// allocare immagine e copiarla con effetto trasparenza su quella temp
+				if (AllocaImmagine(pBack->ImageNumber, &pBase->ImageLoadLevel, -1, -1) == false) {
+					InviaLog("ERROR: Failed loading image for BKGDT_LOADING_LEVEL of CUST_BACKGROUND command");
+
+					return;
+				}
+				Blend.AlphaFormat = 0; // 1= valore di AC_SRC_ALPHA;
+				Blend.BlendFlags = 0;
+				Blend.BlendOp = AC_SRC_OVER;
+				Blend.SourceConstantAlpha = (BYTE) pBack->Parameter;  // livello trasparenza 0=trasparenza / 255=opaco
+
+				AlphaBlend(pBase->Temp.MemHdc, 0, 0, pBase->Temp.SizeX, pBase->Temp.SizeY, pBase->ImageLoadLevel.MemHdc, 0, 0, pBase->ImageLoadLevel.SizeX, pBase->ImageLoadLevel.SizeY, Blend);
+				LiberaImmagine(&pBase->ImageLoadLevel);
+			}
+		}
+
+		pBack->TestAllocatedImage = true;
+		InviaLog("Set in ImageLoadLevel data from TempImage");
+		// ma adesso copiare i dati da temp a imageloadlevel
+		pBase->ImageLoadLevel = pBase->Temp;
+
+		// adesso segnalare immgine temp come se fosse stata liberata
+		pBase->Temp.TestUsata = false;
+		pBase->Temp.TestPreload = false;
+		pBase->Temp.hBitMap = NULL;
+		pBase->Temp.MemHdc = NULL;
+		// ora rilasciare hdctomb ma mantenere l'hdc temp
+		LiberaHdcTomb(pBase, false);
+
+		// aggiunta: provare a visualizzare subito l'immagine:
+		RefreshImgLoadingLevel();
+	}
+
+	void RefreshImgLoadingLevel(void)
+	{
+		StrShowImage *pBase;
+		StrBaseImgBackGround *pBack;
+		DWORD ErrorCode;
+
+		pBack = &GlobTomb4.BaseImgLoadingLevel;
+		pBase = &GlobTomb4.BaseImages;
+
+		if (pBack->TestAllocatedImage == false) {
+			if (GlobTomb4.TestFirstLoadTitle == false) {
+				InviaLog("WARNING: Image for loading level has not been allocated");
+			}
+			return;
+		}
+
+		AllocaHdcTomb(pBase, false, true);
+
+		if (pBase->HdcTomb == NULL)
+			return;
+
+		// ora trasferire l'intero hdc temp
+		if (BitBlt(pBase->HdcTomb, 0, 0, pBase->ZonaSchermoTomb.right, pBase->ZonaSchermoTomb.bottom, pBase->ImageLoadLevel.MemHdc, 0, 0, SRCCOPY) == FALSE) {
+			ErrorCode = GetLastError();
+
+			sprintf_s(BufferLog, "BitBlt() error in RefreshLoadingLevel(): 0x%X", ErrorCode);
+			InviaLog(BufferLog);
+		}
+
+		LiberaHdcTomb(pBase, true);
+
+		pBase->TestHdcBack = false;
+	}
+
+	// verifica se stanza RoomSorgente corrisponde ad una delle stanze
+	// di fronte a mirror
+	// se lo e' restituisce inserisce in
+	// GlobTomb4.BaseMirror.pRecNow il puntatore al record attuale
+	// effettua la ricerca a partire da IndiceStart
+	// e poi salva l'indice trovfato in GlobTomb4.BaseMirror.IndiceNow
+	void CercaRecordMirror(WORD RoomSorgente, int IndiceStart)
+	{
+		int TotMirror;
+		RecordMirror *pRec;
+		int i;
+
+		GlobTomb4.BaseMirror.pRecNow = NULL;
+		GlobTomb4.BaseMirror.IndiceNow = -100;
+
+		if (IndiceStart < 0)
+			return;
+
+		TotMirror = GlobTomb4.BaseMirror.TotMirror;
+
+		if (TotMirror == 0)
+			return;
+		pRec = &GlobTomb4.BaseMirror.VetMirror[IndiceStart];
+
+		for (i = IndiceStart; i < TotMirror; i++) {
+			if (pRec->MirrorRoom == RoomSorgente && pRec->TestAttivo) {
+				GlobTomb4.BaseMirror.IndiceNow = i;
+				GlobTomb4.BaseMirror.pRecNow = pRec;
+				GlobTomb4.BaseMirror.MirrorType = pRec->MirrorType;
+				return;
+			}
+			pRec++;
+		}
+	}
+
+	// riceve in input la coordinata del rollingbal
+	// il tasto action e' premuto e lara e' ferma e non ha niente in mano
+	// insomma tutto e' a posto, ora bisogna vedere se lara e' allineata
+	// e distante nel modo giusto
+	// se e' tutto ok imposta animazione di spinta e restituisce true
+	// se non puo' resitutisce false
+	bool ControllaSpintaRollingBall(StrItemTr4 *pItem, short IndiceRolling)
+	{
+		WORD OrientAlign;
+		int Differenza;
+		int IndiceAzione;
+		StrProgressiveAction *pAzione;
+		WORD FlagsEnv;
+		int Distanza;
+		int IncX, IncZ;
+		int Speed;
+		DWORD CordX, CordZ;
+		int CordY;
+		int RollY;
+		int DiffX, DiffY, DiffZ;
+		int FirstX, FirstZ;
+
+		FlagsEnv = ENV_POS_HORTOGONAL | ENV_POS_STRIP_1;
+
+		if (ControllaENVFlags(FlagsEnv)	== false)
+			return false;
+
+		Distanza = GlobTomb4.pBaseCustomize->RollingBallPush.Distance;
+
+		CalcolaIncremento(GlobTomb4.pAdr->pLara->OrientationH, &IncX, &IncZ, Distanza);
+
+		CordX = GlobTomb4.pAdr->pLara->CordX;
+		CordY = GlobTomb4.pAdr->pLara->CordY;
+		CordZ = GlobTomb4.pAdr->pLara->CordZ;
+
+		CordX += IncX;
+		CordZ += IncZ;
+		RollY = pItem->CordY + 0x200;
+
+		// ora controllo per coordinate
+		DiffX = abs((int)(CordX - pItem->CordX));
+		DiffY = abs(CordY - RollY);
+		DiffZ = abs((int)(CordZ - pItem->CordZ));
+
+		if (DiffX > 128 || DiffY > 512 || DiffZ > 128)
+			return false;
+
+		// salvare indice di rolling ball con cui lara sta interagendo
+		GlobTomb4.ItemIndexUsedByLara = IndiceRolling;
+
+		// adesso sembra tutto giusto
+		// bisogna impostare animazione per lara e anche l'azione progressiva
+		// ma prima vedere se c'e' spazio oltre il rollingball attuale
+		if (TrovaOggettoDavanti(pItem, GlobTomb4.pAdr->pLara->OrientationH, 1024) == true) {
+			// c'e' qualche moveable che impedisce
+
+			EseguiAnimazione(GlobTomb4.pBaseCustomize->RollingBallPush.AnimFallito, 0, false);
+			return false;
+		}
+
+		EseguiAnimazione(GlobTomb4.pBaseCustomize->RollingBallPush.Animation, 0, true);
+		OrientAlign = GetAlignedOrient(GlobTomb4.pAdr->pLara->OrientationH, true, &Differenza);
+		IncX = 0;
+		IncZ = 0;
+		FirstX = 0;
+		FirstZ = 0;
+		Speed = GlobTomb4.pBaseCustomize->RollingBallPush.SpeedPushing;
+
+		switch (OrientAlign) {
+		case 0:
+			// verso est
+			IncZ = Speed;
+			FirstZ = 256;
+			break;
+		case 0x4000:
+			// verso sud
+			IncX = Speed;
+			FirstX = 256;
+			break;
+		case 0x8000:
+			// verso ovest
+			IncZ = -Speed;
+			FirstZ = -256;
+			break;
+		case 0xC000:
+			// verso nord
+			IncX = -Speed;
+			FirstX = -256;
+			break;
+		}
+		// creare azione progressiva in modo da far partire
+		// rollingball solo nel momento giusto
+
+		IndiceAzione = CreaNuovaAzioneProgressiva();
+		pAzione = &GlobTomb4.VetProgressiveActions[IndiceAzione];
+		pAzione->ActionType = AZ_MOVE_ROLLINGBALL;
+		AggiungiItemMosso(IndiceRolling);
+		pAzione->ItemIndex = IndiceRolling;
+		pAzione->Arg1 = OrientAlign;
+		pAzione->Arg2 = GlobTomb4.pBaseCustomize->RollingBallPush.FrameInvulnerabile; // ritardo prima di ferire lara
+		pAzione->VetArg[0] = IncX;
+		pAzione->VetArg[1] = IncZ;
+		pAzione->VetArg[2] = FirstX;
+		pAzione->VetArg[3] = FirstZ;
+
+		return true;
+	}
+
+	// questa procedura conrolla se davanti (in direzione orient e con distanza)
+	// c'e' un oggetto moveable che crea collisione
+	bool TrovaOggettoDavanti(StrItemTr4 *pItem, short Orient, int Distanza)
+	{
+		DWORD CordX;
+		DWORD CordZ;
+		int IncX, IncZ;
+		int TotTrovati;
+		StrItemTr4 *VetTrovati[20];
+		bool TestEsito;
+		int i;
+
+		CalcolaIncremento(Orient, &IncX, &IncZ, Distanza);
+
+		CordX = pItem->CordX + IncX;
+		CordZ = pItem->CordZ + IncZ;
+
+		TotTrovati = TrovaOggettoInSettore(VetTrovati, CordX, pItem->CordY, CordZ, pItem->Room, 512);
+
+		TestEsito = false;
+		for (i = 0; i < TotTrovati; i++) {
+
+			if (VetTrovati[i] != pItem && VetTrovati[i]->SlotID != 0x96 && VetTrovati[i]->SlotID != 0x8a) {
+
+				TestEsito = true;
+				break;
+			}
+		}
+
+		return TestEsito;
+	}
+
+	// trova tutti gli oggetti piazzati nel settore che corrisponde
+	// a cordx cordz di stanza room
+	// inserisce i record in pVetFounds[] e restituisce il numero di oggetti
+	// trovati
+	int TrovaOggettoInSettore(StrItemTr4* pVetFounds[], DWORD CordX, int CordY, DWORD CordZ, short Room, int RangeY)
+	{
+		StrRoomTr4 *pRoom;
+		DWORD GridX, GridZ;
+		DWORD PosX, PosZ;
+		int IndiceNow;
+		int TotTrovati;
+		StrItemTr4 *pItem;
+		short NumeroRoom;
+
+		// prima localizzare stanza
+		NumeroRoom = Room;
+		tomb4::GetFloor(CordX, CordY, CordZ, &NumeroRoom);
+
+		GridX = CordX >> 10;
+		GridZ = CordZ >> 10;
+
+		TotTrovati = 0;
+
+		pRoom = &GlobTomb4.pAdr->pVetRooms[NumeroRoom];
+
+		// ora scandire gli oggetti in questa room
+		IndiceNow = pRoom->FirstItemIndex;
+		while (IndiceNow != -1) {
+			pItem = &GlobTomb4.pAdr->pVetItems[IndiceNow];
+
+			// vedere se e' nella coordinata giusta
+			// prima controllare gapy
+			if (abs(pItem->CordY - CordY) <= RangeY) {
+				PosX = pItem->CordX >> 10;
+				PosZ = pItem->CordZ >> 10;
+
+				if (PosX == GridX && PosZ == GridZ) {
+					pVetFounds[TotTrovati++] = pItem;
+				}
+			}
+			IndiceNow = pItem->ItemIndexNext;
+
+		}
+
+		return TotTrovati;
+	}
+
+	void CambiaTitoloSetup(HWND hDialogo)
+	{
+		char Buffer[256];
+
+		if (MexNewWindowTitle[0] == 0)
+			return;
+		sprintf_s(Buffer, " Setup - %s", MexNewWindowTitle);
+		SetWindowText(hDialogo, Buffer);
+	}
+
+	// chiamata una sola volta (INIT_DIALOG) quando si crea finestra setup
+	// inizializza i controlli della finestra setup ai valori effettivi del registro
+	void InitControlliSetup(HWND hWind)
+	{
+		static int *pSetting_DD = (int *) &tomb4::App.DXInfo.nDD;
+		static int *pSetting_D3D = (int *) &tomb4::App.DXInfo.nD3D;
+		static int *Setting_VMode = (int *) &tomb4::App.DXInfo.nDisplayMode;
+		static int *pSetting_TFormat = (int *) &tomb4::App.DXInfo.nTexture;
+		static int *pSetting_DS = (int *) &tomb4::App.DXInfo.nDS;
+		static BYTE *pSetting_BumpMap = (BYTE*) &tomb4::App.BumpMapping;
+		static BYTE *pSetting_Filter = (BYTE *) &tomb4::App.Filtering;
+		static BYTE *pSetting_Volumetric = (BYTE *) &tomb4::App.Volumetric;
+		static BYTE *pSetting_DisableSound = (BYTE*) &tomb4::App.SoundDisabled;
+		static BYTE *pSetting_NoFMV = (BYTE*) &tomb4::fmvs_disabled;
+		static int *pFlagsSettingRegistro = (int *) &tomb4::App.StartFlags;
+
+		DWORD ID_Now;
+		int *pSetting_TextLow;
+		int *pSetting_BumpLow;
+		bool TestForced;
+		HWND WindControl;
+
+		pSetting_TextLow = (int*) &tomb4::App.TextureSize;;
+		pSetting_BumpLow = (int*) &tomb4::App.BumpMapSize;
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_SETTING_DD);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_DD, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_SETTTING_D3D);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_D3D, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_VIDEO_MODE);
+		SelezionaComboValore(WindControl, *Setting_VMode);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_TIPO_TEX);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_TFormat, 0);
+
+		WindControl = GetDlgItem(hWind, ID_SETUP_COMBO_AUDIO_DEVICES);
+		SendMessage(WindControl, CB_SETCURSEL, (WPARAM) *pSetting_DS, 0);
+
+		if (*pSetting_DisableSound) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISATTIVA_AUDIO, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISATTIVA_AUDIO, BST_UNCHECKED);
+		}
+
+		if (*pSetting_Volumetric) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_VOLUMETRIC, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_VOLUMETRIC, BST_UNCHECKED);
+		}
+
+		if (*pSetting_Filter) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BILINEAR, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BILINEAR, BST_UNCHECKED);
+		}
+
+		if (*pSetting_BumpMap) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BUMP_MAP, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_BUMP_MAP, BST_UNCHECKED);
+		}
+
+		if (*pSetting_TextLow == 0x80) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_TEX, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_TEX, BST_UNCHECKED);
+		}
+
+		if (*pSetting_BumpLow == 0x80) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_BUMP, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_LOW_BUMP, BST_UNCHECKED);
+		}
+
+		if (*pSetting_NoFMV) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISABLE_FMV, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_DISABLE_FMV, BST_UNCHECKED);
+		}
+
+		if ((*pFlagsSettingRegistro & 0x90) == 0x90) {
+			CheckRadioButton(hWind, ID_SETUP_RADIO_HARDWARE, ID_SETUP_RADIO_SOFTWARE, ID_SETUP_RADIO_HARDWARE);
+		} else {
+			CheckRadioButton(hWind, ID_SETUP_RADIO_HARDWARE, ID_SETUP_RADIO_SOFTWARE, ID_SETUP_RADIO_SOFTWARE);
+		}
+
+		if (*pFlagsSettingRegistro & 0x02) {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_WINDOWED, BST_CHECKED);
+		} else {
+			CheckDlgButton(hWind, ID_SETUP_CHECK_WINDOWED, BST_UNCHECKED);
+		}
+
+		// se ci sono impostazioni di script forzare quei valori
+		TestForced = false;
+		if (GlobTomb4.Settings & SET_FORCE_SOFT_FULL_SCREEN) {
+			GlobTomb4.EmergencySettings = ES_SOFT_FULL_SCREEN;
+			TestForced = true;
+		} else {
+			if (GlobTomb4.Settings & SET_FORCE_NO_WAITING_REFRESH) {
+				GlobTomb4.EmergencySettings = ES_NO_WAITING_REFRESH;
+				TestForced = true;
+			}
+		}
+
+		switch (GlobTomb4.EmergencySettings) {
+		case ES_SOFT_FULL_SCREEN:
+			ID_Now = ID_SETUP_SOFT_FULL_SCREEN;
+			break;
+		case ES_NO_WAITING_REFRESH:
+			ID_Now = ID_SETUP_NO_WAITING_REFRESH;
+			break;
+		default:
+			ID_Now = ID_SETUP_DISABLED;
+			break;
+		}
+
+		CheckRadioButton(hWind, ID_SETUP_DISABLED, ID_SETUP_NO_WAITING_REFRESH, ID_Now);
+		// ora disattivarlo in modo che non possa essere modificato
+		if (TestForced) {
+			WindControl = GetDlgItem(hWind, ID_SETUP_DISABLED);
+			EnableWindow(WindControl, FALSE);
+
+			WindControl = GetDlgItem(hWind, ID_SETUP_SOFT_FULL_SCREEN);
+			EnableWindow(WindControl, FALSE);
+
+			WindControl = GetDlgItem(hWind, ID_SETUP_NO_WAITING_REFRESH);
+			EnableWindow(WindControl, FALSE);
+		}
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -5623,4 +6829,16 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100C61E2, (unsigned int)trng::ControllaTrapDoor, replace);
 	ProcessInject(0x100CB427, (unsigned int)trng::TrovaFrameArmaPesante, replace);
 	ProcessInject(0x100D34A1, (unsigned int)trng::StopSuScatto, replace);
+	ProcessInject(0x100B54EB, (unsigned int)trng::InitTextureAnimateTomb4, replace);
+	ProcessInject(0x100B4736, (unsigned int)trng::CorreggiRemapTail, replace);
+	ProcessInject(0x100B4B7B, (unsigned int)trng::TailTr4ToTom, replace);
+	ProcessInject(0x100B4BC9, (unsigned int)trng::TailTomToTr4, replace);
+	ProcessInject(0x100D20CA, (unsigned int)trng::AllocaImgLoadingLevel, replace);
+	ProcessInject(0x100D23B0, (unsigned int)trng::RefreshImgLoadingLevel, replace);
+	ProcessInject(0x100C0391, (unsigned int)trng::CercaRecordMirror, replace);
+	ProcessInject(0x100C5E64, (unsigned int)trng::ControllaSpintaRollingBall, replace);
+	ProcessInject(0x100C5CA6, (unsigned int)trng::TrovaOggettoDavanti, replace);
+	ProcessInject(0x100C5BBD, (unsigned int)trng::TrovaOggettoInSettore, replace);
+	ProcessInject(0x100D3B49, (unsigned int)trng::CambiaTitoloSetup, replace);
+	ProcessInject(0x100D09E1, (unsigned int)trng::InitControlliSetup, replace);
 }

@@ -13,7 +13,9 @@ namespace flep
 	}
 }
 
+// NOLINTBEGIN(clang-analyzer-core.FixedAddressDereference)
 void Inject_Quadbike(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C148, (unsigned int)flep::IsQuadBikeAssigned, replace);
 }
+// NOLINTEND(clang-analyzer-core.FixedAddressDereference)

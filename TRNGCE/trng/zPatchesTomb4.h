@@ -31,6 +31,9 @@ namespace trng {
 	extern char (&DatiMoveables)[0x7DE5];
 	extern int (&VetEnabledFlipMaps)[32];
 	extern int (&VetButtonFlipMaps)[32];
+	extern StrRoomTr4 *&pInsRecordRoom;
+	extern DWORD &StartLoadingTime;
+	extern HWND &WindSetup;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -128,6 +131,18 @@ namespace trng {
 	void ControllaTrapDoor(StrItemTr4 *pTrap);
 	int TrovaFrameArmaPesante(void);
 	void StopSuScatto(void);
+	void InitTextureAnimateTomb4(void);
+	void CorreggiRemapTail(void);
+	int TailTr4ToTom(int IndiceTr4);
+	int TailTomToTr4(int IndiceTom);
+	void AllocaImgLoadingLevel(void);
+	void RefreshImgLoadingLevel(void);
+	void CercaRecordMirror(WORD RoomSorgente, int IndiceStart);
+	bool ControllaSpintaRollingBall(StrItemTr4 *pItem, short IndiceRolling);
+	bool TrovaOggettoDavanti(StrItemTr4 *pItem, short Orient, int Distanza);
+	int TrovaOggettoInSettore(StrItemTr4* pVetFounds[], DWORD CordX, int CordY, DWORD CordZ, short Room, int RangeY);
+	void CambiaTitoloSetup(HWND hDialogo);
+	void InitControlliSetup(HWND hWind);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

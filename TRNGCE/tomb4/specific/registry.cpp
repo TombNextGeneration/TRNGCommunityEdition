@@ -28,6 +28,11 @@ namespace tomb4
 	{
 		REG_CloseKey();
 	}
+
+	bool LoadSettings()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Registry(bool replace)
@@ -35,4 +40,5 @@ void Inject_Registry(bool replace)
 	ProcessInject(0x483200, (unsigned int)tomb4::SaveSettings, false);
 	ProcessInject(0x482940, (unsigned int)tomb4::REG_CloseKey, replace);
 	ProcessInject(0x482AD0, (unsigned int)tomb4::CloseRegistry, replace);
+	ProcessInject(0x482AE0, (unsigned int)tomb4::LoadSettings, false);
 }

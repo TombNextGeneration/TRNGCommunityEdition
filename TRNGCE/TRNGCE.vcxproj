@@ -44,12 +44,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
+    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
+    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -160,6 +160,7 @@
     <ClInclude Include="tomb4\specific\3dmath.h" />
     <ClInclude Include="tomb4\specific\audio.h" />
     <ClInclude Include="tomb4\specific\cmdline.h" />
+    <ClInclude Include="tomb4\specific\d3dmatrix.h" />
     <ClInclude Include="tomb4\specific\drawroom.h" />
     <ClInclude Include="tomb4\specific\dxshell.h" />
     <ClInclude Include="tomb4\specific\file.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="tomb4\specific\3dmath.cpp" />
     <ClCompile Include="tomb4\specific\audio.cpp" />
     <ClCompile Include="tomb4\specific\cmdline.cpp" />
+    <ClCompile Include="tomb4\specific\d3dmatrix.cpp" />
     <ClCompile Include="tomb4\specific\drawroom.cpp" />
     <ClCompile Include="tomb4\specific\dxshell.cpp" />
     <ClCompile Include="tomb4\specific\file.cpp" />

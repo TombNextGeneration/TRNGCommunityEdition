@@ -28,6 +28,9 @@ namespace tomb4
 	void SetScreenFadeOut(short speed, short back);
 	long ExplodingDeath2(short item_number, long mesh_bits, short Flags);
 	LIGHTNING_STRUCT* TriggerLightning(PHD_VECTOR* s, PHD_VECTOR* d, char variation, long rgb, uchar flags, uchar size, uchar segments);
+	void LaraBubbles(ITEM_INFO* item);
+	void CreateBubble(PHD_3DPOS* pos, short room_number, long size, long biggest);
+	void DrawWeaponMissile(ITEM_INFO* item);
 }
 
 void Inject_Tomb4fx(bool replace);

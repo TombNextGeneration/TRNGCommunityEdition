@@ -18,8 +18,10 @@ namespace flep
 	}
 }
 
+// NOLINTBEGIN(clang-analyzer-core.FixedAddressDereference)
 void Inject_Sub(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C3D8, (unsigned int)flep::IsSubAssignedToItem, replace);
 	ProcessInject(*(unsigned int*)0x90C380, (unsigned int)flep::IsSubAssigned, replace);
 }
+// NOLINTEND(clang-analyzer-core.FixedAddressDereference)

@@ -2295,6 +2295,21 @@ namespace trng {
 	inline constexpr int FISH_BUBBLES = 6;
 	inline constexpr int FISH_ESCAPE_FROM_LARA = 7;
 
+	// flag per tabella di remap tail
+	inline constexpr int REMAP_FRAMMENTO = 0x400;
+	inline constexpr int REMAP_TRIANGOLO = 0x1000;
+	inline constexpr int REMAP_TRASPARENTE = 0x2000;
+	inline constexpr int REMAP_SPECULARE = 0x4000;
+
+	// costanti per ocb di rollingball
+	inline constexpr int RB_SILEN_MODE = 0x0001;
+	inline constexpr int RB_KILL_ENEMIES = 0x0002;
+	inline constexpr int RB_PUSHING_ACTIVATION = 0x0004;
+	inline constexpr int RB_PUSHING_MULTIPLE = 0x0008;
+	inline constexpr int RB_DESTROY_SHATTERS = 0x0010;
+	inline constexpr int RB_CHECK_WATER = 0x0020;
+	inline constexpr int RB_ENABLE_TRIGGERS = 0x0040;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -4177,11 +4192,16 @@ namespace trng {
 		WORD Attribute;			// 0
 		WORD Tail;				// 2
 		WORD Flags;				// 4
-		float TopLeft[2];		// 6
-		float TopRight[2];		// 0E
-		float BottomRight[2];	// 16
-		float BottomLeft[2];	// 1E
-								// 26
+		union {
+			struct {
+				float TopLeft[2];		// 6
+				float TopRight[2];		// 0E
+				float BottomRight[2];	// 16
+				float BottomLeft[2];	// 1E
+										// 26
+			};
+			float VetVertici[8];
+		};
 	};
 
 	struct StrAnimFrame {
@@ -6423,6 +6443,13 @@ namespace trng {
 
 	struct StrRettangolo {
 		StrMioPuntoInt VetVertici[4];
+	};
+
+	struct StrRiverRange {
+		int TotTexture;
+		WORD SettingFps;
+		int IndiceRangeNG;
+		WORD VetIndiciTail[50];
 	};
 #pragma pack(pop)
 }

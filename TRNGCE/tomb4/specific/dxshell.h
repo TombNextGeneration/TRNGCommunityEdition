@@ -16,6 +16,7 @@ namespace tomb4
 	long DXGetInfo(DXINFO* dxinfo, HWND hwnd);
 	BOOL __stdcall DXEnumDirectDraw(GUID FAR* lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext);
 	BOOL __stdcall DXEnumDirectSound(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+	HRESULT DXShowFrame();
 }
 
 void Inject_Dxshell(bool replace);

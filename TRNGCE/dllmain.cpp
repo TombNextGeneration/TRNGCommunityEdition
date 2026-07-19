@@ -76,6 +76,8 @@
 #include "tomb4/game/lara.h"
 #include "tomb4/game/switch.h"
 #include "tomb4/game/objlight.h"
+#include "tomb4/specific/d3dmatrix.h"
+#include "tomb4/specific/cmdline.h"
 
 inline constexpr bool REPLACE = true;
 
@@ -475,6 +477,16 @@ static void ProcessInjectJump(unsigned int from, unsigned int to) {
 	VirtualProtect((LPVOID) from, sizeof(Jump), protection, &protection);
 }
 
+static void ProcessInjectReturn(unsigned int address) {
+	DWORD protection;
+	BYTE opcode;
+
+	VirtualProtect((LPVOID) address, sizeof(BYTE), PAGE_EXECUTE_READWRITE, &protection);
+	opcode = 0xC3;
+	memcpy((void *) address, &opcode, sizeof(BYTE));
+	VirtualProtect((LPVOID) address, sizeof(BYTE), protection, &protection);
+}
+
 static void ReferenceInject(void *reference, void *value) {
 	memcpy(reference, value, sizeof(void *));
 }
@@ -558,9 +570,7 @@ static void CheckPluginVersion(const char *name, WORD major, WORD minor, WORD bu
 	if (!size)
 		PluginErrorTerminate(name);
 	block = HeapAlloc(GetProcessHeap(), 0, size);
-	if (!block)
-		PluginErrorTerminate(name);
-	if (!GetFileVersionInfo(name, 0, size, block) || !VerQueryValue(block, "\\", (LPVOID*)&version, &length) || !length)
+	if (!block || !GetFileVersionInfo(name, 0, size, block) || !VerQueryValue(block, "\\", (LPVOID*)&version, &length) || !length)
 		PluginErrorTerminate(name);
 	required[0] = major;
 	required[1] = minor;
@@ -642,6 +652,8 @@ static void Inject(bool replace) {
 	Inject_Lara(replace);
 	Inject_Switch(replace);
 	Inject_Objlight(replace);
+	Inject_D3dmatrix(replace);
+	Inject_Cmdline(replace);
 }
 
 static LPSTR __stdcall CallInject() {
@@ -665,7 +677,7 @@ static LPSTR __stdcall CallInject() {
 		Terminate(message);
 	}
 	CheckPluginVersion("Plugin_FlyCheat.dll", 4, 0, 0, 2);
-	CheckPluginVersion("Plugin_ParticleSystem.dll", 1, 0, 0, 1);
+	CheckPluginVersion("Plugin_ParticleSystem.dll", 1, 1, 0, 0);
 	Inject(REPLACE);
 	GetCommandLineBinding = GetCommandLineA;
 	return GetCommandLineA();
@@ -680,6 +692,12 @@ void ProcessInject(unsigned int from, unsigned int to, bool replace) {
 		ProcessInjectJump(from, to);
 	else
 		ProcessInjectJump(to, from);
+}
+
+void ProcessInject(unsigned int from, unsigned int to, unsigned int patch, bool replace) {
+	ProcessInject(from, to, replace);
+	if (replace)
+		ProcessInjectReturn(patch);
 }
 
 void ModuleProcessInject(void *module, const char *name, unsigned int to, bool replace) {

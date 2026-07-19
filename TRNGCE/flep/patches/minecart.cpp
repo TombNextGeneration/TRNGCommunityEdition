@@ -13,7 +13,9 @@ namespace flep
 	}
 }
 
+// NOLINTBEGIN(clang-analyzer-core.FixedAddressDereference)
 void Inject_Minecart(bool replace)
 {
 	ProcessInject(*(unsigned int*)0x90C0F4, (unsigned int)flep::IsMineCartAssigned, replace);
 }
+// NOLINTEND(clang-analyzer-core.FixedAddressDereference)

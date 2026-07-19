@@ -483,6 +483,22 @@ namespace trng {
 
 		return BufStringa;
 	}
+
+	void SelezionaComboValore(HWND WindCombo, int Valore)
+	{
+		int TotItem;
+		int i, Indice;
+
+		TotItem = SendMessage(WindCombo, CB_GETCOUNT, 0, 0);
+		Indice = -1;
+		for (i = 0; i < TotItem; i++) {
+			if (SendMessage(WindCombo, CB_GETITEMDATA, i, 0) == Valore) {
+				Indice = i;
+				break;
+			}
+		}
+		SendMessage(WindCombo, CB_SETCURSEL, Indice, 0);
+	}
 }
 
 void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
@@ -502,4 +518,5 @@ void LoadTombNextGenerationInject_ZRoomEditor(bool replace)
 	ProcessInject(0x100E91CE, (unsigned int)trng::PrendiLinea, replace);
 	ProcessInject(0x100E9503, (unsigned int)trng::GetArgNumerico, replace);
 	ProcessInject(0x100E8AE3, (unsigned int)trng::Trim, replace);
+	ProcessInject(0x100FC93E, (unsigned int)trng::SelezionaComboValore, replace);
 }

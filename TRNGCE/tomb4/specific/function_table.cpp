@@ -6,6 +6,9 @@
 
 namespace tomb4
 {
+	HRESULT (*&_EndScene)() = *reinterpret_cast<decltype(&_EndScene)>(0x5339AC);
+	HRESULT (*&_BeginScene)() = *reinterpret_cast<decltype(&_BeginScene)>(0x5339B8);
+
 	HRESULT HWBeginScene()
 	{
 		HRESULT result;

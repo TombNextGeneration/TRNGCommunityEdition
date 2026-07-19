@@ -17,6 +17,8 @@ namespace tomb4
 	long TestHeight(ITEM_INFO* item, long z, long x, PHD_VECTOR* pos);
 	void AnimateBike(ITEM_INFO* item, long hitWall, long killed);
 	void BikeStart(ITEM_INFO* item, ITEM_INFO* l);
+	void DrawBikeExtras(ITEM_INFO* item);
+	void DrawBikeBeam(ITEM_INFO* item);
 }
 
 void Inject_Bike(bool replace);

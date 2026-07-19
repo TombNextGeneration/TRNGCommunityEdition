@@ -31,6 +31,8 @@ namespace tomb4
 	extern ulong &GameTimer;
 	extern long &menu_to_display;
 	extern uchar* &gfScriptFile;
+	extern ushort* &gfFilenameOffset;
+	extern char* &gfFilenameWad;
 
 	void DoGameflow();
 	void DoLevel(uchar Name, uchar Audio);

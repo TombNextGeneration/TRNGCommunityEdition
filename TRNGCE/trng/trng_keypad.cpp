@@ -352,6 +352,7 @@ namespace trng {
 				ValoreTasto = 0;
 				Moltiplicatore = 1;
 				for (i = pKeyPad->TotInseriti - 1; i >= 0; i--) {
+					// NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
 					ValoreTasto += (WORD) (Moltiplicatore * pKeyPad->VetInseriti[i]);
 					Moltiplicatore *= 10;
 				}

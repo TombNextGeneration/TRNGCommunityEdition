@@ -3311,7 +3311,7 @@ namespace trng {
 									// di indice del trigger (se pero' e' flipeffect dovrebbe essere evitato)
 									if ((pTrigger->Flags & TGROUP_FLIPEFFECT) == 0) {
 										// non e' flipeffect
-										if ((pTrigger->Flags & (TGROUP_USE_FOUND_ITEM_INDEX + TGROUP_USE_OWNER_ANIM_ITEM_INDEX + TGROUP_USE_EXECUTOR_ITEM_INDEX + TGROUP_USE_ITEM_USED_BY_LARA_INDEX)) == 0) {
+										if ((pTrigger->Flags & (TGROUP_USE_FOUND_ITEM_INDEX | TGROUP_USE_OWNER_ANIM_ITEM_INDEX | TGROUP_USE_EXECUTOR_ITEM_INDEX | TGROUP_USE_ITEM_USED_BY_LARA_INDEX)) == 0) {
 
 											pTrigger->Flags |= TGROUP_USE_TRIGGER_ITEM_INDEX;
 										}
@@ -3992,15 +3992,14 @@ namespace trng {
 
 		pInv = &tomb4::inventry_objects_list[tomb4::INV_QUEST1_ITEM];
 		switch (TipoDetector) {
-		case TD_AMULETO:
-		default:
-			pSrc = VetOriginali;
-			break;
 		case TD_BIG_DETECTOR:
 			pSrc = VetDetectorBig;
 			break;
 		case TD_LITTLE_DETECTOR:
 			pSrc = VetDetectorLittle;
+			break;
+		default:
+			pSrc = VetOriginali;
 			break;
 		}
 
@@ -4160,7 +4159,7 @@ namespace trng {
 		// settings per acqua fredda
 		pDamage = &GlobTomb4.DamageColdWater;
 		pDamage->Colore = 0xfff924f1; // rosa
-		pDamage->Flags = DMG_INDIRECT_BAR + DMG_SLOW_DISAPPEARING + DMG_ALERT_BEEP + DMG_COLD_WATER;
+		pDamage->Flags = DMG_INDIRECT_BAR | DMG_SLOW_DISAPPEARING | DMG_ALERT_BEEP | DMG_COLD_WATER;
 		pDamage->IndiceStringa = -1;
 		pDamage->SecondiMorte = 10;
 		pDamage->DamValue = 10000;
@@ -4173,7 +4172,7 @@ namespace trng {
 		// settings per generica room damage
 		pDamage = &GlobTomb4.DamageRoom;
 		pDamage->Colore = 0xFFF6F923; // giallo
-		pDamage->Flags = DMG_INDIRECT_BAR + DMG_SLOW_DISAPPEARING + DMG_ALERT_BEEP;
+		pDamage->Flags = DMG_INDIRECT_BAR | DMG_SLOW_DISAPPEARING | DMG_ALERT_BEEP;
 		pDamage->IndiceStringa = -1;
 		pDamage->SecondiMorte = 16;
 		pDamage->SecondiRicrescita = 6;
@@ -4320,12 +4319,11 @@ namespace trng {
 			return 0;
 
 		switch (FromPlug) {
-		case PLUG_FROM_SCRIPT:
-		default:
-			pSource = "script";
-			break;
 		case PLUG_FROM_NGLE:
 			pSource = "ngle/tr4";
+			break;
+		default:
+			pSource = "script";
 			break;
 		}
 
@@ -4623,7 +4621,18 @@ namespace trng {
 			case BKGDT_LASER_SIGHT:
 
 				switch (n) {
-					case BKGDT_LOADING_LEVEL:
+					case BKGDT_TITLE:
+						InviaLog("Found BKGDT_TITLE");
+						pBack = &GlobTomb4.BaseImgTitle;
+						break;
+					case BKGDT_BINOCULAR:
+						InviaLog("Found BKGDT_BINOCULAR");
+						pBack = &GlobTomb4.BaseImgBinocular;
+						break;
+					case BKGDT_LASER_SIGHT:
+						InviaLog("Found BKGDT_LASER_SIGHT");
+						pBack = &GlobTomb4.BaseImgLaserSight;
+						break;
 					default:
 						InviaLog("Found BKGDT_LOADING_LEVEL");
 						pBack = &GlobTomb4.BaseImgLoadingLevel;
@@ -4639,18 +4648,6 @@ namespace trng {
 								pBack->ImageNumber = 0;
 							}
 						}
-						break;
-					case BKGDT_TITLE:
-						InviaLog("Found BKGDT_TITLE");
-						pBack = &GlobTomb4.BaseImgTitle;
-						break;
-					case BKGDT_BINOCULAR:
-						InviaLog("Found BKGDT_BINOCULAR");
-						pBack = &GlobTomb4.BaseImgBinocular;
-						break;
-					case BKGDT_LASER_SIGHT:
-						InviaLog("Found BKGDT_LASER_SIGHT");
-						pBack = &GlobTomb4.BaseImgLaserSight;
 						break;
 				}
 
@@ -5780,7 +5777,7 @@ namespace trng {
 			Numero = FT_HALF_SIZEY;
 			break;
 		case SC_HALF_SIZE:
-			Numero = FT_HALF_SIZEX + FT_HALF_SIZEY;
+			Numero = FT_HALF_SIZEX | FT_HALF_SIZEY;
 			break;
 		case SC_DOUBLE_WIDTH:
 			Numero = FT_DOUBLE_SIZEX;
@@ -5789,7 +5786,7 @@ namespace trng {
 			Numero = FT_DOUBLE_SIZEY;
 			break;
 		case SC_DOUBLE_SIZE:
-			Numero = FT_DOUBLE_SIZEX + FT_DOUBLE_SIZEY;
+			Numero = FT_DOUBLE_SIZEX | FT_DOUBLE_SIZEY;
 			break;
 		default:
 			Numero = 0;
@@ -7589,7 +7586,7 @@ Concludi:
 			pAzione->ItemIndex = IndiceCamera;
 			pAzione->Arg1 = 0;
 			// salvare i flag originali
-			GlobTomb4.OldDFPerCamera = GlobTomb4.TestDisableFeatures & (DF_GUARDA + DF_COMBAT_CAMERA);
+			GlobTomb4.OldDFPerCamera = GlobTomb4.TestDisableFeatures & (DF_GUARDA | DF_COMBAT_CAMERA);
 			if (IndiceCamera != -1) {
 				// controllare se e' fissa
 				if (GlobTomb4.pAdr->Camera.pVetCamera[IndiceCamera].Flags & 0x1) {
@@ -8766,7 +8763,7 @@ Concludi:
 				break;
 			}
 			// aggiornare flag allineamento
-			pAzione->VetArgWord[2] &= (FTS_STRETCH_TEXT + FTS_BLINK);
+			pAzione->VetArgWord[2] &= (FTS_STRETCH_TEXT | FTS_BLINK);
 			pAzione->VetArgWord[2] |= Flags;
 		}
 		// salvare valori cord
@@ -8986,6 +8983,9 @@ Concludi:
 	int ConvertiTombItemIndex2NgleIndex(int TombIndex)
 	{
 		int i;
+
+		if (TombIndex < 0 || TombIndex >= 4096)
+			return -1;
 
 		i = GlobTomb4.VetRemapInverseObjects[TombIndex];
 		if (i == -1) {
@@ -11536,8 +11536,6 @@ Concludi:
 	{
 		StrCordDetectors *pCord;
 		DWORD TempoNow;
-		float *pFloat;
-		int *pInt;
 
 		pCord = &GlobTomb4.BaseCordDetector;
 		TempoNow = (DWORD) GetTickCount64();
@@ -11561,24 +11559,89 @@ Concludi:
 		}
 
 		switch (pCord->IndiceAttivo) {
-		case 2:
-		case 3:
-		case 7:
-			// valori float
-			pFloat = (float*) &pCord->DetOrgY;
-
+		case 0:
 			if (TastoVKPremuto('Y'))
-				pFloat[pCord->IndiceAttivo] -= 1.0f;
+				pCord->DetOrgY--;
 			if (TastoVKPremuto('U'))
-				pFloat[pCord->IndiceAttivo] += 1.0f;
+				pCord->DetOrgY++;
+			break;
+		case 1:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTargetY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTargetY++;
+			break;
+		case 2:
+			if (TastoVKPremuto('Y'))
+				pCord->SizeTestoX -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->SizeTestoX += 1.0f;
+			break;
+		case 3:
+			if (TastoVKPremuto('Y'))
+				pCord->SizeTestoY -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->SizeTestoY += 1.0f;
+			break;
+		case 4:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseVLineX--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseVLineX++;
+			break;
+		case 5:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseVLineY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseVLineY++;
+			break;
+		case 6:
+			if (TastoVKPremuto('Y'))
+				pCord->GapVLineX--;
+			if (TastoVKPremuto('U'))
+				pCord->GapVLineX++;
+			break;
+		case 7:
+			if (TastoVKPremuto('Y'))
+				pCord->GapVLineY -= 1.0f;
+			if (TastoVKPremuto('U'))
+				pCord->GapVLineY += 1.0f;
+			break;
+		case 8:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTextX--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTextX++;
+			break;
+		case 9:
+			if (TastoVKPremuto('Y'))
+				pCord->BaseTextY--;
+			if (TastoVKPremuto('U'))
+				pCord->BaseTextY++;
+			break;
+		case 10:
+			if (TastoVKPremuto('Y'))
+				pCord->CompassLineY--;
+			if (TastoVKPremuto('U'))
+				pCord->CompassLineY++;
+			break;
+		case 11:
+			if (TastoVKPremuto('Y'))
+				pCord->KeyPadX--;
+			if (TastoVKPremuto('U'))
+				pCord->KeyPadX++;
+			break;
+		case 12:
+			if (TastoVKPremuto('Y'))
+				pCord->KeyPadY--;
+			if (TastoVKPremuto('U'))
+				pCord->KeyPadY++;
 			break;
 		default:
-			pInt = &pCord->DetOrgY;
-
 			if (TastoVKPremuto('Y'))
-				pInt[pCord->IndiceAttivo]--;
+				pCord->KeyPadTextY--;
 			if (TastoVKPremuto('U'))
-				pInt[pCord->IndiceAttivo]++;
+				pCord->KeyPadTextY++;
 			break;
 		}
 	}
@@ -15502,6 +15565,7 @@ Concludi:
 
 				pVetExtra = (WORD*) realloc(pVetExtra, SizeMem);
 
+				// NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
 				pVetExtra[NWords++] = NumeroWords;
 				pVetExtra[NWords++] = NGTAG_SALVA_TIMER_OGGETTI;
 				pVetExtra[NWords++] = Tot;
@@ -16990,6 +17054,57 @@ Concludi:
 			GlobTomb4.AudioSospeso.VetSospeso[0].NumeroCD = *GlobTomb4.pAdr->pAudioTrackLoop;
 		}
 	}
+
+	// converte coordinata float di game engine tomb4 in valore pixel
+	// (questo funziona quantomeno per dimensione texture e posizione)
+	int FloatCord2Int(float Cord)
+	{
+		float Temp;
+
+		Temp = 256 * Cord;
+		return (int) Temp;
+	}
+
+	// funzione inversa alla precedente: trasforma un valore intero in pixel
+	// nel corrispondente valore float nella forma n/256
+	float IntCord2Float(int Cord)
+	{
+		float Temp;
+
+		Temp = ((float) Cord) / 256;
+
+		return Temp;
+	}
+
+	void AggiornaColorWhiteMod(void)
+	{
+		short Val;
+		short Incremento;
+		BYTE Single;
+
+		Incremento = GlobTomb4.ColorWhiteStep;
+
+		Val = GlobTomb4.ColorGradientNow;
+		Val += Incremento;
+
+		if (Incremento < 0) {
+			if (Val <= 0) {
+				Val = 0;
+				Incremento = -Incremento;
+			}
+		} else {
+			if (Val >= 255) {
+				Val = 255;
+				Incremento = -Incremento;
+			}
+		}
+
+		Single = Val & 0xff;
+		GlobTomb4.ColorGradientNow = Val;
+		GlobTomb4.ColorWhiteStep = Incremento;
+
+		GlobTomb4.VetTextColors[1] = (GlobTomb4.VetTextColors[1] & 0xFF000000) | (((Single << 8) | Single) << 8) | Single;
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17236,4 +17351,7 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1007E016, (unsigned int)trng::DistanzaPrecisaXZ, replace);
 	ProcessInject(0x1004AA12, (unsigned int)trng::AggiungiItemMosso, replace);
 	ProcessInject(0x1007F3F5, (unsigned int)trng::FineLoadSavegame, replace);
+	ProcessInject(0x100814A1, (unsigned int)trng::FloatCord2Int, replace);
+	ProcessInject(0x100814BA, (unsigned int)trng::IntCord2Float, replace);
+	ProcessInject(0x1005F582, (unsigned int)trng::AggiornaColorWhiteMod, replace);
 }
