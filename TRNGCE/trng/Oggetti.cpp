@@ -105,7 +105,7 @@ namespace trng {
 		HINSTANCE TombInstance;
 		WNDCLASS wc;
 
-		wc = {0};
+		wc = {};
 
 		// trovare handle di instanza
 

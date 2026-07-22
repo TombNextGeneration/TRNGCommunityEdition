@@ -54,6 +54,7 @@ namespace tomb4
 	uchar* &gfScriptFile = *reinterpret_cast<decltype(&gfScriptFile)>(0x7FD18C);
 	ushort* &gfFilenameOffset = *reinterpret_cast<decltype(&gfFilenameOffset)>(0x7FD1CC);
 	char* &gfFilenameWad = *reinterpret_cast<decltype(&gfFilenameWad)>(0x7FD16C);
+	uchar* &gfLanguageFile = *reinterpret_cast<decltype(&gfLanguageFile)>(0x7FD14C);
 
 	void DoGameflow()
 	{

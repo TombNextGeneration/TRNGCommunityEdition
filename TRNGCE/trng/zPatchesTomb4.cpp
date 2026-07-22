@@ -6718,6 +6718,50 @@ namespace trng {
 			EnableWindow(WindControl, FALSE);
 		}
 	}
+
+	// chiamata quando ancora c'e' finestra tomb4 e directx ma dopo verranno chiuse
+	void RilasciaTomb4(void)
+	{
+		int i;
+		StrRecordImage *pVetImages;
+		StrEffettoImage *pEffetto;
+
+		// libera tutte le immagini che eventualmente risultino ancora allocate
+		pVetImages = GlobTomb4.BaseImages.Images;
+
+		for (i = 0; i < TOT_IMAGES; i++) {
+			if (pVetImages[i].TestUsata) {
+				sprintf_s(BufferLog, "Free allocated base image%d.bmp with index=%d", pVetImages[i].NImage, i);
+				InviaLog(BufferLog);
+				LiberaImmagine(&pVetImages[i]);
+			}
+		}
+
+		pVetImages = GlobTomb4.BaseImages.VetImages;
+
+		for (i = 0; i < MAX_IMAGE_RECORDS; i++) {
+			if (pVetImages[i].TestUsata) {
+				sprintf_s(BufferLog, "Free allocated custom image%d.bmp with index=%d", pVetImages[i].NImage, i);
+				InviaLog(BufferLog);
+				LiberaImmagine(&pVetImages[i]);
+			}
+		}
+
+		pEffetto = &GlobTomb4.BaseImages.Effetto;
+
+		if (pEffetto->EffectImage.TestUsata) {
+			InviaLog("Free effect image");
+			LiberaImmagine(&pEffetto->EffectImage);
+		}
+
+		LiberaBassDll();
+	}
+
+	// se era stato allocato bass.dll rilberare tutto
+	void LiberaBassDll(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -6841,4 +6885,6 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100C5BBD, (unsigned int)trng::TrovaOggettoInSettore, replace);
 	ProcessInject(0x100D3B49, (unsigned int)trng::CambiaTitoloSetup, replace);
 	ProcessInject(0x100D09E1, (unsigned int)trng::InitControlliSetup, replace);
+	ProcessInject(0x100C7E6E, (unsigned int)trng::RilasciaTomb4, replace);
+	ProcessInject(0x100C7E31, (unsigned int)trng::LiberaBassDll, false);
 }

@@ -354,6 +354,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void FreeLevel()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_File(bool replace)
@@ -368,4 +373,5 @@ void Inject_File(bool replace)
 	ProcessInject(0x474670, (unsigned int)tomb4::S_GetUVRotateTextures, replace);
 	ProcessInject(0x474B20, (unsigned int)tomb4::S_LoadLevelFile, replace);
 	ProcessInject(0x4746D0, (unsigned int)tomb4::LoadLevel, false);
+	ProcessInject(0x4749F0, (unsigned int)tomb4::FreeLevel, false);
 }

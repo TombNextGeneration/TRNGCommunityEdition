@@ -2310,6 +2310,8 @@ namespace trng {
 	inline constexpr int RB_CHECK_WATER = 0x0020;
 	inline constexpr int RB_ENABLE_TRIGGERS = 0x0040;
 
+	inline constexpr int TOT_IMAGES = 12;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -3109,18 +3111,23 @@ namespace trng {
 	};
 
 	struct StrShowImage {
-		StrRecordImage ImageBackGround;      // 0
-		StrRecordImage ImageLittle;          // 1
-		StrRecordImage ImageOverlap;         // 2
-		StrRecordImage Temp;                 // 3
-		StrRecordImage ImageMonoScreen;      // 4
-		StrRecordImage ImageLoadLevel;       // 5
-		StrRecordImage ImageTitle;           // 6
-		StrRecordImage ImageBinocular;		// 7
-		StrRecordImage ImageLaserSight;     // 8
-		StrRecordImage ImagePageDiario;     // 9
-		StrRecordImage ImageBinocCompass;   // 10
-		StrRecordImage ImageBinocSextant;   // 11
+		union {
+			struct {
+				StrRecordImage ImageBackGround;      // 0
+				StrRecordImage ImageLittle;          // 1
+				StrRecordImage ImageOverlap;         // 2
+				StrRecordImage Temp;                 // 3
+				StrRecordImage ImageMonoScreen;      // 4
+				StrRecordImage ImageLoadLevel;       // 5
+				StrRecordImage ImageTitle;           // 6
+				StrRecordImage ImageBinocular;		// 7
+				StrRecordImage ImageLaserSight;     // 8
+				StrRecordImage ImagePageDiario;     // 9
+				StrRecordImage ImageBinocCompass;   // 10
+				StrRecordImage ImageBinocSextant;   // 11
+			};
+			StrRecordImage Images[TOT_IMAGES];
+		};
 		StrRecordImage VetImages[MAX_IMAGE_RECORDS];
 		bool TestTempHdc;
 		RECT ZonaImageLittle;

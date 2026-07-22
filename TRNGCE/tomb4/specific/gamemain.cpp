@@ -5,11 +5,18 @@
 #include "function_stubs.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "../../trng/zRoomEditor.h"
+#include "audio.h"
+#include "file.h"
+#include "../game/gameflow.h"
+#include "../../plugin/particlesystem/trng/trng.h"
+#include "../../plugin/particlesystem/Plugin_ParticleSystem.h"
 
 namespace tomb4
 {
 	THREAD &MainThread = *reinterpret_cast<decltype(&MainThread)>(0x5339D4);
 	char (&savegame_format_string)[256] = *reinterpret_cast<decltype(&savegame_format_string)>(0x4757DE);
+	LPDIRECT3DVERTEXBUFFER &DestVB = *reinterpret_cast<decltype(&DestVB)>(0x7537E8);
+	short* &clipflags = *reinterpret_cast<decltype(&clipflags)>(0x753854);
 
 	long S_SaveGame(long slot_num)
 	{
@@ -66,6 +73,38 @@ namespace tomb4
 
 		return 0;
 	}
+
+	void GameClose()
+	{
+		Log(2, "GameClose");
+
+		if (plugin::particlesystem::Trng.IdMyPlugin != -1)
+			plugin::particlesystem::GameCleanup();
+
+		trng::RilasciaTomb4();
+		ACMClose();
+		FreeLevel();
+
+		if (DestVB)
+		{
+			Log(4, "Released %s @ %x - RefCnt = %d", "Dest VB", DestVB, DestVB->Release());
+			DestVB = 0;
+		}
+		else
+			Log(1, "%s Attempt To Release NULL Ptr", "Dest VB");
+
+		free(clipflags);
+
+		if (wav_file_buffer)
+			free(wav_file_buffer);
+
+		if (ADPCMBuffer)
+			free(ADPCMBuffer);
+
+		free(malloc_buffer);
+		free(gfScriptFile);
+		free(gfLanguageFile);
+	}
 }
 
 __declspec(naked) static void** Inject_Gamemain_savegame_format_string() { __asm lea eax, [tomb4::savegame_format_string] __asm ret }
@@ -76,4 +115,5 @@ void Inject_Gamemain(bool replace)
 
 	ProcessInject(0x475630, (unsigned int)tomb4::S_SaveGame, false);
 	ProcessInject(0x4757D0, (unsigned int)tomb4::S_LoadGame, replace);
+	ProcessInject(0x4752D0, (unsigned int)tomb4::GameClose, replace);
 }

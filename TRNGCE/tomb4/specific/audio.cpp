@@ -21,6 +21,8 @@ namespace tomb4
 	trng::StrListaWav (&TrackFileNames)[256] = *reinterpret_cast<decltype(&TrackFileNames)>(0x46C8AD);
 	HANDLE &NotificationThreadHandle = *reinterpret_cast<decltype(&NotificationThreadHandle)>(0x4BFCD8);
 	bool &acm_ready = *reinterpret_cast<decltype(&acm_ready)>(0x4BFD38);
+	uchar* &wav_file_buffer = *reinterpret_cast<decltype(&wav_file_buffer)>(0x4BFD30);
+	uchar* &ADPCMBuffer = *reinterpret_cast<decltype(&ADPCMBuffer)>(0x4BFD34);
 
 	void S_CDStop()
 	{
@@ -130,6 +132,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void ACMClose()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Audio_TrackFileNames() { __asm lea eax, [tomb4::TrackFileNames] __asm ret }
@@ -144,4 +151,5 @@ void Inject_Audio(bool replace)
 	ProcessInject(0x46BF70, (unsigned int)tomb4::ACMSetupNotifications, replace);
 	ProcessInject(0x46CA20, (unsigned int)tomb4::ACMHandleNotifications, false);
 	ProcessInject(0x46C860, (unsigned int)tomb4::ACMEmulateCDPlay, false);
+	ProcessInject(0x46C3E0, (unsigned int)tomb4::ACMClose, false);
 }
