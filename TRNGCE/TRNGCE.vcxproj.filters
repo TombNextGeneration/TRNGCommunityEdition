@@ -276,6 +276,12 @@
     <ClInclude Include="tomb4\specific\d3dmatrix.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="trngce\discord.h">
+      <Filter>trngce</Filter>
+    </ClInclude>
+    <ClInclude Include="trngce\constants.h">
+      <Filter>trngce</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -522,6 +528,9 @@
     <ClCompile Include="tomb4\specific\d3dmatrix.cpp">
       <Filter>tomb4\specific</Filter>
     </ClCompile>
+    <ClCompile Include="trngce\discord.cpp">
+      <Filter>trngce</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
@@ -556,6 +565,9 @@
     </Filter>
     <Filter Include="plugin\particlesystem\trng">
       <UniqueIdentifier>{c4b4a360-7e37-4ec2-9276-7474d5aa4806}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="trngce">
+      <UniqueIdentifier>{5d652e4a-c1d6-46ef-a66b-0db201c88ece}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@
 #include "text.h"
 #include "../../flep/PlugIn_trng.h"
 #include "../../flep/structures_mine.h"
+#include "../../trngce/discord.h"
 
 namespace tomb4
 {
@@ -55,12 +56,14 @@ namespace tomb4
 	ushort* &gfFilenameOffset = *reinterpret_cast<decltype(&gfFilenameOffset)>(0x7FD1CC);
 	char* &gfFilenameWad = *reinterpret_cast<decltype(&gfFilenameWad)>(0x7FD16C);
 	uchar* &gfLanguageFile = *reinterpret_cast<decltype(&gfLanguageFile)>(0x7FD14C);
+	uchar (&gfLevelNames)[40] = *reinterpret_cast<decltype(&gfLevelNames)>(0x7FD1A0);
 
 	void DoGameflow()
 	{
 		uchar* gf;
 		uchar n;
 
+		trngce::DiscordCreate();
 		do_boot_screen(Gameflow->Language);
 		num_fmvs = 0;
 		fmv_to_play[0] = 0;
@@ -87,7 +90,10 @@ namespace tomb4
 				trng::ImpostaCapelliLara(&gfLevelFlags);
 
 				if (!(gfLevelFlags & GF_NOLEVEL))
+				{
+					trngce::DiscordUpdate(trng::GlobTomb4.WindowNome, &gfStringWad[gfStringOffset[gfLevelNames[gfCurrentLevel]]]);
 					DoLevel(gf[3], gf[4]);
+				}
 				else
 				{
 					gfStatus = 999;
@@ -159,6 +165,7 @@ namespace tomb4
 			case CMD_TITLE:
 				gfLevelFlags = gf[0] | (gf[1] << 8);
 				trng::ImpostaCapelliLara(&gfLevelFlags);
+				trngce::DiscordUpdate(trng::GlobTomb4.WindowNome, "Title Screen");
 				DoTitle(gf[2], gf[3]);
 				gfResidentCut[0] = 0;
 				gfResidentCut[1] = 0;

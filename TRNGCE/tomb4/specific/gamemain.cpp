@@ -10,6 +10,7 @@
 #include "../game/gameflow.h"
 #include "../../plugin/particlesystem/trng/trng.h"
 #include "../../plugin/particlesystem/Plugin_ParticleSystem.h"
+#include "../../trngce/discord.h"
 
 namespace tomb4
 {
@@ -84,6 +85,7 @@ namespace tomb4
 		trng::RilasciaTomb4();
 		ACMClose();
 		FreeLevel();
+		trngce::DiscordClose();
 
 		if (DestVB)
 		{
