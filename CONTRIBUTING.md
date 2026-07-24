@@ -1,6 +1,13 @@
 # How to contribute
 
 To make changes to the code, you will need an account at [GitHub](https://github.com) and make use of [Git](https://gitforwindows.org) and [Visual Studio](https://visualstudio.microsoft.com/downloads).
+This project requires the MSVC v143 - VS 2022 C++ x64/x86 build tools and the vcpkg package manager.
+
+If you have not used vcpkg before, you will need to integrate it. Select Tools > Command Line > Developer Command Prompt and run this command:
+
+```
+vcpkg integrate install
+```
 
 ## Issues
 
