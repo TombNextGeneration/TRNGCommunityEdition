@@ -27,6 +27,7 @@ namespace tomb4
 	void S_GetUVRotateTextures();
 	long S_LoadLevelFile(long num);
 	unsigned int __stdcall LoadLevel(void* name);
+	void FreeLevel();
 }
 
 void Inject_File(bool replace);

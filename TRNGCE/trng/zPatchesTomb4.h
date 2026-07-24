@@ -143,6 +143,8 @@ namespace trng {
 	int TrovaOggettoInSettore(StrItemTr4* pVetFounds[], DWORD CordX, int CordY, DWORD CordZ, short Room, int RangeY);
 	void CambiaTitoloSetup(HWND hDialogo);
 	void InitControlliSetup(HWND hWind);
+	void RilasciaTomb4(void);
+	void LiberaBassDll(void);
 }
 
 void Inject_ZPatchesTomb4(bool replace);
