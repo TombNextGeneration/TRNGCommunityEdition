@@ -79,6 +79,10 @@
 #include "tomb4/specific/d3dmatrix.h"
 #include "tomb4/specific/cmdline.h"
 
+#ifndef _DEBUG
+#error TRNG-CE requires Debug configuration
+#endif
+
 inline constexpr bool REPLACE = true;
 
 #pragma pack(push, 1)
