@@ -7,7 +7,7 @@ To make changes to the code, you will need an account at [GitHub](https://github
 In the Visual Studio Installer, choose the Desktop development with C++ workload.
 Add the latest version of the MSVC v143 - VS 2022 C++ x64/x86 build tools and the vcpkg package manager from the Individual components tab.
 
-After the the installation is complete, open Visual Studio, select Tools > Command Line > Developer Command Prompt and run this command:
+After the installation is complete, open Visual Studio, select Tools > Command Line > Developer Command Prompt and run this command:
 
 ```
 vcpkg integrate install
