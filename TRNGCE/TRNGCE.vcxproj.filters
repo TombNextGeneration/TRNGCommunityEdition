@@ -282,6 +282,9 @@
     <ClInclude Include="trngce\constants.h">
       <Filter>trngce</Filter>
     </ClInclude>
+    <ClInclude Include="flep\patches\quakecam.h">
+      <Filter>flep\patches</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -530,6 +533,9 @@
     </ClCompile>
     <ClCompile Include="trngce\discord.cpp">
       <Filter>trngce</Filter>
+    </ClCompile>
+    <ClCompile Include="flep\patches\quakecam.cpp">
+      <Filter>flep\patches</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

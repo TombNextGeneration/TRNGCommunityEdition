@@ -222,6 +222,11 @@ namespace tomb4
 			}
 		}
 	}
+
+	void SetFadeClip(short height, short speed)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Tomb4fx(bool replace)
@@ -245,4 +250,5 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x439250, (unsigned int)tomb4::LaraBubbles, replace);
 	ProcessInject(0x4391A0, (unsigned int)tomb4::CreateBubble, false);
 	ProcessInject(0x43AFC0, (unsigned int)tomb4::DrawWeaponMissile, replace);
+	ProcessInject(0x4396D0, (unsigned int)tomb4::SetFadeClip, false);
 }

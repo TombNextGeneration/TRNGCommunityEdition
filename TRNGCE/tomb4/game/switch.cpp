@@ -56,9 +56,16 @@ namespace tomb4
 
 		return 0;
 	}
+
+	void TestTriggersAtXYZ(long x, long y, long z, short room_number, short heavy, short flags)
+	{
+		GetHeight(GetFloor(x, y, z, &room_number), x, y, z);
+		TestTriggers(trigger_index, heavy, flags);
+	}
 }
 
 void Inject_Switch(bool replace)
 {
 	ProcessInject(0x460CE0, (unsigned int)tomb4::SwitchTrigger, replace);
+	ProcessInject(0x460E80, (unsigned int)tomb4::TestTriggersAtXYZ, replace);
 }

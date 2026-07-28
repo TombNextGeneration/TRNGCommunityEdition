@@ -78,6 +78,7 @@
 #include "tomb4/game/objlight.h"
 #include "tomb4/specific/d3dmatrix.h"
 #include "tomb4/specific/cmdline.h"
+#include "flep/patches/quakecam.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -658,6 +659,7 @@ static void Inject(bool replace) {
 	Inject_Objlight(replace);
 	Inject_D3dmatrix(replace);
 	Inject_Cmdline(replace);
+	Inject_Quakecam(replace);
 }
 
 static LPSTR __stdcall CallInject() {

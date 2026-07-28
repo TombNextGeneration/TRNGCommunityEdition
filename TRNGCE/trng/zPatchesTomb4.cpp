@@ -6762,6 +6762,65 @@ namespace trng {
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	// chiamata durante esecuzione di flybycamera
+	// se restituisce true allora uscire da calcoloflyby
+	bool PerformInFlyBy(void)
+	{
+		static int *pTestFinitaFlyBy = (int*) &tomb4::bTrackCamInit;
+		static short *pIndiceFlyByInCorso = &tomb4::LastSequence;
+
+		int Codice;
+
+		ImpostaTempoUltimoComando();
+
+		Codice = GlobTomb4.pBaseCustomize->TastoPauseFlyCamera;
+
+		if (GlobTomb4.pBaseCustomize->TestPauseFlyCamera == true && TastoPremutoTomb4(Codice) == true) {
+
+			*pTestFinitaFlyBy = 1;
+			tomb4::InitialiseSpotCam(*pIndiceFlyByInCorso);
+			return true;
+		}
+		return false;
+	}
+
+	bool ControllaEscapeFlyBy(void)
+	{
+		int CodiceTasto;
+
+		CodiceTasto = GlobTomb4.pBaseCustomize->TastoEsciFlyCamera;
+
+		if (GlobTomb4.pBaseCustomize->TestEscapeFlyCamera == true && TastoPremutoTomb4(CodiceTasto) == true) {
+
+			DisabilitaFly();
+
+			return true;
+		}
+		return false;
+	}
+
+	void DisabilitaFly(void)
+	{
+		tomb4::SetFadeClip(0, 1);
+		tomb4::bUseSpotCam = 0;
+		tomb4::bDisableLaraControl = 0;
+		tomb4::bCheckTrigger = 0;
+		tomb4::camera.old_type = tomb4::FIXED_CAMERA;
+		tomb4::camera.type = tomb4::CHASE_CAMERA;
+		tomb4::camera.speed = 1;
+
+		// da qui finisce flyby sequenza
+		tomb4::camera.pos.x = tomb4::InitialCameraPosition.x;
+		tomb4::camera.pos.y = tomb4::InitialCameraPosition.y;
+		tomb4::camera.pos.z = tomb4::InitialCameraPosition.z;
+		tomb4::camera.target.x = tomb4::InitialCameraTarget.x;
+		tomb4::camera.target.y = tomb4::InitialCameraTarget.y;
+		tomb4::camera.target.z = tomb4::InitialCameraTarget.z;
+		tomb4::camera.pos.room_number = tomb4::InitialCameraRoom;
+
+		tomb4::AlterFOV(tomb4::LastFov);
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -6887,4 +6946,7 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100D09E1, (unsigned int)trng::InitControlliSetup, replace);
 	ProcessInject(0x100C7E6E, (unsigned int)trng::RilasciaTomb4, replace);
 	ProcessInject(0x100C7E31, (unsigned int)trng::LiberaBassDll, false);
+	ProcessInject(0x100CCDCA, (unsigned int)trng::PerformInFlyBy, replace);
+	ProcessInject(0x100CCD7D, (unsigned int)trng::ControllaEscapeFlyBy, replace);
+	ProcessInject(0x100CCC8A, (unsigned int)trng::DisabilitaFly, replace);
 }
