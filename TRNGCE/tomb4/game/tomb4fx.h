@@ -31,6 +31,7 @@ namespace tomb4
 	void LaraBubbles(ITEM_INFO* item);
 	void CreateBubble(PHD_3DPOS* pos, short room_number, long size, long biggest);
 	void DrawWeaponMissile(ITEM_INFO* item);
+	void SetFadeClip(short height, short speed);
 }
 
 void Inject_Tomb4fx(bool replace);

@@ -119,6 +119,7 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="flep\patches\quakecam.h" />
     <ClInclude Include="flep\patches\shader.h" />
     <ClInclude Include="flep\patches\sub.h" />
     <ClInclude Include="flep\PlugIn_trng.h" />
@@ -217,6 +218,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="flep\patches\quakecam.cpp" />
     <ClCompile Include="flep\patches\shader.cpp" />
     <ClCompile Include="flep\patches\vehicles.cpp" />
     <ClCompile Include="flep\patches\minecart.cpp" />

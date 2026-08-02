@@ -145,6 +145,9 @@ namespace trng {
 	void InitControlliSetup(HWND hWind);
 	void RilasciaTomb4(void);
 	void LiberaBassDll(void);
+	bool PerformInFlyBy(void);
+	bool ControllaEscapeFlyBy(void);
+	void DisabilitaFly(void);
 }
 
 void Inject_ZPatchesTomb4(bool replace);
