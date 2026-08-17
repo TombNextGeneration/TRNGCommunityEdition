@@ -285,6 +285,9 @@
     <ClInclude Include="flep\patches\quakecam.h">
       <Filter>flep\patches</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\dxsound.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -536,6 +539,9 @@
     </ClCompile>
     <ClCompile Include="flep\patches\quakecam.cpp">
       <Filter>flep\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\dxsound.cpp">
+      <Filter>tomb4\specific</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,7 @@
 #pragma once
+#include <windows.h>
+#include <mmreg.h>
+#include <msacm.h>
 #include "../../trng/structures.h"
 #include "../types.h"
 
@@ -11,6 +14,7 @@ namespace tomb4
 	extern bool &acm_ready;
 	extern uchar* &wav_file_buffer;
 	extern uchar* &ADPCMBuffer;
+	extern HACMDRIVER &hACMDriver;
 
 	void S_CDStop();
 	void ACMSetVolume();

@@ -15,6 +15,7 @@ namespace tomb4
 	extern long &LoadBarColourRight;
 	extern uchar &LoadBarHeight;
 	extern long &LoadBarWidth;
+	extern long (&sfx_frequencies)[3];
 
 	long S_LoadSave(long load_or_save, long mono);
 	long S_PauseMenu();

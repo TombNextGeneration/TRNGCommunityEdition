@@ -86,7 +86,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
     <PostBuildEvent />
@@ -113,7 +113,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
     <PostBuildEvent />
@@ -179,6 +179,7 @@
     <ClInclude Include="tomb4\specific\d3dmatrix.h" />
     <ClInclude Include="tomb4\specific\drawroom.h" />
     <ClInclude Include="tomb4\specific\dxshell.h" />
+    <ClInclude Include="tomb4\specific\dxsound.h" />
     <ClInclude Include="tomb4\specific\file.h" />
     <ClInclude Include="tomb4\specific\function_stubs.h" />
     <ClInclude Include="tomb4\game\croc.h" />
@@ -273,6 +274,7 @@
     <ClCompile Include="tomb4\specific\d3dmatrix.cpp" />
     <ClCompile Include="tomb4\specific\drawroom.cpp" />
     <ClCompile Include="tomb4\specific\dxshell.cpp" />
+    <ClCompile Include="tomb4\specific\dxsound.cpp" />
     <ClCompile Include="tomb4\specific\file.cpp" />
     <ClCompile Include="tomb4\specific\function_stubs.cpp" />
     <ClCompile Include="tomb4\game\croc.cpp" />

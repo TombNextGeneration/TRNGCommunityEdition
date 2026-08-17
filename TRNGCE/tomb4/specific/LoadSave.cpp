@@ -33,6 +33,7 @@ namespace tomb4
 	long &LoadBarColourRight = *reinterpret_cast<decltype(&LoadBarColourRight)>(0x47B65F);
 	uchar &LoadBarHeight = *reinterpret_cast<decltype(&LoadBarHeight)>(0x47B68F);
 	long &LoadBarWidth = *reinterpret_cast<decltype(&LoadBarWidth)>(0x47B693);
+	long (&sfx_frequencies)[3] = *reinterpret_cast<decltype(&sfx_frequencies)>(0x4B1704);
 
 	long S_LoadSave(long load_or_save, long mono)
 	{

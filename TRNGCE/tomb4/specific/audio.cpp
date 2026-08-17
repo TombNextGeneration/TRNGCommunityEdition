@@ -23,6 +23,7 @@ namespace tomb4
 	bool &acm_ready = *reinterpret_cast<decltype(&acm_ready)>(0x4BFD38);
 	uchar* &wav_file_buffer = *reinterpret_cast<decltype(&wav_file_buffer)>(0x4BFD30);
 	uchar* &ADPCMBuffer = *reinterpret_cast<decltype(&ADPCMBuffer)>(0x4BFD34);
+	HACMDRIVER &hACMDriver = *reinterpret_cast<decltype(&hACMDriver)>(0x4BFD20);
 
 	void S_CDStop()
 	{

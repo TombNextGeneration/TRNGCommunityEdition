@@ -1,5 +1,4 @@
 #include "inject.h"
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winternl.h>
 #include <intrin.h>
@@ -79,6 +78,7 @@
 #include "tomb4/specific/d3dmatrix.h"
 #include "tomb4/specific/cmdline.h"
 #include "flep/patches/quakecam.h"
+#include "tomb4/specific/dxsound.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -660,6 +660,7 @@ static void Inject(bool replace) {
 	Inject_D3dmatrix(replace);
 	Inject_Cmdline(replace);
 	Inject_Quakecam(replace);
+	Inject_Dxsound(replace);
 }
 
 static LPSTR __stdcall CallInject() {

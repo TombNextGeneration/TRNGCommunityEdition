@@ -3332,5 +3332,12 @@ namespace tomb4
 		long nVtx;
 		D3DTLBUMPVERTEX vtx[544];
 	};
+
+	struct DS_SAMPLE
+	{
+		LPDIRECTSOUNDBUFFER buffer;
+		long frequency;
+		long playing;
+	};
 #pragma pack(pop)
 }
