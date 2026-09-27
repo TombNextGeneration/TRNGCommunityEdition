@@ -7,6 +7,10 @@
 
 namespace tomb4
 {
+	long &CrossbowOffsetX = *reinterpret_cast<decltype(&CrossbowOffsetX)>(0x429F94);
+	long &CrossbowOffsetY = *reinterpret_cast<decltype(&CrossbowOffsetY)>(0x429F9C);
+	long &CrossbowOffsetZ = *reinterpret_cast<decltype(&CrossbowOffsetZ)>(0x429FA4);
+
 	void TriggerUnderwaterExplosion(ITEM_INFO* item, long vehicle)
 	{
 		__try { throw __func__; } __finally {}

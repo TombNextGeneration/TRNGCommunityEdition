@@ -61,6 +61,10 @@ namespace trng {
 	extern StrBaseFlipSwap &MySwap;
 	extern char (&BufGlobalTimer)[6];
 	extern char (&BufLocalTimer)[6];
+	extern int &TestAttivaCryptTr4;
+	extern int &NumeroBloccoCrypt;
+	extern BYTE (&VetCryptOrd)[16][50];
+	extern BYTE (&VetCryptTableXor)[16][99];
 
 	void ImpostaEnemyDamage(void);
 	bool Inizializza(void);
@@ -93,7 +97,7 @@ namespace trng {
 	void InitFmvLog(const char *pMex, bool TestCancellaLog);
 	void CaricaNGStringTemp(void);
 	void MessageBoxTomb(const char *pMessaggio, const char *pTitolo);
-	bool ExtractNGHeader(char *pNomeFile, StrExtractNG* pExtractNG);
+	bool ExtractNGHeader(const char *pNomeFile, StrExtractNG* pExtractNG);
 	long QuantoLungo(FILE *tempfile);
 	bool ParseNgField(WORD *pNgArray, DWORD CurrentIndex, StrParseNGField* pParseNGField);
 	char *GetStringaNG(int Indice);
@@ -308,6 +312,15 @@ namespace trng {
 	int FloatCord2Int(float Cord);
 	float IntCord2Float(int Cord);
 	void AggiornaColorWhiteMod(void);
+	void CriptaZona(BYTE *pZona, DWORD SizeZona);
+	void RestoreAllAnimSwap(void);
+	void SwapAnimations(WORD Slot, WORD SwapId);
+	void RieseguiOldSwapMesh(StrBaseFlipSwap *pSwap);
+	void SwapMeshLara(int SlotSwap, int TipoSwapMesh);
+	void SalvaRecordSwapMesh(StrFlipSwapMesh *pSwap);
+	void CorreggiVerticiJoint(StrMeshTr4 *pMesh, StrMeshTr4 * pMesh2, int Indice);
+	void SwapMeshItem(short SlotItem, WORD SlotSwap);
+	void SwapFlipMesh(int Slot, int Mesh, bool TestMemo);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

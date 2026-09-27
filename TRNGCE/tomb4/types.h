@@ -16,6 +16,8 @@ namespace tomb4
 	inline constexpr long W2V_SHIFT = 14;
 	inline constexpr long NO_ITEM = -1;
 	inline constexpr long NO_HEIGHT = -32512;
+	inline constexpr long MAX_SAMPLES = 370;
+	inline constexpr long MALLOC_SIZE = 60000000;
 
 	enum mood_type
 	{
@@ -3338,6 +3340,77 @@ namespace tomb4
 		LPDIRECTSOUNDBUFFER buffer;
 		long frequency;
 		long playing;
+	};
+
+	struct SAMPLE_INFO
+	{
+		short number;
+		uchar volume;
+		uchar radius;
+		uchar randomness;
+		char pitch;
+		short flags;
+	};
+
+	struct TEXTURE
+	{
+		LPDIRECT3DTEXTURE2 tex;
+		LPDIRECTDRAWSURFACE4 surface;
+		ulong xoff;
+		ulong yoff;
+		ulong width;
+		ulong height;
+		long tpage;
+		bool bump;
+		long bumptpage;
+	};
+
+	struct MESH_DATA
+	{
+		short x;
+		short y;
+		short z;
+		short r;
+		short flags;
+		short nVerts;
+		short nNorms;
+		short ngt4;
+		short* gt4;
+		short ngt3;
+		short* gt3;
+		long* prelight;
+		LPDIRECT3DVERTEXBUFFER SourceVB;
+		D3DVECTOR* Normals;
+	};
+
+	typedef void (*rgbfunc)(uchar*, uchar*, uchar*);
+
+	struct WEAPON_INFO
+	{
+		short lock_angles[4];
+		short left_angles[4];
+		short right_angles[4];
+		short aim_speed;
+		short shot_accuracy;
+		short gun_height;
+		short target_dist;
+		char damage;
+		char recoil_frame;
+		char flash_time;
+		char draw_frame;
+		short sample_num;
+	};
+
+	struct SPRITESTRUCT
+	{
+		ushort tpage;
+		ushort offset;
+		ushort width;
+		ushort height;
+		float x1;	//left
+		float y1;	//top
+		float x2;	//right
+		float y2;	//bottom
 	};
 #pragma pack(pop)
 }

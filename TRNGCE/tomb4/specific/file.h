@@ -16,6 +16,9 @@ namespace tomb4
 	extern short* &aranges;
 	extern long &nAnimUVRanges;
 	extern TEXTURESTRUCT* &textinfo;
+	extern TEXTURESTRUCT* (&AnimatingWaterfalls)[3];
+	extern long (&AnimatingWaterfallsV)[3];
+	extern SPRITESTRUCT* &spriteinfo;
 
 	bool LoadObjects();
 	bool LoadCinematic();
@@ -28,6 +31,17 @@ namespace tomb4
 	long S_LoadLevelFile(long num);
 	unsigned int __stdcall LoadLevel(void* name);
 	void FreeLevel();
+	bool LoadSamples();
+	bool LoadTextures(long RTPages, long OTPages, long BTPages);
+	bool Decompress(char* pDest, char* pCompressed, long compressedSize, long size);
+	bool LoadRooms();
+	bool LoadSprites();
+	bool LoadCameras();
+	bool LoadSoundEffects();
+	bool LoadBoxes();
+	bool LoadAnimatedTextures();
+	bool LoadTextureInfos();
+	bool LoadItems();
 }
 
 void Inject_File(bool replace);

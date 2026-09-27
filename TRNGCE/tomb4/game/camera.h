@@ -9,6 +9,11 @@ namespace tomb4
 	extern camera_type &BinocularOldCamera;
 	extern long &BinocularOn;
 	extern long &bLaraTorch;
+	extern short &CameraDefaultSpeed;
+	extern long &CameraDefaultDistance;
+	extern short &ChaseCameraDefaultElevation;
+	extern long &LookCameraDefaultTargetZ;
+	extern long &LookCameraDefaultStartY;
 
 	void CalculateCamera();
 	void InitialiseCamera();

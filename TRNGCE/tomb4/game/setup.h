@@ -10,6 +10,7 @@ namespace tomb4
 	void InitialiseLara();
 	void GetCarriedItems();
 	void GetAIPickups();
+	void reset_cutseq_vars();
 }
 
 void Inject_Setup(bool replace);

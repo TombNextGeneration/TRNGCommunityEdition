@@ -288,6 +288,15 @@
     <ClInclude Include="tomb4\specific\dxsound.h">
       <Filter>tomb4\specific</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\specific\texture.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\specific\lighting.h">
+      <Filter>tomb4\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\larafire.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -542,6 +551,15 @@
     </ClCompile>
     <ClCompile Include="tomb4\specific\dxsound.cpp">
       <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\texture.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\specific\lighting.cpp">
+      <Filter>tomb4\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\larafire.cpp">
+      <Filter>tomb4\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

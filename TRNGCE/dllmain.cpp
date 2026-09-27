@@ -79,6 +79,8 @@
 #include "tomb4/specific/cmdline.h"
 #include "flep/patches/quakecam.h"
 #include "tomb4/specific/dxsound.h"
+#include "tomb4/specific/lighting.h"
+#include "tomb4/specific/texture.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -661,6 +663,8 @@ static void Inject(bool replace) {
 	Inject_Cmdline(replace);
 	Inject_Quakecam(replace);
 	Inject_Dxsound(replace);
+	Inject_Lighting(replace);
+	Inject_Texture(replace);
 }
 
 static LPSTR __stdcall CallInject() {

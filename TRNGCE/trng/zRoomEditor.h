@@ -18,7 +18,7 @@ namespace trng {
 	void CaricaNGConstants(WORD TipoLoading, StrNGConstants * pBaseCostanti, char *pNomeFile);
 	char *GetFileTrle(const char *pNomeFile);
 	char *SoloNomeSenzaExt(char FileName[]);
-	char * SoloNome(char FileName[]);
+	const char * SoloNome(const char FileName[]);
 	void GetDataDelFile(char *pNomeFile, FILETIME *pFileTime);
 	bool PrendiNumero(char *pTesto, int *pValore);
 	char *GetTestoScriptTrigger(StrScriptTrigger *pTrigger);

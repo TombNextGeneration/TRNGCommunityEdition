@@ -311,5 +311,16 @@ namespace trng {
 		StrCallGlobReplace BaseVetCbReplace; // o NULL o punttore alla callback
 		BYTE *pTomb4Mem;  // serie di byte di sezione codice di tomb4 originale
 	};
+
+	struct StrTripleteId {
+		WORD IndexFloorOld; // posiizone di trigger (all'interno di floordata) in meta level
+		WORD IndexFloorNow;  // posiizione attuale in nuovo livello di trigger
+		short IdPlugin;  // id del plugin (preso da vecchia tabella)
+	};
+
+	struct StrConvertPluginId {
+		WORD TotConvert;
+		StrTripleteId VetConvert[512];
+	};
 #pragma pack(pop)
 }

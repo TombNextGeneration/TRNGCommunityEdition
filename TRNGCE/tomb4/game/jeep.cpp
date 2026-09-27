@@ -6,6 +6,8 @@
 
 namespace tomb4
 {
+	long &jeep_ignition_key_object = *reinterpret_cast<decltype(&jeep_ignition_key_object)>(0x466452);
+
 	void JeepExplode(ITEM_INFO* item)
 	{
 		__try { throw __func__; } __finally {}

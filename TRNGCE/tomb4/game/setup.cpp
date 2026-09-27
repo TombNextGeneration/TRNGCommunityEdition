@@ -62,6 +62,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void reset_cutseq_vars()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Setup(bool replace)
@@ -74,4 +79,5 @@ void Inject_Setup(bool replace)
 	ProcessInject(0x45B380, (unsigned int)tomb4::InitialiseLara, false);
 	ProcessInject(0x45DD90, (unsigned int)tomb4::GetCarriedItems, false);
 	ProcessInject(0x45DEA0, (unsigned int)tomb4::GetAIPickups, false);
+	ProcessInject(0x45E410, (unsigned int)tomb4::reset_cutseq_vars, false);
 }

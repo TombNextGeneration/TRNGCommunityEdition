@@ -57,6 +57,7 @@ namespace tomb4
 	char* &gfFilenameWad = *reinterpret_cast<decltype(&gfFilenameWad)>(0x7FD16C);
 	uchar* &gfLanguageFile = *reinterpret_cast<decltype(&gfLanguageFile)>(0x7FD14C);
 	uchar (&gfLevelNames)[40] = *reinterpret_cast<decltype(&gfLevelNames)>(0x7FD1A0);
+	uchar &gfLevelCredits = *reinterpret_cast<decltype(&gfLevelCredits)>(0x452057);
 
 	void DoGameflow()
 	{

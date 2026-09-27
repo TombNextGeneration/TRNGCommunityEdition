@@ -3,7 +3,6 @@
 #include "../inject.h"
 #include "Tomb_NextGeneration.h"
 #include "../tomb4/game/control.h"
-#include "MyStructures.h"
 #include "trng_elevator.h"
 #include "../tomb4/game/collide.h"
 #include "Oggetti.h"
@@ -44,6 +43,10 @@
 #include "../tomb4/game/items.h"
 #include "../tomb4/specific/output.h"
 #include "../tomb4/specific/cmdline.h"
+#include "../tomb4/game/larafire.h"
+#include "../tomb4/game/lara1gun.h"
+#include "../tomb4/game/objlight.h"
+#include "trng_weather.h"
 
 namespace trng {
 	DWORD &OffsetPosLara = *reinterpret_cast<decltype(&OffsetPosLara)>(0x10679E5C);
@@ -77,6 +80,15 @@ namespace trng {
 	StrRoomTr4 *&pInsRecordRoom = *reinterpret_cast<decltype(&pInsRecordRoom)>(0x10682064);
 	DWORD &StartLoadingTime = *reinterpret_cast<decltype(&StartLoadingTime)>(0x10679F44);
 	HWND &WindSetup = *reinterpret_cast<decltype(&WindSetup)>(0x1068205C);
+	// usati da procedura DoFlareLight per alterare i colori
+	DWORD &FlareIntensita = *reinterpret_cast<decltype(&FlareIntensita)>(0x10169ED4);
+	DWORD &FlareRosso = *reinterpret_cast<decltype(&FlareRosso)>(0x10169ED8);
+	DWORD &FlareVerde = *reinterpret_cast<decltype(&FlareVerde)>(0x10169EDC);
+	DWORD &FlareBlu = *reinterpret_cast<decltype(&FlareBlu)>(0x10682060);
+	float &Float1_512 = *reinterpret_cast<decltype(&Float1_512)>(0x1016A2E0);
+	float &Float1_240 = *reinterpret_cast<decltype(&Float1_240)>(0x1016A2E4);   // era 540
+	float &Float512 = *reinterpret_cast<decltype(&Float512)>(0x1016A2E8);
+	float &Float240 = *reinterpret_cast<decltype(&Float240)>(0x1016A2EC);   // era 540
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -6821,6 +6833,1587 @@ namespace trng {
 
 		tomb4::AlterFOV(tomb4::LastFov);
 	}
+
+	// chiamata immediatamente prima di caricare file .tr4
+	// carica l'extra header di file .tr4 che si sta per caricare
+	void LeggiExtraHeader_Tr4(const char *pNomeTr4)
+	{
+		StrExtractNG HeaderTr4;
+		char Tr4MexVersione[40];
+		int i;
+		WORD *pWord;
+
+		// salvare il nome (solo il nome no la cartella)
+		// del file tr4 in corso
+		strcpy_s(GlobTomb4.BaseSaveGameInfos.Tr4Name, SoloNome(pNomeTr4));
+
+		// azzerare valori per headee ng tr4
+		GlobTomb4.TestTr4ConHeaderNG = false;
+		GlobTomb4.TexAnimate.TestPresente = false;
+		GlobTomb4.TexAnimate.Tot_UV_Rotate = 0;
+		strcpy_s(MyGlobPrivate.UltimoTr4Caricato, pNomeTr4);
+
+		for (i = 0; i < 40; i++) {
+			GlobTomb4.TexAnimate.VetInfoRangeAnim[i] = 0;
+		}
+
+		GlobTomb4.Flags2LevelTr4 = 0;
+		GlobTomb4.FlagsLevelTr4 = 0;
+		MyGlobPrivate.TestNG_NoTr4 = false;
+
+		HeaderTr4.pNGArray = NULL;
+		if (ExtractNGHeader(pNomeTr4, &HeaderTr4) == true) {
+
+			DecodeNGHeader_Tr4(&HeaderTr4);
+			// analisi versione
+			for (i = 0; i < 4; i++) {
+				if (GlobTomb4.BaseVersione.VetVersione[i] != GlobTomb4.VersioneTr4.VetVersione[i])
+					break;
+			}
+
+			if (i < 4) {
+				// versione diversa, dare un avviso
+				pWord = &GlobTomb4.VersioneTr4.VetVersione[0];
+
+				sprintf_s(Tr4MexVersione, "%d.%d.%d.%d", pWord[0], pWord[1], pWord[2], pWord[3]);
+				sprintf_s(BufferLog, "WARNING: level \"%s\" has a version (%s) different than current dll\r\n", SoloNome(pNomeTr4), Tr4MexVersione);
+				strcat_s(GlobTomb4.BaseMissing.MexMissing, BufferLog);
+				GlobTomb4.BaseMissing.TestAvvisi = true;
+			}
+
+			GlobTomb4.TestTr4ConHeaderNG = true;
+
+		} else {
+			switch (HeaderTr4.Result) {
+			case -2:
+
+				sprintf_s(BufferLog, "ERROR: cann't open file '%s' to extract ng extra header", pNomeTr4);
+
+				InviaLog(BufferLog);
+
+				return;
+			case -1:
+
+				InviaLog("WARNING: Extra NG Header appears corrupted");
+				sprintf_s(BufferLog, "CRITICAL ERROR: Header NG of file \"%s\" appears corrupted (or it is an old version)\r\n", SoloNome(pNomeTr4));
+				strcat_s(GlobTomb4.BaseMissing.MexMissing, BufferLog);
+				GlobTomb4.BaseMissing.TestErrori = true;
+
+				return;
+			case 0:
+
+				InviaLog("Current tr4 file has no Extra NG Header");
+				sprintf_s(BufferLog, "WARNING: missing Header NG in  \"%s\" level file\r\n", SoloNome(pNomeTr4));
+				strcat_s(GlobTomb4.BaseMissing.MexMissing, BufferLog);
+				GlobTomb4.BaseMissing.TestAvvisi = true;
+
+				MyGlobPrivate.TestNG_NoTr4 = true;
+				return;
+			default:
+				sprintf_s(BufferLog, "UNKNOWN ERROR trying to read NG header from file: %s", pNomeTr4);
+				InviaLog(BufferLog);
+				break;
+			}
+		}
+	}
+
+	// estrae tuttii dati di headerng e li inserisce nelle rispettive
+	// variabili globali in GlobTomb4
+	void DecodeNGHeader_Tr4(StrExtractNG *pExtractNG)
+	{
+		int i;
+		int j;
+		StrParseNGField ParseField;
+		void *pSrc, *pDest;
+		DWORD Numero;
+		StrPluginRec *pRec;
+		StrConvertPluginId BaseConvertId;
+
+		BaseConvertId.TotConvert = 0;
+
+		GlobTomb4.TexAnimate.TestPresente = false;
+		GlobTomb4.TexAnimate.Tot_UV_Rotate = 0;
+		for (i = 0; i < 40; i++) {
+			GlobTomb4.TexAnimate.VetInfoRangeAnim[i] = 0;
+		}
+
+		GlobTomb4.Flags2LevelTr4 = 0;
+		GlobTomb4.FlagsLevelTr4 = 0;
+
+		InviaLog("Found Extra NG Header for tr4");
+
+		// scandire dati, saltando prima word di controllo "NG"
+		i = 0;
+		while (ParseNgField(pExtractNG->pNGArray, i, &ParseField)) {
+
+			// analizzare tipo di pacchetto
+			switch (ParseField.Type) {
+			case NGTAG_REMAP_PLUGIN_IDS:
+				j = 0;
+				BaseConvertId.TotConvert = ParseField.pData[j++];
+				Numero = BaseConvertId.TotConvert;
+				memcpy(&BaseConvertId.VetConvert[0], &ParseField.pData[j], sizeof(StrTripleteId) * Numero);
+				break;
+
+			case NGTAG_PLUGIN_ID_FLOOR_TABLE:
+				j = 0;
+				GlobTomb4.pPluginFloorTable->TotTable = ParseField.pData[j++];
+				Numero = GlobTomb4.pPluginFloorTable->TotTable;
+
+				if (Numero > 0) {
+					if (Numero > 0x10000) {
+						sprintf_s(BufferLog, "ERROR: PluginIdFloorTabel, read from tr4 file, is wider than max size available table size = %d (max size=65536)", Numero);
+						InviaLog(BufferLog);
+						Numero = 0x10000;
+						GlobTomb4.pPluginFloorTable->TotTable = Numero;
+					}
+					memcpy(&GlobTomb4.pPluginFloorTable->VetTable[0], &ParseField.pData[j], Numero);
+				}
+
+				break;
+
+			case NGTAG_PLUGIN_NAMES_NGLE:
+				j = 0;
+				GlobTomb4.TotPluginNgle = ParseField.pData[j++];
+
+				memcpy(GlobTomb4.pVetPluginNgle, &ParseField.pData[j], sizeof(StrPluginNames) * GlobTomb4.TotPluginNgle);
+
+				// agggiornare i plugin id di ngle nel dei plugin caricati dll
+				for (i = 0; i < GlobTomb4.TotPluginNgle; i++) {
+					for (j = 0; j < (int) MyGlobPrivate.DataBase.TotPlugins; j++) {
+						pRec = &MyGlobPrivate.DataBase.pVetPlugins[j];
+						if (_stricmp(GlobTomb4.pVetPluginNgle[i].Nome, pRec->Nome) == 0) {
+							pRec->PluginIdNgle = GlobTomb4.pVetPluginNgle[i].PluginId;
+						}
+					}
+				}
+				break;
+
+			case NGTAG_ANIMATED_TEXTURES:
+				// dati animazione
+				if (ParseField.SizeData == sizeof(StrDatiExtraAnimazioni)) {
+					memcpy(&GlobTomb4.TexAnimate, ParseField.pData, sizeof(StrDatiExtraAnimazioni));
+					GlobTomb4.TexAnimate.TestPresente = true;
+				}
+				break;
+
+			case NGTAG_TEX_PARZIALE:
+				i = 0;
+				GlobTomb4.BaseTexParziali.TotRecords = ParseField.pData[i++];
+				memcpy(GlobTomb4.BaseTexParziali.VetParziali, &ParseField.pData[i], sizeof(StrTexParziali) * GlobTomb4.BaseTexParziali.TotRecords);
+				break;
+			case NGTAG_REMAP_TAILS:
+				i = 0;
+				GlobTomb4.BaseRemapTail.TotTails = ParseField.pData[i++];
+				memcpy(GlobTomb4.BaseRemapTail.VetRemapTail, &ParseField.pData[i], sizeof(StrRemapTailInfo) * GlobTomb4.BaseRemapTail.TotTails);
+
+				break;
+			case NGTAG_VERSION_HEADER:
+				memcpy(&GlobTomb4.VersioneTr4, &ParseField.pData[0], sizeof(StrVersionHeader));
+				break;
+			case NGTAG_REMAP_OBJ:
+				// vettore di 6000 short
+				memcpy(GlobTomb4.VetRemapObjects, ParseField.pData, 12000);
+				// creare vettore inverso di conversione
+				CreaVetRemapInverse();
+
+				break;
+			case NGTAG_EXTRA_INFO_ROOMS:
+				// elenco di strutture  informative per room
+				GlobTomb4.TotExtraInfoRoom = ParseField.pData[0];
+				pSrc = &ParseField.pData[1];
+				pDest = &GlobTomb4.VetExtraInfoRoom;
+				Numero = GlobTomb4.TotExtraInfoRoom * sizeof(StrExtraInfoRoom);
+				memcpy(pDest, pSrc, Numero);
+				break;
+			case NGTAG_REMAP_STATICS:
+				// vettore per localizzare static
+				memcpy(&GlobTomb4.VetRemapStatics, &ParseField.pData[0], sizeof(StrCercaStatic) * 6000);
+				break;
+
+			case NGTAG_FLAG_LEVEL_TR4:
+				// due word con due word flag per livello settate da ngle
+				GlobTomb4.FlagsLevelTr4 = ParseField.pData[0];
+				GlobTomb4.Flags2LevelTr4 = ParseField.pData[1];
+				break;
+			case NGTAG_VET_REMAP_ROOMS:
+				memcpy(&GlobTomb4.VetRemapRooms[0], &ParseField.pData[0], MAX_ROOMS * 2);
+				break;
+			}
+
+			// puntare a chunk successivo
+			i = ParseField.NextIndex;
+		}
+		FreeMine(pExtractNG->pNGArray);
+		pExtractNG->pNGArray = NULL;
+
+		AggiornaRoomStatics();
+		// vedere se vanno aggiorni gli id dei plugin
+		if (BaseConvertId.TotConvert > 0) {
+			AggiornaPluginIdTable(&BaseConvertId, GlobTomb4.pPluginFloorTable);
+		}
+	}
+
+	// e' stato appena caricato il vettore di remap dei moveable per file .tr4
+	// ora creare il vettore inverso che avra' come indice un indicetomb4 e come valore l'indice ngle
+	void CreaVetRemapInverse(void)
+	{
+		int i;
+		int IndexTomb4;
+
+		for (i = 0; i < 4096; i++) {
+			GlobTomb4.VetRemapInverseObjects[i] = -1;
+		}
+
+		for (i = 0; i < 6000; i++) {
+			IndexTomb4 = GlobTomb4.VetRemapObjects[i];
+
+			if (IndexTomb4 != -1) {
+				GlobTomb4.VetRemapInverseObjects[IndexTomb4] = (short) i;
+			}
+		}
+	}
+
+	// chiamata subito dopo aver caricato header tr4
+	// aggiornare i alori assoluti di room per gli statics
+	// con i valori di room relativi che trova in VetRemapRooms anch'esso
+	// appena caricato
+	void AggiornaRoomStatics(void)
+	{
+		int i;
+		int IndiceRel;
+
+		for (i = 0; i < 6000; i++) {
+			IndiceRel = GlobTomb4.VetRemapStatics[i].IndiceRoom;
+			if (IndiceRel != -1 && IndiceRel < 512) {
+				IndiceRel = GlobTomb4.VetRemapRooms[IndiceRel];
+				if (IndiceRel != -1) {
+					GlobTomb4.VetRemapStatics[i].IndiceRoom = (WORD) IndiceRel;
+				}
+			}
+
+		}
+	}
+
+	// AggiornaPluginIdTable(&BaseConvertId, GlobTomb4.pPluginFloorTable);
+	void AggiornaPluginIdTable(StrConvertPluginId *pConv, StrTablePluginIdFloor *pTable)
+	{
+		// rifare la tabella plugin  id sulla base delle triplette in pConv
+		int i;
+		int Indice;
+		BYTE Valore;
+
+		memset(&pTable->VetTable[0], 0, 0x10000);
+		pTable->TotTable = 0;
+
+		for (i = 0; i < pConv->TotConvert; i++) {
+			Indice = pConv->VetConvert[i].IndexFloorNow;
+			Valore = (BYTE) pConv->VetConvert[i].IdPlugin;
+
+#pragma warning(suppress: 6386)
+			pTable->VetTable[Indice] = Valore;
+			if (pTable->TotTable <= Indice)
+				pTable->TotTable = Indice + 1;
+		}
+	}
+
+	void LiberaImgLoadingLevel(void)
+	{
+		DWORD TimeNow;
+		DWORD TimeMinimo;
+
+		InviaLog("LiberaImgLoadingLevel()");
+		if (GlobTomb4.BaseImgLoadingLevel.Flags & BKGDF_MINIMAL_LOADING_TIME) {
+
+			TimeMinimo = GlobTomb4.BaseImgLoadingLevel.Parameter * 1000;
+			do {
+
+				TimeNow = (DWORD) GetTickCount64() - StartLoadingTime;
+				if (GlobTomb4.BaseImgLoadingLevel.Flags & BKGDF_SKIP_LOADING_TIME) {
+					if (TastoVKPremuto(VK_SPACE) || TastoVKPremuto(VK_CONTROL) || TastoVKPremuto(VK_ESCAPE))
+						break;
+				}
+				Sleep(0);
+			} while (TimeNow < TimeMinimo);
+		}
+
+		GlobTomb4.BaseImgLoadingLevel.TestAllocatedImage = false;
+
+		LiberaImmagine(&GlobTomb4.BaseImages.ImageLoadLevel);
+	}
+
+	// chiamata all'iniio del livello ma dopo la scansione di savegame/script
+	// modifca in modo specifico tomb4 come previsto dalle customizzazioni
+	// attuali
+	// in pratica viene chiamata quando e' tutto pronto per livello
+	// attuale
+	// qui vengono fatte le modiifche specifcihe necessarie
+	// che erano state lette poco prima da script per livello attuale
+	void PreparaCustomize(void)
+	{
+		static StrArmiTr4 DatiBalestraTR4 = {-10920, 10920, -10010, 10010, -14560, 14560, -11830, 11830, -14560, 14560, -11830, 11830, 1820, 1456, 500, 8192, 5, 0, 2, 10, 0};
+		static StrArmiTr4 DatiArpioneTR3 = {-10920, 10920, -11830, 11830, -3640, 3640, -13650, 13650, -14560, 14560, -13650, 13650, 1820, 1456, 500, 8192, 6, 0, 2, 10, 0};
+
+		StrBaseCustomize *pCust;
+		StrCustWeapon *pWeap;
+		StrCustAmmo *pAmmo;
+		bool TestSkeletonCust;
+		StrBaseHarpoon *pHarp;
+		StrDatoInventario *pInv;
+		StrBaseDeadAnim *pDead;
+		StrCustFlare *pFlare;
+		int i;
+		StrBaseAnimMorte *pMorte;
+		int n;
+		StrRecordEnemyScript *pEnemy;
+		int j;
+		StrCustCamera *pCamera;
+		int Slot;
+		StrCustDatiOggettoMano *pVetOggetti;
+		StrArmiTr4 *pVetCostantiNemici;
+
+		pVetCostantiNemici = (StrArmiTr4*) tomb4::weapons;
+
+		pVetOggetti = GlobTomb4.pAdr->pVetCustObjectsHand;
+		pCust = GlobTomb4.pBaseCustomize;
+
+		// imposta numero totale di segreti
+		if (pCust->SecretsAmount > 99)
+			pCust->SecretsAmount = 99;
+
+		sprintf_s(tomb4::secrets_format_string, "%%d / %d", pCust->SecretsAmount);
+
+		// imposta slot per chiave jeep
+		tomb4::jeep_ignition_key_object = pCust->SlotChiaveJeep;
+
+		// imposta numero livello credits
+		tomb4::gfLevelCredits = (BYTE) pCust->CreditsLevel;
+
+		// ------ imposta altre preferenze per munizioni -----------
+		// munizioni pistola
+		pAmmo = &pCust->AmmoPistols;
+		pVetCostantiNemici[1].DannoArmaNormale = (BYTE) pAmmo->DamageNormale;
+
+		// munizioni uzi
+		pAmmo = &pCust->AmmoUZI;
+		pVetCostantiNemici[3].DannoArmaNormale = (BYTE) pAmmo->DamageNormale;
+
+		// munizione revolver
+		pAmmo = &pCust->AmmoRevolver;
+		pVetCostantiNemici[2].DannoArmaNormale = (BYTE) pAmmo->DamageNormale;
+
+		// munizione fucile
+		pAmmo = &pCust->AmmoFucileNormale;
+		pVetCostantiNemici[4].DannoArmaNormale = (BYTE) pAmmo->DamageNormale;
+
+		// munizioni fucile esplosive (niente c'e' gia' una patch per aggiungere
+		// danno
+
+		// munizioni balestra
+		pAmmo = &pCust->AmmoBalestraNormali;
+		pVetCostantiNemici[6].DannoArmaNormale = (BYTE) pAmmo->DamageNormale;
+
+		// munizioni balestra esplosiva
+
+		// per balestra veleno e' gia' usata in automatico da patch
+
+		// ------ WEAPON customize -------------
+		// PISTOLS
+		pWeap = &pCust->WeaponPistols;
+
+		pVetCostantiNemici[1].Random = pWeap->Dispersion;
+		pVetCostantiNemici[1].DistanceTarget = pWeap->DistanceAiming;
+		pVetOggetti[1].FrameCounter = pWeap->FrameCounter;
+		pVetOggetti[1].FrameMinRange = pWeap->FrameMinRange;
+		pVetOggetti[1].FrameMaxRange = pWeap->FrameMaxRange;
+		pVetCostantiNemici[1].TempoRicarica = pWeap->FramesRicarica;
+		pVetOggetti[1].FrameChangeArma = pWeap->FrameToTakeWeapon;
+		pVetCostantiNemici[1].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[1].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[1].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[1].CordYArma = pWeap->VPositionOfWeapon;
+
+		// UZI
+		pWeap = &pCust->WeaponUzi;
+
+		pVetCostantiNemici[3].Random = pWeap->Dispersion;
+		pVetCostantiNemici[3].DistanceTarget = pWeap->DistanceAiming;
+		pVetOggetti[3].FrameCounter = pWeap->FrameCounter;
+		pVetOggetti[3].FrameMinRange = pWeap->FrameMinRange;
+		pVetOggetti[3].FrameMaxRange = pWeap->FrameMaxRange;
+		pVetCostantiNemici[3].TempoRicarica = pWeap->FramesRicarica;
+		pVetOggetti[3].FrameChangeArma = pWeap->FrameToTakeWeapon;
+		pVetCostantiNemici[3].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[3].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[3].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[3].CordYArma = pWeap->VPositionOfWeapon;
+
+		// REVOLVER
+		pWeap = &pCust->WeaponRevolver;
+
+		pVetCostantiNemici[2].Random = pWeap->Dispersion;
+		pVetCostantiNemici[2].DistanceTarget = pWeap->DistanceAiming;
+		pVetOggetti[2].FrameCounter = pWeap->FrameCounter;
+		pVetOggetti[2].FrameMinRange = pWeap->FrameMinRange;
+		pVetOggetti[2].FrameMaxRange = pWeap->FrameMaxRange;
+		pVetCostantiNemici[2].TempoRicarica = pWeap->FramesRicarica;
+		pVetOggetti[2].FrameChangeArma = pWeap->FrameToTakeWeapon;
+		pVetCostantiNemici[2].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[2].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[2].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[2].CordYArma = pWeap->VPositionOfWeapon;
+
+		// fucile
+		pWeap = &pCust->WeaponFucile;
+
+		pVetCostantiNemici[4].Random = pWeap->Dispersion;
+		pVetCostantiNemici[4].DistanceTarget = pWeap->DistanceAiming;
+
+		pVetCostantiNemici[4].FrameCambioArma = pWeap->FrameToTakeWeapon;
+		// il valore pWeap->FrameToLetWeapon viene gestito in patch globale
+
+		pVetCostantiNemici[4].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[4].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[4].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[4].CordYArma = pWeap->VPositionOfWeapon;
+
+		// lancia granate ---------------------------
+		pWeap = &pCust->WeaponLanciaGranate;
+
+		pVetCostantiNemici[5].Random = pWeap->Dispersion;
+		pVetCostantiNemici[5].DistanceTarget = pWeap->DistanceAiming;
+
+		pVetCostantiNemici[5].FrameCambioArma = pWeap->FrameToTakeWeapon;
+		// il valore pWeap->FrameToLetWeapon viene gestito in patch globale
+
+		pVetCostantiNemici[5].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[5].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[5].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[5].CordYArma = pWeap->VPositionOfWeapon;
+		// balestra ---------------------------
+		pWeap = &pCust->WeaponBalestra;
+
+		pVetCostantiNemici[6].Random = pWeap->Dispersion;
+		pVetCostantiNemici[6].DistanceTarget = pWeap->DistanceAiming;
+
+		pVetCostantiNemici[6].FrameCambioArma = pWeap->FrameToTakeWeapon;
+		// il valore pWeap->FrameToLetWeapon viene gestito in patch globale
+
+		pVetCostantiNemici[6].DurateFlash = pWeap->SizeShell;
+		pVetCostantiNemici[6].SuonoSparo = pWeap->SoundShot;
+		pVetCostantiNemici[6].DatoArmaEstratta = pWeap->Unknow;
+		pVetCostantiNemici[6].CordYArma = pWeap->VPositionOfWeapon;
+
+		// vedere se c'e' da modificare origine di proiettile
+		if (pWeap->Orient | pWeap->OrigX | pWeap->OrigY | pWeap->OrigZ) {
+			// c'e' qualche modifica a posizione proiettile
+			tomb4::CrossbowOffsetX = pWeap->OrigX;
+			tomb4::CrossbowOffsetY = 228 + pWeap->OrigY;
+			tomb4::CrossbowOffsetZ = 32 + pWeap->OrigZ;
+		}
+
+		// se e' attivo show ammo counter, creare adesso la simil
+		// azione che andra poi modificata nel testo.
+		if (GlobTomb4.pBaseCustomize->ShowAmmoCounter.TestShowAmmoCounter) {
+			InitShowAmmoCounter();
+		}
+
+		// memorizza gli indici di tutte le creature per cui
+		// e' prevista una animazione di morte nuova
+		pMorte = &GlobTomb4.pBaseCustomize->BaseAddAnimMorte;
+		pDead = &GlobTomb4.BaseDeadAnim;
+
+		pDead->TotDeadAnim = 0;
+		if (pMorte->TotCustAnimMorte) {
+
+			// ora scandagliare tutti gli item e salvare tutti quelli
+			// che hanno lo slot che sia una di quelli previsti
+			for (i = 0; i < *GlobTomb4.pAdr->pTotItems; i++) {
+				Slot = GlobTomb4.pAdr->pVetItems[i].SlotID;
+				for (j = 0; j < pMorte->TotCustAnimMorte; j++) {
+					if (pMorte->VetAnimMorte[j].Slot == Slot)
+						break;
+				}
+
+				if (j < pMorte->TotCustAnimMorte) {
+					// aggiungere
+					n = pDead->TotDeadAnim;
+
+					if (n < MAX_DEAD_ANIM) {
+						pDead->VetDeadAnim[n].Indice = (short) i;
+						pDead->VetDeadAnim[n].AnimIndex = pMorte->VetAnimMorte[j].AnimIndex;
+						pDead->TotDeadAnim++;
+					}
+				}
+			}
+		}
+		pCamera = &pCust->CameraCust;
+
+		tomb4::CameraDefaultSpeed = pCamera->Speed;
+
+		tomb4::CameraDefaultDistance = pCamera->ChaseDistance;
+
+		// distanza combat camera va usata in modo esplicito in una patch
+		// dinamica
+
+		tomb4::ChaseCameraDefaultElevation = pCamera->ChaseHeight;
+
+		tomb4::LookCameraDefaultTargetZ = pCamera->LookDistance;
+
+		tomb4::LookCameraDefaultStartY = pCamera->LookHeight;
+
+		// imposta customizzazioni per lights
+		// AMBER (timing)
+		tomb4::AmberLightSwitchSpeed = (short) pCust->AmberLight.Time;
+
+		// WHITE light
+		tomb4::WhiteLightFrameOn = (short) pCust->WhiteLight.Time;
+
+		// blinking ligth
+		tomb4::BlinkingLightDelay = (short) pCust->BlinkingLight.Time;
+
+		// intensita blinking light
+		tomb4::BlinkingLightBlue = (BYTE) pCust->BlinkingLight.Blue;
+
+		tomb4::BlinkingLightGreen = (BYTE) pCust->BlinkingLight.Verde;
+
+		tomb4::BlinkingLightRed = (BYTE) pCust->BlinkingLight.Rosso;
+
+		tomb4::BlinkingLightFalloff = (BYTE) pCust->BlinkingLight.Intensita;
+
+		// ------ modifica per Arpione harpoon --------
+		pHarp = &pCust->BaseHarpoon;
+
+		if (pHarp->TestArpione) {
+			// dati per patch arpione su nemici costnati
+			pVetCostantiNemici[6] = DatiArpioneTR3;
+			// copiare dati di patch
+			pInv = &GlobTomb4.pAdr->pVetStructInventoryItems[5];
+			pInv->Distance = pHarp->Distance;
+			pInv->OffsetY = pHarp->TopY;
+			pInv->OrientX = pHarp->OrientX;
+			pInv->OrientY = pHarp->OrientY;
+			pInv->OrientZ = pHarp->OrientZ;
+			pInv = &GlobTomb4.pAdr->pVetStructInventoryItems[6];
+			pInv->Distance = pHarp->Distance;
+			pInv->OffsetY = pHarp->TopY;
+			pInv->OrientX = pHarp->OrientX;
+			pInv->OrientY = pHarp->OrientY;
+			pInv->OrientZ = pHarp->OrientZ;
+
+			if (pHarp->ArpioneFlags & HRP_DISABLE_LASER_SIGHT) {
+				GlobTomb4.pAdr->pVetFlagsInventoryItems[5] &= ~8;
+			}
+
+		} else {
+			// rimette dati standard
+			pVetCostantiNemici[6] = DatiBalestraTR4;
+			pInv = &GlobTomb4.pAdr->pVetStructInventoryItems[5];
+			pInv->Distance = 0x300;
+			pInv->OffsetY = 0;
+			pInv->OrientX = 0x2000;
+			pInv->OrientY = 0x1800;
+			pInv->OrientZ = 0x0;
+			pInv = &GlobTomb4.pAdr->pVetStructInventoryItems[6];
+			pInv->Distance = 0x300;
+			pInv->OffsetY = 0;
+			pInv->OrientX = 0x2000;
+			pInv->OrientY = 0x1800;
+			pInv->OrientZ = 0x0;
+			// riabilita uso del mirino laser
+			GlobTomb4.pAdr->pVetFlagsInventoryItems[5] |= 0x08;
+		}
+
+		// ----- prepara colori e intensita per flare
+		pFlare = &pCust->BaseFlare;
+		FlareIntensita = pFlare->Intensita;
+		FlareRosso = pFlare->Rosso;
+		FlareVerde = pFlare->Verde;
+		FlareBlu = pFlare->Blu;
+
+		InitTextTypes(&pCust->VetTTColors[0]);
+
+		// dati customize rain
+		SetCustomizeWeatherDefault();
+
+		// dati enemy
+		TestSkeletonCust = false;
+		for (i = 0; i < GlobTomb4.BaseEnemys.TotEnemy; i++) {
+			pEnemy = &GlobTomb4.BaseEnemys.VetEnemy[i];
+
+			if (pEnemy->SlotId == 35) {
+				// skeleton
+				// se c'e' flag NEF_SET_AS_MORTAL, applicare patch selettiva per impedire
+				// alterazione di vitalita' da parte di gestione hardcoded di tomb4
+				if (pEnemy->FlagsNEF & NEF_SET_AS_MORTAL)
+					TestSkeletonCust = true;
+			}
+		}
+
+		CreaPatchSkeleton(TestSkeletonCust);
+	}
+
+	void InitShowAmmoCounter(void)
+	{
+		StrProgressiveAction *pAzione;
+		StrPrintString *pTex;
+
+		pAzione = &GlobTomb4.pBaseCustomize->ShowAmmoCounter.AzioneTestoCounter;
+		pTex = &GlobTomb4.pBaseCustomize->ShowAmmoCounter.TexAmmoCounter;
+
+		// inizializzare solo dati diversi da testo della stringa
+		pAzione->ActionType = AZ_PRINT_STRING;
+
+		// dimensione
+		pAzione->Arg2 = pTex->DefALLFlagsMicro;
+		pAzione->VetArgWord[2] = pTex->Flags;
+		pAzione->VetArgShort[3] = -1;
+		pAzione->VetArgWord[6] = GlobTomb4.pBaseCustomize->ShowAmmoCounter.Flags;
+
+		// salvare colore attuale per stringhe
+		pAzione->VetArgWord[4] = pTex->Colore;
+		pAzione->VetArg[3] = pTex->Posizione;
+	}
+
+	// mette valori di default per colori associati con text type TT_ ...
+	void InitTextTypes(BYTE *pVetBytes)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// rimuove certe zone di codice di gestione skeleton se TestMettiNop == true
+	// per impedire modifiche a vitalita' skeleton
+	// se invece TestMettiNOP == false, ripristina codice originale
+	void CreaPatchSkeleton(bool TestMettiNOP)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void PreparaMirror(void)
+	{
+		WORD IndiceRoom;
+		int *pMirrorNumeroComplesso; //  Mirror_NumeroComplesso
+		int i, j;
+		StrBoxCollisione *pBox;
+		int z;
+		int TotMirrors;
+		WORD Indice;
+		int IndiceSecondario;
+		int OldTotMirrors;
+		RecordMirror *pMirror;
+		StrItemTr4 *pItemMain;
+		StrItemTr4 *pItemMirror;
+		StrRoomTr4 *pRoom;
+		BYTE *pMirrorRoom; //  Mirror_Room
+
+		pMirrorNumeroComplesso = (int *) &tomb4::gfMirrorZPlane;
+		pMirrorRoom = &tomb4::gfMirrorRoom;
+
+		OldTotMirrors = GlobTomb4.BaseMirror.TotMirror;
+
+		// se il mirror e' quello standard del comando script
+		// aggiungerlo alla lista
+
+		if (*GlobTomb4.pAdr->pScriptLevelFlags & 0x2000) {
+
+			// ok, ora aggiungerlo sotto forma standard
+			TotMirrors = GlobTomb4.BaseMirror.TotMirror;
+			pMirror = &GlobTomb4.BaseMirror.VetMirror[TotMirrors];
+			pMirror->CordMirror = *pMirrorNumeroComplesso * 2;
+			pMirror->MirrorRoom = *pMirrorRoom;
+			pMirror->MirrorType = MIR_WEST_WALL;  // tipo west standard
+			pMirror->TotAnimating = 0;
+			pMirror->TestAttivo = true;
+			GlobTomb4.BaseMirror.TotMirror++;
+
+		} else {
+			// non e' attivo
+			// vedere se ci sono mirror col nuovo comnando
+			if (GlobTomb4.BaseMirror.TotMirror) {
+				GlobTomb4.pAdr->pScriptLevelFlags[0] |= 0x2000;
+			}
+		}
+
+		if (OldTotMirrors == 0)
+			return;
+
+		for (z = 0; z < OldTotMirrors; z++) {
+
+			pMirror = &GlobTomb4.BaseMirror.VetMirror[z];
+
+			// disattivarlo se la stanza hidden e' tra quelle disabilitate
+			for (i = 0; i < GlobTomb4.TotDisabledMirrors; i++) {
+				if (pMirror->HiddenRoom == GlobTomb4.VetDisabledMirrors[i]) {
+					pMirror->TestAttivo = 0;
+				}
+			}
+
+			IndiceRoom = pMirror->MirrorRoom;
+
+			// se ci sono indici di animating convertirli da formato ngle
+			// a formato interno trng
+			for (i = 0; i < pMirror->TotAnimating; i++) {
+				Indice = pMirror->VetAnimMain[i] & FMIR_MASK_INDEX;
+				Indice = GlobTomb4.VetRemapObjects[Indice];
+				if (Indice < 0 || Indice >= *GlobTomb4.pAdr->pTotItems) {
+
+					sprintf_s(BufferLog, "ERROR: mirror effect: animating with ngle index = %d is not present", pMirror->VetAnimMain[i] & FMIR_MASK_INDEX);
+					InviaLog(BufferLog);
+
+					pMirror->TotAnimating = 0;
+					break;
+				}
+				pMirror->VetAnimMain[i] = (pMirror->VetAnimMain[i] & FMIR_MASK_FLAGS) | Indice;
+				// inizializzare anche le coordinat x,z per fix
+				pMirror->VetFixX[i] = 0;
+				pMirror->VetFixZ[i] = 0;
+
+				if (pMirror->VetAnimMain[i] & (FMIR_ADJUST_X | FMIR_ADJUST_Z)) {
+					pItemMain = &GlobTomb4.pAdr->pVetItems[Indice];
+					pBox = (trng::StrBoxCollisione *) tomb4::GetBestFrame((tomb4::ITEM_INFO *) pItemMain);
+					pBox = RuotaBox(pBox, pItemMain->OrientationH);
+
+					if (pMirror->VetAnimMain[i] & FMIR_ADJUST_X) {
+						pMirror->VetFixX[i] = pBox->MaxX + pBox->MinX;
+					}
+
+					if (pMirror->VetAnimMain[i] & FMIR_ADJUST_Z) {
+						pMirror->VetFixZ[i] = pBox->MaxZ + pBox->MinZ;
+					}
+				}
+
+			}
+
+			switch (pMirror->MirrorType) {
+			case MIR_WEST_WALL:     // mirror e' nella stanza di sinistra sull'asse Z
+			case MIR_INVERSE_WEST:
+			case MIR_EAST_WALL:   // mirror e' nella stanza di destra sull'asse z
+
+				pRoom = &GlobTomb4.pAdr->pVetRooms[IndiceRoom];
+				if (pMirror->MirrorType == MIR_EAST_WALL) {
+					pMirror->CordMirror = (pRoom->OriginZ + 1024) + (pRoom->Z_SizeSectors - 2) * 1024;
+					pMirror->CordMirror *= 2;
+
+				} else {
+
+					pMirror->CordMirror = (pRoom->OriginZ + 1024) * 2;
+
+					if (pMirror->MirrorType == MIR_INVERSE_WEST) {
+						// usato per mirror inverso
+						pMirror->MinCordMirror = (pRoom->OriginX + 1024);
+						pMirror->MaxCordMirror = pMirror->MinCordMirror + (pRoom->X_SizeSectors - 2) * 1024;
+					}
+				}
+				// localizzare item corrispettivi
+				for (i = 0; i < pMirror->TotAnimating; i++) {
+					pItemMain = &GlobTomb4.pAdr->pVetItems[pMirror->VetAnimMain[i] & FMIR_MASK_INDEX];
+					// ora cercare un item che sia nella stanza Hidden
+					// che abbia lo stesso numero di slot, la stessa coordinata x
+					// e lo stesso orientamento orizzontale(?) forse e' meglio di no
+					// o forse si?
+					pItemMirror = GlobTomb4.pAdr->pVetItems;
+					IndiceSecondario = -1;
+
+					for (j = 0; j < *GlobTomb4.pAdr->pTotItems; j++) {
+						if (pItemMirror->Room == pMirror->HiddenRoom && pItemMirror->SlotID == pItemMain->SlotID) {
+							IndiceSecondario = j;
+							if (pItemMirror->CordX == pItemMain->CordX)
+								break;
+						}
+						pItemMirror++;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems && IndiceSecondario == -1) {
+
+						sprintf_s(BufferLog, "ERROR: speculare mirror effect east/west: cann't locate the animating in hidden room with same slot type = %d", pItemMain->SlotID);
+						InviaLog(BufferLog);
+
+						pMirror->TotAnimating = 0;
+						break;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems) {
+
+						j = IndiceSecondario;
+					}
+
+					// indice j
+					pMirror->VetAnimMirror[i] = (WORD) j;
+				}
+
+				break;
+			case MIR_SOUTH_WALL:  // mirror a sud di stanza su asse x
+			case MIR_NORTH_WALL:  // mirror a nord di stanza su asse x
+
+				pRoom = &GlobTomb4.pAdr->pVetRooms[IndiceRoom];
+				if (pMirror->MirrorType == MIR_SOUTH_WALL) {
+					pMirror->CordMirror = (pRoom->OriginX + 1024) + (pRoom->X_SizeSectors - 2) * 1024;
+					pMirror->CordMirror *= 2;
+
+				} else {
+					// deve essere MIR_NORTH_WALL
+					pMirror->CordMirror = (pRoom->OriginX + 1024) * 2;
+				}
+
+				// localizzare item corrispettivi
+				for (i = 0; i < pMirror->TotAnimating; i++) {
+					pItemMain = &GlobTomb4.pAdr->pVetItems[pMirror->VetAnimMain[i] & FMIR_MASK_INDEX];
+					// ora cercare un item che sia nella stanza Hidden
+					// che abbia lo stesso numero di slot, la stessa coordinata z
+					// e lo stesso orientamento orizzontale(?) forse e' meglio di no
+					// o forse si?
+					pItemMirror = GlobTomb4.pAdr->pVetItems;
+					IndiceSecondario = -1;
+
+					for (j = 0; j < *GlobTomb4.pAdr->pTotItems; j++) {
+						if (pItemMirror->Room == pMirror->HiddenRoom && pItemMirror->SlotID == pItemMain->SlotID) {
+							IndiceSecondario = j;
+							if (pItemMirror->CordZ == pItemMain->CordZ)
+								break;
+						}
+						pItemMirror++;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems && IndiceSecondario == -1) {
+
+						sprintf_s(BufferLog, "ERROR: speculare mirror effect south/north: cann't locate the animating in hidden room with same slot type = %d", pItemMain->SlotID);
+						InviaLog(BufferLog);
+
+						pMirror->TotAnimating = 0;
+						break;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems) {
+
+						j = IndiceSecondario;
+					}
+
+					// indice j
+					pMirror->VetAnimMirror[i] = (WORD) j;
+				}
+
+				break;
+			case MIR_FLOOR:
+			case MIR_CEILING:
+				// mirror verticale, la coordinata y e' il floor della stanza
+
+				if (pMirror->MirrorType == 1) {
+					// floor
+					pMirror->CordMirror = GlobTomb4.pAdr->pVetRooms[IndiceRoom].OrigYBottom * 2;
+				} else {
+					// ceiling
+					pMirror->CordMirror = GlobTomb4.pAdr->pVetRooms[IndiceRoom].OrigYTop * 2;
+				}
+
+				// localizzare item corrispettivi
+				for (i = 0; i < pMirror->TotAnimating; i++) {
+					pItemMain = &GlobTomb4.pAdr->pVetItems[pMirror->VetAnimMain[i] & FMIR_MASK_INDEX];
+					// ora cercare un item che sia nella stanza Hidden
+					// che abbia lo stesso numero di slot, la stessa coordinata x e z
+					// e lo stesso orientamento orizzontale(?) forse e' meglio di no
+					// o forse si?
+					pItemMirror = GlobTomb4.pAdr->pVetItems;
+					IndiceSecondario = -1;
+					for (j = 0; j < *GlobTomb4.pAdr->pTotItems; j++) {
+						if (pItemMirror->Room == pMirror->HiddenRoom && pItemMirror->SlotID == pItemMain->SlotID) {
+							IndiceSecondario = j;
+							if (pItemMirror->CordZ == pItemMain->CordZ && pItemMirror->CordX == pItemMain->CordX)
+								break;
+						}
+						pItemMirror++;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems && IndiceSecondario == -1) {
+
+						sprintf_s(BufferLog, "ERROR: specular mirror effect south/north: cann't locate the animating in hidden room with same slot type = %d", pItemMain->SlotID);
+						InviaLog(BufferLog);
+
+						pMirror->TotAnimating = 0;
+						break;
+					}
+					if (j == *GlobTomb4.pAdr->pTotItems) {
+						// trovato solo come uguale slot
+
+						j = IndiceSecondario;
+					}
+					// indice j
+					pMirror->VetAnimMirror[i] = (WORD) j;
+				}
+
+				break;
+			default:
+				return;
+			}
+
+			*GlobTomb4.pAdr->pScriptLevelFlags |= 0x2000;
+
+		}
+		AggiornaMirrorAnimating();
+	}
+
+	void PreparaCutscene(void)
+	{
+		GlobTomb4.TestTakeAwayWeapons = false;
+
+		if (GlobTomb4.pScriptLevelNow->LevelFlags & fngl_CutScene) {
+
+			//per questo livello c'e' cutscene
+			// disattivare input
+			GlobTomb4.KeysToStop = CMD_ALL;
+			// togiere oggetti dalle mani
+			GlobTomb4.TestTakeAwayWeapons = true;
+		}
+	}
+
+	// prepara detector
+	void PreparaDetector(void)
+	{
+		StrDetector *pDetector;
+		int i;
+		int Indice;
+
+		pDetector = &GlobTomb4.BaseDetector;
+		if (pDetector->TestAttivo == false)
+			return;
+		SetItemDetector(TD_LITTLE_DETECTOR);
+		for (i = 0; i < pDetector->TotIndici; i++) {
+			Indice = pDetector->VetIndici[i];
+			if (Indice == SCRIPT_IGNORE || GlobTomb4.VetRemapObjects[Indice] == -1) {
+
+				sprintf_s(BufferLog, "ERROR in Detector script command: wrong index in items array (%d)", Indice);
+				InviaLog(BufferLog);
+
+				pDetector->TestAttivo = false;
+
+				return;
+			}
+			pDetector->VetIndici[i] = GlobTomb4.VetRemapObjects[Indice];
+		}
+
+		VerificaTargetDetector();
+		pDetector->Indice = pDetector->VetIndici[0];
+		if (pDetector->Flags & DTF_RADAR_MODE) {
+
+			// calcolare la massima distana valida in metri sia in verticale
+			// che in orizzontale per abilitare la visione
+			pDetector->MaxDifHMetri = pDetector->ScalaMetrica * 6;
+			pDetector->MaxDifVMetri = pDetector->ScalaMetrica * 7;
+			// all'inizio disattivare tutti i target
+			for (i = 0; i < pDetector->TotIndici; i++) {
+				pDetector->VetTargets[i].Fase = FTR_INATTIVO;
+			}
+		}
+	}
+
+	// chiamata subito dopo il caricamento del livello
+	// trova tutti i puntatori di oggetti di tipo pedana che possono
+	// sostenere pushabvle objects
+	void PreparaPedane(void)
+	{
+		WORD i;
+		WORD SlotNow;
+
+		GlobTomb4.TotPedane = 0;
+		for (i = 0; i < *GlobTomb4.pAdr->pTotItems; i++) {
+			SlotNow = GlobTomb4.pAdr->pVetItems[i].SlotID;
+			if (SlotNow >= 0x95 && SlotNow <= 0x99) {
+				// memorizzarlo
+				GlobTomb4.VetPlatforms[GlobTomb4.TotPedane++] = &GlobTomb4.pAdr->pVetItems[i];
+			}
+		}
+	}
+
+	// chiamata subito dopo il caricamento del livello
+	// trova tutti i puntatori di oggetti di tipo pushable object
+	void PreparaPushables(void)
+	{
+		WORD i;
+		WORD SlotNow;
+
+		GlobTomb4.BasePushables.TotPushables = 0;
+
+		for (i = 0; i < *GlobTomb4.pAdr->pTotItems; i++) {
+			SlotNow = GlobTomb4.pAdr->pVetItems[i].SlotID;
+			if (SlotNow >= 156 && SlotNow <= 160) {
+				// memorizzarlo
+				GlobTomb4.BasePushables.VetPushables[GlobTomb4.BasePushables.TotPushables] = &GlobTomb4.pAdr->pVetItems[i];
+				GlobTomb4.BasePushables.VetPushablesIndex[GlobTomb4.BasePushables.TotPushables++] = i;
+			}
+
+		}
+	}
+
+	// chiamata all'inziio del livello ma dopo eventuale caricamento di savegame
+	// inizializza i dati dinamici per organizer
+	void PreparaOrganizer(void)
+	{
+		bool TestSavegame;
+		int i;
+		StrScriptOrganizer *pScriptOrg;
+		StrStatusOrganizer *pStatusOrg;
+
+		if (GlobTomb4.pBaseOrganizer->TotOrganizer == 0)
+			return;
+
+		if (GlobTomb4.TestAsSavegame)
+			TestSavegame = true;
+		else
+			TestSavegame = false;
+
+		// se c'era savegame i dati dinamici sono gia' stati impostati
+		if (TestSavegame == true)
+			return;
+		for (i = 0; i < GlobTomb4.pBaseOrganizer->TotOrganizer; i++) {
+			pScriptOrg = &GlobTomb4.pBaseOrganizer->VetOrganizer[i];
+			pStatusOrg = &GlobTomb4.pBaseOrganizer->VetStatusOrganizer[i];
+
+			pStatusOrg->indiceNow = 0;
+
+			if (pScriptOrg->Flags & FO_ENABLED) {
+				if (pScriptOrg->Flags & FO_TICK_TIME) {
+					pStatusOrg->StartPerformed = GlobTomb4.pBaseOrganizer->CounterGame;
+				} else {
+					pStatusOrg->StartPerformed = GlobTomb4.pBaseOrganizer->CounterGame / 30;
+				}
+				pStatusOrg->Status = 1;
+			} else {
+				pStatusOrg->Status = 0;
+			}
+
+		}
+	}
+
+	void PreparaItemGroup(void)
+	{
+		// converte indici di itemgroup in valori validi
+		int i;
+		StrItemGroup *pItemGroup;
+		int TotGroups;
+		int j;
+		short Indice;
+
+		TotGroups = GlobTomb4.BaseItemGroup.TotGroups;
+		if (TotGroups == 0)
+			return;
+
+		for (i = 0; i < TotGroups; i++) {
+			pItemGroup = &GlobTomb4.BaseItemGroup.VetItemGroup[i];
+
+			for (j = 0; j < pItemGroup->TotIndici; j++) {
+				Indice = pItemGroup->VetIndici[j];
+
+				if (Indice >= 0) {
+					Indice = GlobTomb4.VetRemapObjects[Indice];
+					if (Indice == -1) {
+						sprintf_s(BufferLog, "ERROR not found item with index=%d in ItemGroup=%d command", pItemGroup->VetIndici[j], pItemGroup->IdGroup);
+						InviaLog(BufferLog);
+					}
+				} else {
+					// era uno static
+					Indice = -Indice;
+				}
+				pItemGroup->VetIndici[j] = Indice;
+			}
+		}
+	}
+
+	// chiamata subito dopo aver caricato livello (e/o savegame)
+	// usata per inizializzare alcuni global trigger
+	void PreparaGlobalTriggers(void)
+	{
+		// se = 4 allora e' stato caricato un savegame
+		if (*GlobTomb4.pAdr->pTestLoadOrNewLevel == 4) {
+			GlobTomb4.pBaseGlobalTriggers->TestCaricatoSavegame = true;
+		} else {
+			GlobTomb4.pBaseGlobalTriggers->TestCaricatoSavegame = false;
+		}
+	}
+
+	// chiamata dopo aver caricato script
+	void PreparaPushAway(void)
+	{
+		// imposta i valori delle animazioni che hanno flag FAN_DISABLE_PUSH_AWAY
+		StrDisablePushAway *pBase;
+		BaseAnimScript *pAnim;
+		int i;
+
+		pBase = &GlobTomb4.BaseDisablePushAway;
+
+		pBase->TotDisable = 0;
+
+		// se e' attivo il customize CUST_DISABLE_PUSH_AWAY_ANIMATION, non fare altri
+		// calcoli perche' il push_away sara' sempre disabilitato
+
+		if (GlobTomb4.pBaseCustomize->TestDisablePushAway == true)
+			return;
+
+		pAnim = GlobTomb4.pBaseAnimations;
+
+		for (i = 0; i < pAnim->TotAnimazioni; i++) {
+			if (pAnim->VetAnimations[i].Flags & FAN_DISABLE_PUSH_AWAY) {
+				pBase->VetAnimNumber[pBase->TotDisable] = pAnim->VetAnimations[i].AnimIndex;
+				pBase->TotDisable++;
+			}
+		}
+	}
+
+	// viene chiamata dopo LoadSprites
+	// bisogna caricare VetBinary se e' presente FONT_GRAPHICS
+	// poi libera memoria di mappa texture 2
+	void PreparaFontGrapchis(void)
+	{
+		StrSlot *pSlot;
+		int IndiceTex;
+		StrSpriteTomb4 *pTail;
+		int OrgX, OrgY;
+		int IndiceTailInfo;
+		int OffX, OffY;
+		int Inizio;
+		BYTE ValCheckSum;
+		int i;
+		int SizeBinary;
+		BYTE *pMem;
+		DWORD Somma;
+		BYTE *pByte;
+		int x, y;
+		int IndiceSrc;
+		int IndiceDest;
+		StrSpriteTomb4 *pVetTexSprites;
+		// NOTA: impostare indirizzo globale per texinfo perche
+		// questa procedura viene chiamata prima di InizializzaStartLivello
+
+		pVetTexSprites = (StrSpriteTomb4 *) tomb4::spriteinfo;
+		GlobTomb4.TestFontNew = false;
+
+		pSlot = &GlobTomb4.pAdr->pVetSlot[470];
+
+		if ((pSlot->Flags & 0x01) == 0 || GlobTomb4.pMemoriaTexture == NULL) {
+			// manca lo slot dei font, quindi uscire subito
+			// e non fare alcuna patch
+			// (o rimuovere quelle fatte)
+			if ((pSlot->Flags & 0x01) == 0) {
+				InviaLog("Missing FONT_GRAPHICS in current level");
+			} else {
+				InviaLog("ERROR: current level didn't used 32 bits Texture Map, cann't locate binary data for FONT_GRAPHICS");
+			}
+			free(GlobTomb4.pMemoriaTexture);
+			GlobTomb4.pMemoriaTexture = NULL;
+			return;
+		}
+
+		// ora devo trovare indice di prima texture di font
+		IndiceTailInfo = pSlot->IndexFirstMesh;
+		pTail = &pVetTexSprites[IndiceTailInfo];
+
+		// ok  ora in pTail dovrebbero esserci dati per localizzare
+		// inizio di prima texture dei font
+
+		IndiceTex = pTail->TexturePage - 1;
+		// ora IndiceTex e' la texture di 256x256 di mappa,
+		// a questa origine devo aggiungere quella specifica in tail
+		// pero' temo sia in floating point.
+
+		OffX = Float2Cord(pTail->x1) - 1;
+		OffY = Float2Cord(pTail->y1) - 1;
+
+		OrgX = OffX;
+		OrgY = IndiceTex * 256 + OffY;
+		// ok, ora in OrgX OrgY dovrebbe esserci origine all'interno di mappa
+		// ora convertire in indice assoluto
+		Inizio = OrgX * 4 + OrgY * 4 * 256;
+
+		// allocare memoria per estrarre dati decodicficati
+		SizeBinary = sizeof(StrFontBaseSetting);
+		pMem = (BYTE *) malloc(SizeBinary + 10);
+		if (pMem == NULL) {
+			free(GlobTomb4.pMemoriaTexture);
+			GlobTomb4.pMemoriaTexture = NULL;
+			return;
+		}
+
+		pByte = &GlobTomb4.pMemoriaTexture[Inizio];
+		// adesso estrarre tutti i byte di prima texture 42x42
+		IndiceDest = 0;
+		for (y = 0; y < 42; y++) {
+			for (x = 0; x < 42; x++) {
+				IndiceSrc = y * 256 * 4 + x * 4;
+
+				pMem[IndiceDest] = pByte[IndiceSrc + 2];
+				pMem[IndiceDest + 1] = pByte[IndiceSrc + 1];
+				pMem[IndiceDest + 2] = pByte[IndiceSrc];
+				IndiceDest += 3;
+				if (IndiceDest >= SizeBinary)
+					break;
+			}
+			if (IndiceDest >= SizeBinary)
+				break;
+		}
+
+		// ora calcolare checksum
+		ValCheckSum = pMem[0];
+
+		Somma = 0;
+
+		for (i = 1; i < SizeBinary; i++) {
+			Somma += pMem[i];
+		}
+		if ((Somma & 0xff) != ValCheckSum) {
+			InviaLog("ERROR: checksum error in Font Settings of FONT_GRAPHICS slot");
+			free(GlobTomb4.pMemoriaTexture);
+			free(pMem);
+			GlobTomb4.pMemoriaTexture = NULL;
+			return;
+		}
+		// ok, c'e' tutto
+		// ora copiarlo nel vettore
+		memcpy(&GlobTomb4.BaseFontBinary, pMem, SizeBinary);
+
+		// ora si puo' liberare memoria
+		free(GlobTomb4.pMemoriaTexture);
+		GlobTomb4.pMemoriaTexture = NULL;
+		free(pMem);
+		GlobTomb4.TestFontNew = true;
+	}
+
+	int Float2Cord(float Valore)
+	{
+		float Temp;
+
+		Temp = Valore * 256.0f;
+		return (int) Temp;
+	}
+
+	// chiamata sia ad inizio livello che quando viene cambiata risoluzione
+	// video
+	// aggiorna dimensioni sulla base di misure di schermo
+	// inizializza GlobTomb4.VetFontInfos[]
+	// usando i dati in GlobTomb4.BaseFontBinary
+	void NuovoInitFont(void)
+	{
+		int i;
+		StrInfoChar *pTex;
+		StrFontSetting *pBinary;
+		float Schermo;
+		float Cord;
+		short *pSchermoX_Meno1;
+		short *pSchermoY_Meno1;
+		StrSpriteTomb4 *pVetTexSprites;
+		StrSpriteTomb4 *pSprite;
+		int IndicePrimaTex;
+		int n;
+		float RapportoX;
+		float RapportoY;
+		bool TestVisibile;
+		StrInfoChar *pVetTexInfo;
+
+		pSchermoX_Meno1 = &tomb4::phd_winxmax;
+		pSchermoY_Meno1 = &tomb4::phd_winymax;
+
+		if (GlobTomb4.TestFontNew == false) {
+			// se c'e' vecchio font usare come rapporto per caratteri
+			// piccoli quello di dimezzare altezza verticale
+			GlobTomb4.FontRemapLittleX = 1.0f;
+			GlobTomb4.FontRemapLittleY = 0.5f;
+
+			return;
+		}
+		pVetTexSprites = (trng::StrSpriteTomb4 *) tomb4::spriteinfo;
+		// localizzare prima textue
+		IndicePrimaTex = GlobTomb4.pAdr->pVetSlot[470].IndexFirstMesh;
+
+		for (i = 0; i < 256; i++) {
+			GlobTomb4.VetFontGraphics[i] = 0;
+			GlobTomb4.VetFontIndici[i].IndiceRedirect = -1;
+			GlobTomb4.VetFontIndici[i].IndiceTexture = -1;
+			TestVisibile = false;
+
+			pTex = &GlobTomb4.VetFontInfos[i];
+			pBinary = &GlobTomb4.BaseFontBinary.VetFontList[i];
+
+			if (pBinary->Status & 0xff00)  {
+				// qualche elemento speciale
+				if (pBinary->Status & FS_Custom) {
+					GlobTomb4.VetFontGraphics[i] = 1;
+					TestVisibile = true;
+				}
+
+				if (pBinary->Status & FS_Redirect) {
+					// mettere redirect
+					GlobTomb4.VetFontIndici[i].IndiceRedirect = (pBinary->Status & 0xff);
+				}
+				if (pBinary->Status & FS_Spazio) {
+					GlobTomb4.VetFontIndici[i].IndiceRedirect = 32;
+				}
+
+			} else {
+				TestVisibile = true;
+			}
+
+			if (TestVisibile == true) {
+				GlobTomb4.VetFontIndici[i].IndiceRedirect = (short) i;
+				// ora devo calcolare la texture per questo carattere
+				pSprite = &pVetTexSprites[IndicePrimaTex + pBinary->IndiceTex];
+				GlobTomb4.VetFontIndici[i].IndiceTexture = pSprite->TexturePage;
+
+				n = -pBinary->BaseLineY;
+
+				pTex->BaseLine = (short) (n + pBinary->OffY - 32);
+
+				pTex->OrgX = (float) (pBinary->OrgX + pBinary->OffX);
+				pTex->OrgY = (float) (pBinary->OrgY + pBinary->OffY);
+
+				// a questo vsalori org vanno aggiunti quelli dove e' posiizionata
+				// texture che ospita questo blocco
+				pTex->OrgX += Float2Cord(pSprite->x1) - 1;
+				pTex->OrgY += Float2Cord(pSprite->y1) - 1;
+				pTex->OrgX /= 256.0f;
+				pTex->OrgY /= 256.0f;
+
+				if (pBinary->Status & FS_Custom) {
+					pTex->XSizeDestinazione = pBinary->SizeX + 1;
+					pTex->YSizeDestinzione = pBinary->SizeY + 2;
+				} else  {
+					pTex->XSizeDestinazione = pBinary->SizeX + 3;
+					pTex->YSizeDestinzione = pBinary->SizeY + 3;
+				}
+				if ((pBinary->Status & FS_Custom) != 0 && (GlobTomb4.BaseFontBinary.Flags & ff_DisableShadeGraphic) != 0) {
+					pTex->IndicePattern = 1;
+					pTex->IndicePattern2 = 1;
+				} else {
+					pTex->IndicePattern = 1;
+					pTex->IndicePattern2 = 11;
+				}
+			}
+
+		}
+		// impostare i rapporti di conversione sulla base di layout e size
+		// impostata nel nuovo font
+		RapportoX = 1024;
+		RapportoY = 540;
+
+		// prima layout
+		switch (GlobTomb4.BaseFontBinary.RapportoSize & FONT_LAYOUT_MASK) {
+		case FONT_LAYOUT_TOMB:
+			RapportoX = 1024;
+			RapportoY = 540;
+			GlobTomb4.FontRemapLittleX = 0.8f;
+			GlobTomb4.FontRemapLittleY = 0.5f;
+			break;
+		case FONT_LAYOUT_SQUARE:
+			RapportoX = 1024;
+			RapportoY = 750;
+			GlobTomb4.FontRemapLittleX = 0.8f;
+			GlobTomb4.FontRemapLittleY = 0.7f;
+			break;
+		case FONT_LAYOUT_HIGH_RECT:
+			RapportoX = 1024;
+			RapportoY = 400;
+			GlobTomb4.FontRemapLittleX = 0.8f;
+			GlobTomb4.FontRemapLittleY = 0.3f;
+			break;
+		case FONT_LAYOUT_WIDE_RECT:
+			RapportoX = 750;
+			RapportoY = 750;
+			GlobTomb4.FontRemapLittleX = 0.5f;
+			GlobTomb4.FontRemapLittleY = 0.7f;
+			break;
+		}
+		// ora dimensione
+		switch (GlobTomb4.BaseFontBinary.RapportoSize & FONT_SIZE_MASK) {
+		case FONT_SIZE_TOMB:
+			// nulla lasciare valori base
+			break;
+		case FONT_SIZE_LITTLE:
+			RapportoX *= 1.5f;
+			RapportoY *= 1.5f;
+
+			GlobTomb4.FontRemapLittleX *= 1.5f;
+			GlobTomb4.FontRemapLittleY *= 1.5f;
+			break;
+		case FONT_SIZE_BIG:
+			RapportoX /= 1.3f;
+			RapportoY /= 1.3f;
+			GlobTomb4.FontRemapLittleX *= 0.7f;
+			GlobTomb4.FontRemapLittleY *= 0.7f;
+			break;
+		}
+		// ora impostare i valori
+		Float1_512 = 1.0f / RapportoX;
+		Float1_240 = 1.0f / RapportoY;
+		Float512 = RapportoX;
+		Float240 = RapportoY;
+
+		// adesso fare adattamente di sizex, sizey e baseliney
+
+		pVetTexInfo = &GlobTomb4.VetFontInfos[0];
+
+		for (i = 0; i < GlobTomb4.BaseFontBinary.TotListFont; i++) {
+			pTex = &pVetTexInfo[i];
+
+			Schermo = (float) *pSchermoX_Meno1;
+
+			Cord = (float) pTex->XSizeDestinazione;
+			Cord = Cord * Schermo * Float1_512;
+
+			pTex->XSizeDestinazione = (WORD) Cord;
+
+			Schermo = (float) *pSchermoY_Meno1;
+
+			Cord = (float) pTex->YSizeDestinzione;
+			Cord = Cord * Schermo * Float1_240;
+
+			pTex->YSizeDestinzione = (WORD) Cord;
+
+			Cord = (float) pTex->BaseLine;
+			Cord = Cord * Schermo * Float1_240;
+
+			pTex->BaseLine = (short) Cord;
+
+		}
+	}
+
+	// viene chiamata quando e' tutto pronto per avviare gioco
+	// nello steso momento di prepara elevatori ecc.
+	// viene usata per modificare dei codici come se fossero customize
+	// ma che in realta' appartengono ad altri comandi
+	void InitModificaCodice(void)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	// chiamata dopo aver completato il caricqamento del livello e impostato e preparato customize, elevator ecc ecc
+	// e' l'ultima funzione prima di entrare in loop control game
+	void PreparaLivello(void)
+	{
+		int NumDemo;
+		int i;
+		DWORD Flags;
+		CALL_INIT_LEVEL CallInitLevel;
+		StrPluginRec *pRec;
+
+		if (GlobTomb4.pBaseCutscene->BaseCamera.TestAllocata == true) {
+			RestartCutsceneCamera();
+		}
+
+		// se da savegame erano stati caricati swap animation li esegue adesso per rirpistinare la situazione
+		RestoreAllAnimSwap();
+		RieseguiOldSwapMesh(&MySwap);
+		RestoreAllFlipMesh();
+
+		// se c'e' un demo in questo livello (e non siamo in title) e siamo in modalita' nuovo livello e non
+		// savegame, mettere subito in play la prima cutscene
+		if (GlobTomb4.TestAsSavegame == false) {
+			if (GlobTomb4.pDemoTitle->TestLoadAndPlay == false && GlobTomb4.pDemoNow == GlobTomb4.pDemoLevel) {
+				if (GlobTomb4.pDemoNow->Flags & DEMF_PERFORM_AT_START) {
+					// ok, iniziare subito il play
+					NumDemo = GlobTomb4.pDemoNow->VetDemoIDs[0];
+					if (CaricaDemo(NumDemo) == true) {
+						GlobTomb4.DemoNumberLoaded = NumDemo;
+						GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
+						GlobTomb4.pBaseDemo->IndexFrame = 0;
+						GlobTomb4.pDemoNow->TestDemoInProgress = true;
+					}
+				}
+			}
+
+			if (GlobTomb4.pDemoTitle->CtrlSign == 0x615274F1 && GlobTomb4.pDemoTitle->TestLoadAndPlay == true) {
+				GlobTomb4.pDemoTitle->TestLoadAndPlay = false;
+				GlobTomb4.pDemoTitle->TestDemoInProgress = true;
+				GlobTomb4.pBaseDemo->Status = RECF_PLAYING;
+			}
+		}
+
+		// ----- da tenere in fondo -----------------------
+
+		// mettere livelloOld a -1 se arriviamo da savegame
+		if (*GlobTomb4.pAdr->pTestLoadOrNewLevel == 4) {
+			LivelloOldNumber = -1;
+		}
+
+		// gestione callback
+		if (MyGlobPrivate.DataBase.TotPlugins > 1) {
+			// costruire flag
+			Flags = 0;
+			if (*GlobTomb4.pAdr->pTestLoadOrNewLevel == 4) {
+				Flags |= FIL_FROM_SAVEGAME;
+			}
+
+			// ora vedere se e' new level
+			if (*GlobTomb4.pAdr->pTestLoadOrNewLevel != 4 && GlobTomb4.TestHubLara == false && GlobTomb4.TestHubLevel == false) {
+
+				Flags |= FIL_FROM_NEW_LEVEL;
+			}
+
+			if (GlobTomb4.TestHubLara == true || GlobTomb4.TestHubLevel == true) {
+
+				Flags |= FIL_FROM_LEVEL_JUMP;
+			}
+
+			if (GlobTomb4.TestHubLara == true) {
+				Flags |= FIL_PRESERVE_LARA;
+			}
+
+			if (GlobTomb4.TestHubLevel == true) {
+				Flags |= FIL_PRESERVE_LEVEL;
+			}
+			if (GlobTomb4.TestAsSavegame == true) {
+				Flags |= FIL_FROM_LIKE_SAVEGAME;
+			}
+			pRec = &MyGlobPrivate.DataBase.pVetPlugins[1];
+			for (i = 1; i < (int) MyGlobPrivate.DataBase.TotPlugins; i++) {
+				if (pRec->VetDirectCB[CB_INIT_LEVEL]) {
+					CallInitLevel = (CALL_INIT_LEVEL) pRec->VetDirectCB[CB_INIT_LEVEL];
+
+					CallInitLevel(*GlobTomb4.pAdr->pLevelNow, LivelloOldNumber, Flags);
+				}
+
+				pRec++;
+			}
+		}
+
+		// salvare qui valore livello old (che poi sarebbe il livello attuale ma non verra' cambiato fino al prossimo livello)
+		LivelloOldNumber = *GlobTomb4.pAdr->pLevelNow;
+	}
+
+	// sono stati appena ricaricati i dati di cutscene camera
+	// ora deve nuovamente inizializzarla
+	void RestartCutsceneCamera(void)
+	{
+		int DifFrames;
+		StrCameraTr4 *pCamera;
+		StrCutsceneCamera *pCut;
+
+		pCut = &GlobTomb4.pBaseCutscene->BaseCamera;
+
+		pCamera = &GlobTomb4.pAdr->Camera.pVetCamera[pCut->IndexCamera];
+		*pCamera = pCut->CameraNow;
+		pCut->pCamera = pCamera;
+		pCut->pCamera->Flags = 0x0001;
+		pCut->TestAllocata = true;
+		GlobTomb4.TestDisableFeatures |= DF_GUARDA;
+		// ora riadattare tutti i frame sulla base di quello vecchio
+		DifFrames = pCut->LastPerformedFrame;
+		pCut->LastPerformedFrame = GetCutsceneFrame();
+		DifFrames -= pCut->LastPerformedFrame;
+
+		pCut->DistanceEndFrame -= DifFrames;
+		pCut->FreezeEndFrame -= DifFrames;
+		pCut->HeightEndFrame -= DifFrames;
+		pCut->RotateEndFrame -= DifFrames;
+	}
+
+	// se chiamato dopo caricamento savegame bisogna impostare TestClear=false, perche'bisogna mantenere
+	// i dati dell mesh swappate
+	void RestoreAllFlipMesh(void)
+	{
+		int i;
+
+		for (i = 0; i < GlobTomb4.BaseFlipMesh.TotFlipMesh; i++) {
+			SwapFlipMesh(GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Slot, GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Mesh, false);
+		}
+
+		GlobTomb4.BaseFlipMesh.TotFlipMesh = 0;
+	}
+
+	void aClearFX(void)
+	{
+		ClearRainSnowBuffers();
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -6949,4 +8542,31 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100CCDCA, (unsigned int)trng::PerformInFlyBy, replace);
 	ProcessInject(0x100CCD7D, (unsigned int)trng::ControllaEscapeFlyBy, replace);
 	ProcessInject(0x100CCC8A, (unsigned int)trng::DisabilitaFly, replace);
+	ProcessInject(0x100C4FA9, (unsigned int)trng::LeggiExtraHeader_Tr4, replace);
+	ProcessInject(0x100C49BC, (unsigned int)trng::DecodeNGHeader_Tr4, replace);
+	ProcessInject(0x100C48BA, (unsigned int)trng::CreaVetRemapInverse, replace);
+	ProcessInject(0x100C4851, (unsigned int)trng::AggiornaRoomStatics, replace);
+	ProcessInject(0x100C492E, (unsigned int)trng::AggiornaPluginIdTable, replace);
+	ProcessInject(0x100D2496, (unsigned int)trng::LiberaImgLoadingLevel, replace);
+	ProcessInject(0x100B989E, (unsigned int)trng::PreparaCustomize, replace);
+	ProcessInject(0x100B9079, (unsigned int)trng::InitShowAmmoCounter, replace);
+	ProcessInject(0x100B93CC, (unsigned int)trng::InitTextTypes, false);
+	ProcessInject(0x100B982F, (unsigned int)trng::CreaPatchSkeleton, false);
+	ProcessInject(0x100B8362, (unsigned int)trng::PreparaMirror, replace);
+	ProcessInject(0x100B810A, (unsigned int)trng::PreparaCutscene, replace);
+	ProcessInject(0x100B7FCD, (unsigned int)trng::PreparaDetector, replace);
+	ProcessInject(0x100B7D0E, (unsigned int)trng::PreparaPedane, replace);
+	ProcessInject(0x100B7C1F, (unsigned int)trng::PreparaPushables, replace);
+	ProcessInject(0x100B8266, (unsigned int)trng::PreparaOrganizer, replace);
+	ProcessInject(0x100B7ED7, (unsigned int)trng::PreparaItemGroup, replace);
+	ProcessInject(0x100CA5D9, (unsigned int)trng::PreparaGlobalTriggers, replace);
+	ProcessInject(0x100D07CD, (unsigned int)trng::PreparaPushAway, replace);
+	ProcessInject(0x100CCEA8, (unsigned int)trng::PreparaFontGrapchis, replace);
+	ProcessInject(0x100B4DDF, (unsigned int)trng::Float2Cord, replace);
+	ProcessInject(0x100B136E, (unsigned int)trng::NuovoInitFont, replace);
+	ProcessInject(0x100CD8DD, (unsigned int)trng::InitModificaCodice, false);
+	ProcessInject(0x100D10C6, (unsigned int)trng::PreparaLivello, replace);
+	ProcessInject(0x100B1D3A, (unsigned int)trng::RestartCutsceneCamera, replace);
+	ProcessInject(0x100D0EDA, (unsigned int)trng::RestoreAllFlipMesh, replace);
+	ProcessInject(0x100B703E, (unsigned int)trng::aClearFX, replace);
 }

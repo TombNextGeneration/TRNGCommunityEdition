@@ -204,4 +204,12 @@ namespace trng {
 	typedef void (__cdecl *CALL_LOADING_GAME) (BYTE *pAdrZone, DWORD SizeData);
 
 	typedef DWORD (__cdecl *TYPE_QuantoLungoFile) (FILE *pFile);
+
+	// prototype for CB_INIT_LEVEL callback
+	// WARNING: this prototype has been changed from PU-5 update, previously the cbInitLevel callback had no input arguments
+	// received in input:
+	// LevelNow : the number of current level, just started (0=title, 1=first level in the script, ect)
+	// LevelOld : the number of previous level played. Note: if the game has been loaded from savegame the LevelOld will be = -1
+	// FIL_Flags: one or more enumFIL flags to specify the way whereby current level it has been launched
+	typedef void (__cdecl *CALL_INIT_LEVEL)(int LevelNow, int LevelOld, DWORD FIL_Flags);
 }

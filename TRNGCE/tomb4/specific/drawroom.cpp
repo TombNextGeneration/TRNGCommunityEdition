@@ -4,6 +4,7 @@
 namespace tomb4
 {
 	TEXTUREBUCKET (&Bucket)[80] = *reinterpret_cast<decltype(&Bucket)>(0x470CF8);
+	MESH_DATA** &mesh_vtxbuf = *reinterpret_cast<decltype(&mesh_vtxbuf)>(0x52A210);
 
 	void ProcessMeshData(long num_meshes)
 	{

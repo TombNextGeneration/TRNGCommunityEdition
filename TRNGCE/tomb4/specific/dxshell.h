@@ -17,6 +17,7 @@ namespace tomb4
 	BOOL __stdcall DXEnumDirectDraw(GUID FAR* lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext);
 	BOOL __stdcall DXEnumDirectSound(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
 	HRESULT DXShowFrame();
+	void* AddStruct(void* p, long num, long size);
 }
 
 void Inject_Dxshell(bool replace);

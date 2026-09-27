@@ -5,6 +5,8 @@ namespace tomb4
 {
 	SoundSlot (&LaSlot)[32] = *reinterpret_cast<decltype(&LaSlot)>(0x7F7100);
 	long &sound_active = *reinterpret_cast<decltype(&sound_active)>(0x4BF5AC);
+	short* &sample_lut = *reinterpret_cast<decltype(&sample_lut)>(0x7F7580);
+	SAMPLE_INFO* &sample_infos = *reinterpret_cast<decltype(&sample_infos)>(0x7F7584);
 
 	long SoundEffect(long sfx, PHD_3DPOS* pos, long flags)
 	{

@@ -103,6 +103,13 @@ namespace trng {
 	StrBaseFlipSwap &MySwap = *reinterpret_cast<decltype(&MySwap)>(0x103DF860);
 	char (&BufGlobalTimer)[6] = *reinterpret_cast<decltype(&BufGlobalTimer)>(0x1015A3E8);
 	char (&BufLocalTimer)[6] = *reinterpret_cast<decltype(&BufLocalTimer)>(0x1015A3E0);
+	int &TestAttivaCryptTr4 = *reinterpret_cast<decltype(&TestAttivaCryptTr4)>(0x103DFAC8); //usato in tom2pc per segnale di [CryptTr4]
+	int &NumeroBloccoCrypt = *reinterpret_cast<decltype(&NumeroBloccoCrypt)>(0x103DF438); // segnala se e' tex1,tex2,tex3 o geometry
+	// tabella per cryptare e decriptare file tr4 e altra roba
+	// usata sia in tomb4 che in tom2pc
+	BYTE (&VetCryptOrd)[16][50] = *reinterpret_cast<decltype(&VetCryptOrd)>(0x1015AE98);
+	// tabella xor usata per cryptare/decryptare  tr4
+	BYTE (&VetCryptTableXor)[16][99] = *reinterpret_cast<decltype(&VetCryptTableXor)>(0x1015A868);
 
 	// modifica i damage sulla base di elenco Enemy
 	void ImpostaEnemyDamage(void)
@@ -1118,7 +1125,7 @@ namespace trng {
 	// contenuta nel campo pExtractNG->pArray
 	// nota: una copia viene salvata nella variabile globale
 	// LastNGHeader
-	bool ExtractNGHeader(char *pNomeFile, StrExtractNG* pExtractNG)
+	bool ExtractNGHeader(const char *pNomeFile, StrExtractNG* pExtractNG)
 	{
 		DWORD SizeFile;
 		FILE *pFile;
@@ -17105,6 +17112,436 @@ Concludi:
 
 		GlobTomb4.VetTextColors[1] = (GlobTomb4.VetTextColors[1] & 0xFF000000) | (((Single << 8) | Single) << 8) | Single;
 	}
+
+	// viene usato sia per cryptare che per decryptare (nota: se il programma
+	// attuale (testExe) == 1 (tomb4) allora decripta, se invece e' diverso
+	// come tom2pc allora cripta
+	// usare le due seguenti zone globali:
+	// 	BYTE VetCryptTableXor[16][99]
+	// BYTE VetCryptOrd[16][50]
+	// nota: il valore SizeZona e' (se tr4) il valore CompressedSize
+	// viene usato per decidere quale serie di crittografazione usare
+	// usa valore globale NumeroBloccoCrypt per stabilire lo shift di
+	// valore dimensione size compressa sulla base del quale
+	// si sceglie la serie di ordinamento e di xor
+	void CriptaZona(BYTE *pZona, DWORD SizeZona)
+	{
+		// nota: se si deve criptare bisogna PRIMA invertire l'ordine
+		// e dopo fare lo xor
+		// se invece si deve criptare bisogna PRIMA fare lo xsor e
+		// e dopo cambiare l'ordine
+		// per creare piu' confusione effetuare una intuile ripetezione per endere
+		// tutto piu' complicato
+		BYTE Buffer[234];
+		int i;
+		int j;
+		int CalcoloCrypting;
+		BYTE *pBytes;
+
+		// TipoExe = 1 = tomb4
+		// tipoexe = 3 = tom2c
+
+		// ottenere impostazione se crypting attivo
+		// questo viene impostato sia da tom2pc che da tomb4
+		// prima di chiamare questa procedura
+		CalcoloCrypting = (BYTE)TestAttivaCryptTr4;
+
+		// adesso fare prima fase di decrypt che e' ordinaemnto inverso
+		if (CalcoloCrypting) {
+			// qui bisogna localizzare ogni indice nella tabella
+			i = SizeZona >> (NumeroBloccoCrypt + 4);
+			pBytes = &VetCryptOrd[i & 0x0f][0];
+			for (i = 0; i < 50; i++) {
+				for (j = 0; j < 50; j++) {
+					if (pBytes[j] == i)
+						break;
+				}
+				Buffer[i] = pZona[j];
+			}
+			for (i = 0; i < 50; i++) {
+				pZona[i] = Buffer[i];
+			}
+		}
+
+		// adesso fare fase xor che agisce come seconda fase di decrypt
+		if (CalcoloCrypting) {
+			// questa operazione potrebbe essere resa uguale a quella
+			// di crypting
+			i = SizeZona >> NumeroBloccoCrypt;
+			pBytes = (BYTE *) &VetCryptTableXor[i & 0x0f][0];
+
+			for (i = 0; i < 99; i++) {
+				pZona[i] ^= pBytes[i];
+			}
+		}
+	}
+
+	// chiama in direzione opposta tutti gli swapping animation che erano stati fatti
+	void RestoreAllAnimSwap(void)
+	{
+		int i;
+		StrMemSwapAnim *pSwapMem;
+
+		for (i = GlobTomb4.pBaseMemSwapAnim->TotMemSwap - 1; i >= 0; i--) {
+			pSwapMem = &GlobTomb4.pBaseMemSwapAnim->VetMemSwapAnim[i];
+			SwapAnimations(pSwapMem->Slot, pSwapMem->IdParamSwap);
+
+		}
+
+		GlobTomb4.pBaseMemSwapAnim->TotMemSwap = 0;
+
+	}
+
+	// scambia gruppo di animazioni sulla base di dati in Parameters=PARAM_SWAP_ANIMATIONS, SwapId
+	// per slot Slot
+	void SwapAnimations(WORD Slot, WORD SwapId)
+	{
+		StrSwapAnim *pSwap;
+		int i;
+		StrAnimationTr4 SwapAnim;
+		int FirstAnimSlot;
+		StrAnimationTr4 *pVet;
+
+		i = GlobTomb4.pBaseSwapAnim->VetId[SwapId];
+		if (i == -1) {
+			sprintf_s(BufferLog, "ERROR: cann't find Parameters=PARAM_SWAP_ANIMATIONS, %d script command", SwapId);
+			InviaLog(BufferLog);
+			return;
+		}
+		pSwap = &GlobTomb4.pBaseSwapAnim->VetSwapAnim[i];
+
+		FirstAnimSlot = GlobTomb4.pAdr->pVetSlot[Slot].IndexFirstAnim;
+
+		pVet = &GlobTomb4.pAdr->pVetAnimations[FirstAnimSlot];
+
+		for (i = 0; i < pSwap->NumberOfAim; i++) {
+			SwapAnim = pVet[pSwap->FirstSourceAnim + i];
+			pVet[pSwap->FirstSourceAnim + i] = pVet[pSwap->FirstTargetAnim + i];
+			pVet[pSwap->FirstTargetAnim + i] = SwapAnim;
+		}
+
+	}
+
+	void RieseguiOldSwapMesh(StrBaseFlipSwap *pSwap)
+	{
+		int i;
+		WORD SlotSwap;
+
+		for (i = pSwap->TotMeshSwap - 1; i >= 0; i--) {
+			if (pSwap->VetMeshSwap[i].SlotItem == 0) {
+				// e' uno swap mesh di lara
+
+				SwapMeshLara(pSwap->VetMeshSwap[i].SlotAltroSlot, pSwap->VetMeshSwap[i].TipoSwapMesh);
+			} else {
+				// e' uno swap per item
+				SlotSwap = pSwap->VetMeshSwap[i].SlotAltroSlot;
+				SwapMeshItem(pSwap->VetMeshSwap[i].SlotItem, SlotSwap);
+			}
+
+		}
+	}
+
+	// effettua uno swap mesh full
+	// nota: se TipoSwapMesh ha bit 0x4000 allora fa solo un copy
+	void SwapMeshLara(int SlotSwap, int TipoSwapMesh)
+	{
+		int i;
+		StrMeshTr4* Valore;
+		int IndiceMeshLara;
+		int IndiceMeshSlot;
+		StrFlipSwapMesh SwapMesh;
+		int VetSlotItem[20];
+		int TotSlotItem;
+		int SlotSource;
+		int j;
+		bool TestSwap;
+		int VietataDestra, VietataSinistra;
+		bool TestInverso;
+
+		IndiceMeshLara = GlobTomb4.pAdr->pVetSlot[0].IndexFirstMesh;
+		IndiceMeshSlot = GlobTomb4.pAdr->pVetSlot[SlotSwap].IndexFirstMesh;
+
+		// impostare tutti i dati
+
+		SwapMesh.SlotItem = 0;
+		SwapMesh.SlotAltroSlot = (short) SlotSwap;
+		SwapMesh.TipoSwapMesh = (WORD) TipoSwapMesh;
+		// salvare l'esecuzione di questo swap
+		SalvaRecordSwapMesh(&SwapMesh);
+		if (TipoSwapMesh & 0x4000)
+			TestSwap = false;
+		else
+			TestSwap = true;
+
+		if (TipoSwapMesh & 0x8000)
+			TestInverso = true;
+		else
+			TestInverso = false;
+
+		TipoSwapMesh &= 0x3fff;
+		VietataDestra = -1;
+		VietataSinistra = -1;
+
+		switch (*GlobTomb4.pAdr->pObjInLaraHandsNext) {
+		case 1:
+		case 3:
+			// pistole o uzi
+			if (*GlobTomb4.pAdr->pFlagsLaraHands != 4)
+				break;
+			VietataDestra = 10; // mano destra
+			VietataSinistra = 13; // mano sinistra
+			break;
+		case 2:
+		case 4:
+		case 5:
+		case 6:
+			// Revolver Fucile LanciaGranate Balestra
+			if (*GlobTomb4.pAdr->pFlagsLaraHands != 4)
+				break;
+			VietataDestra = 10;
+			break;
+		case 7:
+			// flare
+			VietataSinistra = 13;
+			break;
+		case 8:
+			// torcia
+			if (*GlobTomb4.pAdr->pFlagsLaraHands != 4)
+				break;
+			VietataSinistra = 13;
+			break;
+		}
+
+		for (i = 0; i < 15; i++) {
+			// salva mesh originale di lara
+			// invertire le mesh
+
+			Valore = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshLara];
+			if (TestInverso == false) {
+				// questo NON effettuarlo se e' attivo inverso
+				GlobTomb4.pAdr->VetMeshPointer[IndiceMeshLara] = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot];
+			}
+
+			if (TestSwap)
+				GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot] = Valore;
+
+			// ora salvarle anche in vetmehlara
+			// a meno che non sia una delle mani da NON modificare
+			if (i != VietataDestra && i != VietataSinistra && TestInverso == false) {
+				GlobTomb4.pAdr->VetMeshLara[i] = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshLara];
+			}
+
+			IndiceMeshLara += 2;
+			IndiceMeshSlot += 2;
+
+		}
+
+		// ora se e' diverso da swap standard costruire vettore con gli slot
+		// sorgente e destinazione
+
+		if (TipoSwapMesh == 0)
+			return;
+		TotSlotItem = 0;
+		switch (TipoSwapMesh) {
+		case 1:
+			// 1: Lara Skin + Lara Joints (Slot+1)
+			VetSlotItem[TotSlotItem++] = 9; // LARA_SKIN_JOINTS
+
+			break;
+		case 2:
+			// 2: Lara Skin + Lara Joints (Slot+1) + Hairs (Slot+2)
+			VetSlotItem[TotSlotItem++] = 9; // LARA_SKIN_JOINTS
+			VetSlotItem[TotSlotItem++] = 30; // HAIR
+			break;
+		case 3:
+			// 3: Lara Skin + Lara Joints (Slot+1) + Hairs (Slot+2) + ShootingHead (Slot+3)
+			VetSlotItem[TotSlotItem++] = 9; // LARA_SKIN_JOINTS
+			VetSlotItem[TotSlotItem++] = 30; // HAIR
+			VetSlotItem[TotSlotItem++] = 10; // LARA_SCREAM
+			break;
+		case 4:
+			// 4: Lara Skin + Shooting Head (Slot+1)
+			VetSlotItem[TotSlotItem++] = 10; // LARA_SCREAM
+			break;
+		case 5:
+			// 5: Lara Skin + Shooting Head (Slot+1) + Hairs (Slot+2)
+			VetSlotItem[TotSlotItem++] = 10; // LARA_SCREAM
+			VetSlotItem[TotSlotItem++] = 30; // HAIR
+			break;
+		}
+
+		for (j = 0; j < TotSlotItem; j++) {
+			SlotSource = VetSlotItem[j];
+			SlotSwap++;
+
+			IndiceMeshSlot = GlobTomb4.pAdr->pVetSlot[SlotSwap].IndexFirstMesh;
+			IndiceMeshLara = GlobTomb4.pAdr->pVetSlot[SlotSource].IndexFirstMesh;
+
+			for (i = 0; i < 15; i++) {
+				// salva mesh originale di lara
+				// invertire le mesh
+
+				Valore = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshLara];
+				if ((SlotSource == 9 || SlotSource == 30) && TestInverso == false) {
+					//  se sono joint normalizzare dati
+					CorreggiVerticiJoint(Valore, GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot], i);
+				}
+				if (TestInverso == false) {
+					GlobTomb4.pAdr->VetMeshPointer[IndiceMeshLara] = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot];
+				}
+
+				if (TestSwap)
+					GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot] = Valore;
+
+				IndiceMeshLara += 2;
+				IndiceMeshSlot += 2;
+			}
+		}
+
+	}
+
+	// salva attuale record di swap a meno che non sia del tutto uguale
+	// ad uno gia' fatto, in questo caso cancellare quello gia' presente
+	void SalvaRecordSwapMesh(StrFlipSwapMesh *pSwap)
+	{
+		int i;
+		StrFlipSwapMesh *pRecord;
+		int TotRecord;
+
+		TotRecord = GlobTomb4.BaseMeshSwap.TotMeshSwap;
+		if ((pSwap->TipoSwapMesh & 0x4000) == 0) {
+			pRecord = NULL;
+			for (i = 0; i < TotRecord; i++) {
+				pRecord = &GlobTomb4.BaseMeshSwap.VetMeshSwap[i];
+
+				if (pRecord->SlotItem == pSwap->SlotItem && pRecord->SlotAltroSlot == pSwap->SlotAltroSlot && pRecord->TipoSwapMesh == pSwap->TipoSwapMesh)
+					break;
+			}
+			if (i < TotRecord) {
+				// era gia' presente: eliminarlo
+				if (TotRecord > 1) {
+					*pRecord = GlobTomb4.BaseMeshSwap.VetMeshSwap[TotRecord - 1];
+				}
+				GlobTomb4.BaseMeshSwap.TotMeshSwap--;
+				return;
+			}
+		} else {
+			// e' un copy mesh, (deveessere lara)
+			// eliminare tutti gli altri copy mesh( puo' essercene uno solo
+			// e quindi aggiungerlo sempre, anzi basta aggiungerlo nella posizione
+			// dove c'era l'ultimo, se c'era
+			for (i = 0; i < TotRecord; i++) {
+				pRecord = &GlobTomb4.BaseMeshSwap.VetMeshSwap[i];
+				if (pRecord->TipoSwapMesh & 0x4000) {
+					// ok, usare questo
+					break;
+				}
+			}
+		}
+
+		// aggiungerlo in posizone i
+		GlobTomb4.BaseMeshSwap.VetMeshSwap[i] = *pSwap;
+		if (i == TotRecord)
+			GlobTomb4.BaseMeshSwap.TotMeshSwap++;
+
+	}
+
+	// corregge i dati di collegamento delle joint, ossia le coordinate
+	// iniziali dei puntatori mesh
+	// nota: da migliorare perche' la struttura usatra e' quasi certamente
+	// sbagliata
+	void CorreggiVerticiJoint(StrMeshTr4 *pMesh, StrMeshTr4 * pMesh2, int Indice)
+	{
+
+		pMesh2->CenterX = pMesh->CenterX;
+		pMesh2->CenterY = pMesh->CenterY;
+		pMesh2->CenterZ = pMesh->CenterZ;
+		pMesh2->NVertici = pMesh->NVertici;
+
+	}
+
+	// esegue swap mesh ma non salva l'esecuzione, quello va fatto chiamando SalvaRecordSwapMesh()
+	// nota: TipoSwap (attualmente) supporta solo flag 0x4000 che vuol dire COPY (e non swap)
+	// in caso di copy lo slot sorgente e' SlotItem e quello destinazione e' SlotSwap
+	void SwapMeshItem(short SlotItem, WORD SlotSwap)
+	{
+		StrFlipSwapMesh SwapMesh;
+		int i;
+		int IndiceMeshItem;
+		int IndiceMeshSlot;
+		int SlotSource;
+		int TotMesh;
+		StrMeshTr4* Valore;
+
+		// impostare tutti i dati da salvare
+
+		SwapMesh.SlotItem = SlotItem;
+		SwapMesh.SlotAltroSlot = SlotSwap;
+		SwapMesh.TipoSwapMesh = 0; // normale
+
+		// salvare l'esecuzione di questo swap
+		SalvaRecordSwapMesh(&SwapMesh);
+
+		SlotSource = SlotItem;
+
+		// ok, ora posso usare il codice quasi identico a quello standard
+
+		TotMesh = GlobTomb4.pAdr->pVetSlot[SlotSource].TotMesh;
+		IndiceMeshItem = GlobTomb4.pAdr->pVetSlot[SlotSource].IndexFirstMesh;
+		IndiceMeshSlot = GlobTomb4.pAdr->pVetSlot[SlotSwap].IndexFirstMesh;
+
+		for (i = 0; i < TotMesh; i++) {
+			// salva mesh originale di lara
+			// invertire le mesh
+			Valore = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshItem];
+
+			GlobTomb4.pAdr->VetMeshPointer[IndiceMeshItem] = GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot];
+			GlobTomb4.pAdr->VetMeshPointer[IndiceMeshSlot] = Valore;
+
+			IndiceMeshItem += 2;
+			IndiceMeshSlot += 2;
+
+		}
+	}
+
+	// effettua il flip della mesh Mesh per slot Slot
+
+	void SwapFlipMesh(int Slot, int Mesh, bool TestMemo)
+	{
+		int i;
+		int n;
+		StrMeshTr4 * pMeshObj;
+
+		i = GlobTomb4.pAdr->pVetSlot[Slot].IndexFirstMesh;
+
+		i += Mesh * 2;
+
+		pMeshObj = GlobTomb4.pAdr->VetMeshPointer[i];
+		GlobTomb4.pAdr->VetMeshPointer[i] = GlobTomb4.pAdr->VetMeshPointer[i + 1];
+		GlobTomb4.pAdr->VetMeshPointer[i + 1] = pMeshObj;
+
+		if (TestMemo == false)
+			return;
+
+		n = GlobTomb4.BaseFlipMesh.TotFlipMesh;
+
+		// vedere se questo flip era gia' stato memorizzato
+		for (i = 0; i < n; i++) {
+			if (GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Slot == Slot && GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Mesh == Mesh)
+				break;
+		}
+
+		if (i >= n) {
+			// non c'era: salvarlo ora
+			GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Mesh = (WORD) Mesh;
+			GlobTomb4.BaseFlipMesh.VetFlipMesh[i].Slot = (WORD) Slot;
+			GlobTomb4.BaseFlipMesh.TotFlipMesh++;
+		} else {
+			// c'era gia': toglierlo
+			GlobTomb4.BaseFlipMesh.VetFlipMesh[i] = GlobTomb4.BaseFlipMesh.VetFlipMesh[n - 1];
+			GlobTomb4.BaseFlipMesh.TotFlipMesh--;
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17354,4 +17791,13 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x100814A1, (unsigned int)trng::FloatCord2Int, replace);
 	ProcessInject(0x100814BA, (unsigned int)trng::IntCord2Float, replace);
 	ProcessInject(0x1005F582, (unsigned int)trng::AggiornaColorWhiteMod, replace);
+	ProcessInject(0x10038950, (unsigned int)trng::CriptaZona, replace);
+	ProcessInject(0x1007E942, (unsigned int)trng::RestoreAllAnimSwap, replace);
+	ProcessInject(0x1007E814, (unsigned int)trng::SwapAnimations, replace);
+	ProcessInject(0x1003A9CF, (unsigned int)trng::RieseguiOldSwapMesh, replace);
+	ProcessInject(0x1007C3C8, (unsigned int)trng::SwapMeshLara, replace);
+	ProcessInject(0x1007C248, (unsigned int)trng::SalvaRecordSwapMesh, replace);
+	ProcessInject(0x1007C38D, (unsigned int)trng::CorreggiVerticiJoint, replace);
+	ProcessInject(0x1003B32B, (unsigned int)trng::SwapMeshItem, replace);
+	ProcessInject(0x1003E1EB, (unsigned int)trng::SwapFlipMesh, replace);
 }

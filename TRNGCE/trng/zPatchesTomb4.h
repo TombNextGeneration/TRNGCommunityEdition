@@ -3,6 +3,7 @@
 #include "structures.h"
 #include "../tomb4/types.h"
 #include "DefTomb4Funct.h"
+#include "MyStructures.h"
 
 namespace trng {
 	extern DWORD &OffsetPosLara;
@@ -34,6 +35,14 @@ namespace trng {
 	extern StrRoomTr4 *&pInsRecordRoom;
 	extern DWORD &StartLoadingTime;
 	extern HWND &WindSetup;
+	extern DWORD &FlareIntensita;
+	extern DWORD &FlareRosso;
+	extern DWORD &FlareVerde;
+	extern DWORD &FlareBlu;
+	extern float &Float1_512;
+	extern float &Float1_240;
+	extern float &Float512;
+	extern float &Float240;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -148,6 +157,33 @@ namespace trng {
 	bool PerformInFlyBy(void);
 	bool ControllaEscapeFlyBy(void);
 	void DisabilitaFly(void);
+	void LeggiExtraHeader_Tr4(const char *pNomeTr4);
+	void DecodeNGHeader_Tr4(StrExtractNG *pExtractNG);
+	void CreaVetRemapInverse(void);
+	void AggiornaRoomStatics(void);
+	void AggiornaPluginIdTable(StrConvertPluginId *pConv, StrTablePluginIdFloor *pTable);
+	void LiberaImgLoadingLevel(void);
+	void PreparaCustomize(void);
+	void InitShowAmmoCounter(void);
+	void InitTextTypes(BYTE *pVetBytes);
+	void CreaPatchSkeleton(bool TestMettiNOP);
+	void PreparaMirror(void);
+	void PreparaCutscene(void);
+	void PreparaDetector(void);
+	void PreparaPedane(void);
+	void PreparaPushables(void);
+	void PreparaOrganizer(void);
+	void PreparaItemGroup(void);
+	void PreparaGlobalTriggers(void);
+	void PreparaPushAway(void);
+	void PreparaFontGrapchis(void);
+	int Float2Cord(float Valore);
+	void NuovoInitFont(void);
+	void InitModificaCodice(void);
+	void PreparaLivello(void);
+	void RestartCutsceneCamera(void);
+	void RestoreAllFlipMesh(void);
+	void aClearFX(void);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

@@ -86,7 +86,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;dxguid.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
     <PostBuildEvent />
@@ -113,7 +113,7 @@
       <BaseAddress>0x21000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;dxguid.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
     <PostBuildEvent />
@@ -153,6 +153,7 @@
     <ClInclude Include="tomb4\game\jeep.h" />
     <ClInclude Include="tomb4\game\lara1gun.h" />
     <ClInclude Include="tomb4\game\lara2gun.h" />
+    <ClInclude Include="tomb4\game\larafire.h" />
     <ClInclude Include="tomb4\game\laraflar.h" />
     <ClInclude Include="tomb4\game\laramisc.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
@@ -190,11 +191,13 @@
     <ClInclude Include="tomb4\specific\function_table.h" />
     <ClInclude Include="tomb4\specific\gamemain.h" />
     <ClInclude Include="tomb4\specific\input.h" />
+    <ClInclude Include="tomb4\specific\lighting.h" />
     <ClInclude Include="tomb4\specific\LoadSave.h" />
     <ClInclude Include="tomb4\specific\output.h" />
     <ClInclude Include="tomb4\specific\polyinsert.h" />
     <ClInclude Include="tomb4\specific\registry.h" />
     <ClInclude Include="tomb4\specific\specificfx.h" />
+    <ClInclude Include="tomb4\specific\texture.h" />
     <ClInclude Include="tomb4\specific\time.h" />
     <ClInclude Include="tomb4\specific\winmain.h" />
     <ClInclude Include="tomb4\types.h" />
@@ -248,6 +251,7 @@
     <ClCompile Include="tomb4\game\jeep.cpp" />
     <ClCompile Include="tomb4\game\lara1gun.cpp" />
     <ClCompile Include="tomb4\game\lara2gun.cpp" />
+    <ClCompile Include="tomb4\game\larafire.cpp" />
     <ClCompile Include="tomb4\game\laraflar.cpp" />
     <ClCompile Include="tomb4\game\laramisc.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
@@ -285,11 +289,13 @@
     <ClCompile Include="tomb4\specific\function_table.cpp" />
     <ClCompile Include="tomb4\specific\gamemain.cpp" />
     <ClCompile Include="tomb4\specific\input.cpp" />
+    <ClCompile Include="tomb4\specific\lighting.cpp" />
     <ClCompile Include="tomb4\specific\LoadSave.cpp" />
     <ClCompile Include="tomb4\specific\output.cpp" />
     <ClCompile Include="tomb4\specific\polyinsert.cpp" />
     <ClCompile Include="tomb4\specific\registry.cpp" />
     <ClCompile Include="tomb4\specific\specificfx.cpp" />
+    <ClCompile Include="tomb4\specific\texture.cpp" />
     <ClCompile Include="tomb4\specific\time.cpp" />
     <ClCompile Include="tomb4\specific\winmain.cpp" />
     <ClCompile Include="trngce\discord.cpp" />

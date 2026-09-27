@@ -16,6 +16,7 @@ namespace tomb4
 	extern uchar &LoadBarHeight;
 	extern long &LoadBarWidth;
 	extern long (&sfx_frequencies)[3];
+	extern char (&secrets_format_string)[8];
 
 	long S_LoadSave(long load_or_save, long mono);
 	long S_PauseMenu();
@@ -23,6 +24,7 @@ namespace tomb4
 	void DoBar(long x, long y, long width, long height, long pos, long clr1, long clr2);
 	void DoSlider(long x, long y, long width, long height, long pos, long clr1, long clr2, long clr3);
 	void S_LoadBar();
+	void S_InitLoadBar(long maxpos);
 }
 
 void Inject_Loadsave(bool replace);

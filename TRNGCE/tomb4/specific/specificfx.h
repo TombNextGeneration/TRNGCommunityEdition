@@ -6,6 +6,7 @@ namespace tomb4
 	void InitBinoculars();
 	void DrawJeepSpeedo(long ux, long uy, long vel, long maxVel, long turboVel, long size, long spriteSlot);
 	void DrawBikeSpeedo(long ux, long uy, long vel, long maxVel, long turboVel, long size, long unk);
+	void InitTarget_2();
 }
 
 void Inject_Specificfx(bool replace);

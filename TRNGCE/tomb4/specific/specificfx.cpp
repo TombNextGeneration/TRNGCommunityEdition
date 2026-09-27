@@ -22,6 +22,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void InitTarget_2()
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Specificfx(bool replace)
@@ -30,4 +35,5 @@ void Inject_Specificfx(bool replace)
 	ProcessInject(0x4859E0, (unsigned int)tomb4::InitBinoculars, false);
 	ProcessInject(0x48B330, (unsigned int)tomb4::DrawJeepSpeedo, false);
 	ProcessInject(0x48A480, (unsigned int)tomb4::DrawBikeSpeedo, false);
+	ProcessInject(0x485910, (unsigned int)tomb4::InitTarget_2, false);
 }

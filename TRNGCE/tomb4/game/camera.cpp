@@ -9,6 +9,11 @@ namespace tomb4
 	camera_type &BinocularOldCamera = *reinterpret_cast<decltype(&BinocularOldCamera)>(0x4BF2C4);
 	long &BinocularOn = *reinterpret_cast<decltype(&BinocularOn)>(0x4BF2C0);
 	long &bLaraTorch = *reinterpret_cast<decltype(&bLaraTorch)>(0x536DE0);
+	short &CameraDefaultSpeed = *reinterpret_cast<decltype(&CameraDefaultSpeed)>(0x444574);
+	long &CameraDefaultDistance = *reinterpret_cast<decltype(&CameraDefaultDistance)>(0x44459C);
+	short &ChaseCameraDefaultElevation = *reinterpret_cast<decltype(&ChaseCameraDefaultElevation)>(0x442DB9);
+	long &LookCameraDefaultTargetZ = *reinterpret_cast<decltype(&LookCameraDefaultTargetZ)>(0x44387C);
+	long &LookCameraDefaultStartY = *reinterpret_cast<decltype(&LookCameraDefaultStartY)>(0x443732);
 
 	void CalculateCamera()
 	{

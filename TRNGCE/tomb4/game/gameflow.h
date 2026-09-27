@@ -35,6 +35,7 @@ namespace tomb4
 	extern char* &gfFilenameWad;
 	extern uchar* &gfLanguageFile;
 	extern uchar (&gfLevelNames)[40];
+	extern uchar &gfLevelCredits;
 
 	void DoGameflow();
 	void DoLevel(uchar Name, uchar Audio);

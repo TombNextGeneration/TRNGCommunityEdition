@@ -141,7 +141,7 @@ namespace trng {
 		return BufferTemp;
 	}
 
-	char * SoloNome(char FileName[])
+	const char * SoloNome(const char FileName[])
 	{
 		// restituisce solo il nome del file
 		int i;

@@ -34,6 +34,7 @@ namespace tomb4
 	uchar &LoadBarHeight = *reinterpret_cast<decltype(&LoadBarHeight)>(0x47B68F);
 	long &LoadBarWidth = *reinterpret_cast<decltype(&LoadBarWidth)>(0x47B693);
 	long (&sfx_frequencies)[3] = *reinterpret_cast<decltype(&sfx_frequencies)>(0x4B1704);
+	char (&secrets_format_string)[8] = *reinterpret_cast<decltype(&secrets_format_string)>(0x4B1780);
 
 	long S_LoadSave(long load_or_save, long mono)
 	{
@@ -163,6 +164,12 @@ namespace tomb4
 			S_DumpScreen();
 		}
 	}
+
+	void S_InitLoadBar(long maxpos)
+	{
+		loadbar_pos = 0;
+		loadbar_maxpos = maxpos;
+	}
 }
 
 void Inject_Loadsave(bool replace)
@@ -173,4 +180,5 @@ void Inject_Loadsave(bool replace)
 	ProcessInject(0x47AF60, (unsigned int)tomb4::DoBar, false);
 	ProcessInject(0x478D20, (unsigned int)tomb4::DoSlider, false);
 	ProcessInject(0x47B600, (unsigned int)tomb4::S_LoadBar, replace);
+	ProcessInject(0x47B5E0, (unsigned int)tomb4::S_InitLoadBar, replace);
 }

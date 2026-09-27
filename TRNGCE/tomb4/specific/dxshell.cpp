@@ -678,6 +678,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void* AddStruct(void* p, long num, long size)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Dxshell(bool replace)
@@ -691,4 +696,5 @@ void Inject_Dxshell(bool replace)
 	ProcessInject(0x48FC30, (unsigned int)tomb4::DXEnumDirectDraw, false);
 	ProcessInject(0x48F930, (unsigned int)tomb4::DXEnumDirectSound, false);
 	ProcessInject(0x491B40, (unsigned int)tomb4::DXShowFrame, false);
+	ProcessInject(0x48FAC0, (unsigned int)tomb4::AddStruct, false);
 }

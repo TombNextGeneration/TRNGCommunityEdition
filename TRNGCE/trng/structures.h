@@ -2312,6 +2312,64 @@ namespace trng {
 
 	inline constexpr int TOT_IMAGES = 12;
 
+	// flage EF_.. per elevtore (comando script)
+	inline constexpr int EF_NONE = 0;
+	inline constexpr int EF_MULTI_DOORS = 0x0001;
+	inline constexpr int EF_SINGLE_DOOR = 0x0002;
+	inline constexpr int EF_INNER_KEYPAD = 0x0004;
+	inline constexpr int EF_MODE_YO_YO = 0x0008;
+	inline constexpr int EF_MODE_STOP_AND_GO = 0x0010;
+	inline constexpr int EF_DOUBLE_DOOR = 0x0020;
+	inline constexpr int EF_ANIM_DOOR = 0x8000;  // flag interno
+
+	// valore per flag Elevator status
+	inline constexpr int EST_ATTESA = 0x00;
+	inline constexpr int EST_ATTENDI_KEYPAD = 0x001;
+	inline constexpr int EST_ATTENDI_ALLINEAMENTO_LARA = 0x002;
+	inline constexpr int EST_ATTENDI_DELAY = 0x003;
+	inline constexpr int EST_MOVIMENTO = 0x004;
+	inline constexpr int EST_INIZIO_MOVIMENTO = 0x005;
+	inline constexpr int EST_OPEN_AND_STOP = 0x006;
+	inline constexpr int EST_CLOSE_AND_GO = 0x7;
+	inline constexpr int EST_STOP = 8;
+
+	// flag per azione progressiva di movimento animating
+	inline constexpr int fmov_CordX = 0x0001;
+	inline constexpr int fmov_CordY = 0x0002;
+	inline constexpr int fmov_CordZ = 0x0004;
+	inline constexpr int fmov_Up_Down = 0x008;
+	inline constexpr int fmov_For_Back = 0x0010;
+
+	// flag per dati binary nuovo font
+	inline constexpr int FS_Custom = 0x100;
+	inline constexpr int FS_Redirect = 0x200;
+	inline constexpr int FS_Spazio = 0x400;
+	inline constexpr int FS_Comando = 0x800;
+	inline constexpr int FS_Ignora = 0x1000;
+	inline constexpr int FS_Binary = 0x2000;
+
+	// flag di font binary
+	inline constexpr int ff_DisableShadeGraphic = 0x01;
+
+	inline constexpr int FONT_LAYOUT_TOMB = 0x00;
+	inline constexpr int FONT_LAYOUT_SQUARE = 0x01;
+	inline constexpr int FONT_LAYOUT_HIGH_RECT = 0x02;
+	inline constexpr int FONT_LAYOUT_WIDE_RECT = 0x03;
+	inline constexpr int FONT_LAYOUT_MASK = 0x0F;
+
+	// flag per campo RapportoSize di dati font binary letti da sprite
+	inline constexpr int FONT_SIZE_TOMB = 0x00;
+	inline constexpr int FONT_SIZE_LITTLE = 0x10;
+	inline constexpr int FONT_SIZE_BIG = 0x20;
+	inline constexpr int FONT_SIZE_MASK = 0xF0;
+
+	inline constexpr int FIL_FROM_SAVEGAME = 0x0001;
+	inline constexpr int FIL_FROM_NEW_LEVEL = 0x0002; // level started from new game of title or with level jump and resethub
+	inline constexpr int FIL_FROM_LEVEL_JUMP = 0x0004; // when there is a level jump (note: if resethub was enabled, this flag will be missing)
+	inline constexpr int FIL_PRESERVE_LARA = 0x0008; // this flag is present: from savegame or from level jump (but no resethub)
+	inline constexpr int FIL_PRESERVE_LEVEL = 0x0010; // this flag is present: from savegame or from go and back for level jump and no resethub
+	inline constexpr int FIL_FROM_LIKE_SAVEGAME = 0x0020; // this flag is enabled if level is from savegame or from level jump with no reset hub and go and back from two levels.
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone
@@ -6457,6 +6515,50 @@ namespace trng {
 		WORD SettingFps;
 		int IndiceRangeNG;
 		WORD VetIndiciTail[50];
+	};
+
+	// struttura per vetcostantinemici size 0x26
+	struct StrArmiTr4 {
+		short ArmaSingleHMinAngle;  // 0x00
+		short ArmaSingleHMaxAngle;  // 0x02
+		short ArmaSingleVMinAngle;  // 0x04
+		short ArmaSingleVMaxAngle;  // 0x06
+
+		short ArmaRightHMinAngle;    // 0x08
+		short ArmaRightHMaxAngle;	// 0x0a
+		short ArmaRightVMinAngle;    // 0x0c
+		short ArmaRightVMaxAngle;	// 0x0e
+
+		short ArmaLeftHMinAngle;    // 0x10
+		short ArmaLeftHMaxAngle;	   // 0x12
+		short ArmaLeftVMinAngle;    // 0x14
+		short ArmaLeftVMaxAngle;	   // 0x16
+
+		WORD DatoArmaEstratta;		    // 0x18  senza sparare o puntare nemici
+		WORD Random;		// 0x1A quando si spara
+
+		short CordYArma;			// 0x1C
+		WORD DistanceTarget;		// 0x1E
+
+		BYTE DannoArmaNormale;		// 0x20
+		BYTE TempoRicarica;		    // 0x21
+
+		BYTE DurateFlash;			// 0x22
+		BYTE FrameCambioArma;		// 0x23
+		WORD SuonoSparo;			// 0x24
+	};
+
+	// struttura sprite di tomb4
+	struct StrSpriteTomb4 {
+		WORD TexturePage;
+		BYTE OrgX;
+		BYTE OrgY;
+		WORD SizeX;
+		WORD SizeY;
+		float x1;
+		float y1;
+		float x2;
+		float y2;
 	};
 #pragma pack(pop)
 }

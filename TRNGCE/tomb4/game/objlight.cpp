@@ -8,6 +8,12 @@
 namespace tomb4
 {
 	short &WhiteLightFrameOn = *reinterpret_cast<decltype(&WhiteLightFrameOn)>(0x45693C);
+	short &AmberLightSwitchSpeed = *reinterpret_cast<decltype(&AmberLightSwitchSpeed)>(0x45683C);
+	short &BlinkingLightDelay = *reinterpret_cast<decltype(&BlinkingLightDelay)>(0x456A65);
+	uchar &BlinkingLightBlue = *reinterpret_cast<decltype(&BlinkingLightBlue)>(0x456A3B);
+	uchar &BlinkingLightGreen = *reinterpret_cast<decltype(&BlinkingLightGreen)>(0x456A3D);
+	uchar &BlinkingLightRed = *reinterpret_cast<decltype(&BlinkingLightRed)>(0x456A42);
+	uchar &BlinkingLightFalloff = *reinterpret_cast<decltype(&BlinkingLightFalloff)>(0x456A47);
 
 	void ControlElectricalLight(short item_number)
 	{

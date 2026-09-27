@@ -3,6 +3,10 @@
 
 namespace tomb4
 {
+	extern long &CrossbowOffsetX;
+	extern long &CrossbowOffsetY;
+	extern long &CrossbowOffsetZ;
+
 	void TriggerUnderwaterExplosion(ITEM_INFO* item, long vehicle);
 	void undraw_shotgun(long weapon_type);
 	void undraw_shotgun_meshes(long weapon_type);
