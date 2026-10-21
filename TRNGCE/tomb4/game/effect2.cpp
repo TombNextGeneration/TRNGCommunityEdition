@@ -8,6 +8,9 @@ namespace tomb4
 	long &SmokeCountR = *reinterpret_cast<decltype(&SmokeCountR)>(0x804D4C);
 	long &SplashCount = *reinterpret_cast<decltype(&SplashCount)>(0x4BF244);
 	long &wibble = *reinterpret_cast<decltype(&wibble)>(0x4BF238);
+	SPLASH_SETUP &splash_setup = *reinterpret_cast<decltype(&splash_setup)>(0x804E20);
+	uchar &ricochet_spark_count_hit = *reinterpret_cast<decltype(&ricochet_spark_count_hit)>(0x44D079);
+	uchar &ricochet_spark_count_no_hit = *reinterpret_cast<decltype(&ricochet_spark_count_no_hit)>(0x44D44C);
 
 	void ClearDynamics()
 	{
@@ -38,6 +41,26 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void TriggerRocketSmoke(long x, long y, long z, long col)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void SetupSplash(SPLASH_SETUP* setup)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void TriggerFireFlame(long x, long y, long z, long body_part, long type)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void TriggerRicochetSpark(GAME_VECTOR* pos, long ang, long num, long smoke_only)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Effect2(bool replace)
@@ -48,4 +71,8 @@ void Inject_Effect2(bool replace)
 	ProcessInject(0x435440, (unsigned int)tomb4::UpdateSplashes, false);
 	ProcessInject(0x434480, (unsigned int)tomb4::TriggerExplosionSparks, false);
 	ProcessInject(0x435BF0, (unsigned int)tomb4::TriggerDynamic, false);
+	ProcessInject(0x435220, (unsigned int)tomb4::TriggerRocketSmoke, false);
+	ProcessInject(0x435380, (unsigned int)tomb4::SetupSplash, false);
+	ProcessInject(0x434BB0, (unsigned int)tomb4::TriggerFireFlame, false);
+	ProcessInject(0x433ED0, (unsigned int)tomb4::TriggerRicochetSpark, false);
 }

@@ -4,4 +4,5 @@
 namespace flep
 {
 	extern RULE (&list)[64];
+	extern short &temporary;
 }

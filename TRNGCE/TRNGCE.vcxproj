@@ -75,7 +75,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <DisableSpecificWarnings>4100;4201</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <DisableSpecificWarnings>4100;4201</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -132,6 +132,10 @@
     <ClInclude Include="plugin\flycheat\constants_mine.h" />
     <ClInclude Include="plugin\flycheat\PlugIn_trng.h" />
     <ClInclude Include="plugin\flycheat\trng.h" />
+    <ClInclude Include="plugin\objecthelper\constants_mine.h" />
+    <ClInclude Include="plugin\objecthelper\PlugIn_trng.h" />
+    <ClInclude Include="plugin\objecthelper\structures_mine.h" />
+    <ClInclude Include="plugin\objecthelper\trng.h" />
     <ClInclude Include="plugin\particlesystem\Plugin_ParticleSystem.h" />
     <ClInclude Include="plugin\particlesystem\trng\trng.h" />
     <ClInclude Include="resource.h" />
@@ -231,6 +235,8 @@
     <ClCompile Include="flep\PlugIn_trng.cpp" />
     <ClCompile Include="plugin\flycheat\PlugIn_trng.cpp" />
     <ClCompile Include="plugin\flycheat\trng.cpp" />
+    <ClCompile Include="plugin\objecthelper\PlugIn_trng.cpp" />
+    <ClCompile Include="plugin\objecthelper\trng.cpp" />
     <ClCompile Include="plugin\particlesystem\Plugin_ParticleSystem.cpp" />
     <ClCompile Include="plugin\particlesystem\trng\trng.cpp" />
     <ClCompile Include="tomb4\game\bike.cpp" />

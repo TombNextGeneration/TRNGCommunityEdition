@@ -21,12 +21,15 @@
 #include "../../flep/structures_mine.h"
 #include "laraswim.h"
 #include "../specific/specificfx.h"
+#include "draw.h"
+#include "debris.h"
 
 namespace tomb4
 {
 	static short &bikefspeed = *reinterpret_cast<decltype(&bikefspeed)>(0x4BFADC);
 	static char &dont_exit_bike = *reinterpret_cast<decltype(&dont_exit_bike)>(0x4BFAF8);
 	static ITEM_INFO* &GlobalBikeItem = *reinterpret_cast<decltype(&GlobalBikeItem)>(0x7F4F2C);
+	static short (&broomies)[22] = *reinterpret_cast<decltype(&broomies)>(0x7F4F00);
 
 	long &bike_booster_object = *reinterpret_cast<decltype(&bike_booster_object)>(0x463922);
 	uchar &bike_explode_in_water = *reinterpret_cast<decltype(&bike_explode_in_water)>(0x465B09);
@@ -594,6 +597,125 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void BikeCollideStaticObjects(long x, long y, long z, short room_number, long height)
+	{
+		static long BikeBounds[6];
+		static long CollidedStaticBounds[6];
+
+		MESH_INFO* mesh;
+		STATIC_INFO* sinfo;
+		ROOM_INFO* r;
+		PHD_VECTOR pos;
+		short* doors;
+		long j;
+		short room_count, rn;
+
+		pos.x = x;
+		pos.y = y;
+		pos.z = z;
+		BikeBounds[0] = x + 256;
+		BikeBounds[1] = x - 256;
+		BikeBounds[2] = y;
+		BikeBounds[3] = y - height;
+		BikeBounds[4] = z + 256;
+		BikeBounds[5] = z - 256;
+		room_count = 1;
+		broomies[0] = room_number;
+		doors = room[room_number].door;
+
+		if (doors)
+		{
+			for (int i = *doors++; i > 0; i--, doors += 16)
+			{
+				for (j = 0; j < room_count; j++)
+				{
+					if (broomies[j] == *doors)
+						break;
+				}
+
+				if (j == room_count)
+				{
+					broomies[room_count] = *doors;
+					room_count++;
+				}
+			}
+		}
+
+		for (int i = 0; i < room_count; i++)
+		{
+			rn = broomies[i];
+			r = &room[rn];
+			mesh = r->mesh;
+
+			for (j = r->num_meshes; j > 0; j--, mesh++)
+			{
+				sinfo = &static_objects[mesh->static_number];
+
+				if (mesh->Flags & 1)
+				{
+					if (mesh->static_number >= trng::GlobTomb4.pBaseCustomize->ShatterInizio && mesh->static_number <= trng::GlobTomb4.pBaseCustomize->ShatterFine)
+					{
+						if (mesh->Flags & trng::OCBS_SHATTER_SPECIFIC)
+						{
+							// e' di tipo specific
+							trng::ResultCheckSpecific = trng::CheckSpecificXVeicolo();
+
+							if (!trng::ResultCheckSpecific)
+								continue;
+						}
+
+						CollidedStaticBounds[2] = mesh->y + sinfo->y_maxc;
+						CollidedStaticBounds[3] = mesh->y + sinfo->y_minc;
+
+						if (mesh->y_rot == -0x8000)
+						{
+							CollidedStaticBounds[0] = mesh->x - sinfo->x_minc;
+							CollidedStaticBounds[1] = mesh->x - sinfo->x_maxc;
+							CollidedStaticBounds[4] = mesh->z - sinfo->z_minc;
+							CollidedStaticBounds[5] = mesh->z - sinfo->z_maxc;
+						}
+						else if (mesh->y_rot == -0x4000)
+						{
+							CollidedStaticBounds[0] = mesh->x - sinfo->z_minc;
+							CollidedStaticBounds[1] = mesh->x - sinfo->z_maxc;
+							CollidedStaticBounds[4] = mesh->z + sinfo->x_maxc;
+							CollidedStaticBounds[5] = mesh->z + sinfo->x_minc;
+						}
+						else if (mesh->y_rot == 0x4000)
+						{
+							CollidedStaticBounds[0] = mesh->x + sinfo->z_maxc;
+							CollidedStaticBounds[1] = mesh->x + sinfo->z_minc;
+							CollidedStaticBounds[4] = mesh->z - sinfo->x_minc;
+							CollidedStaticBounds[5] = mesh->z - sinfo->x_maxc;
+						}
+						else
+						{
+							CollidedStaticBounds[0] = mesh->x + sinfo->x_maxc;
+							CollidedStaticBounds[1] = mesh->x + sinfo->x_minc;
+							CollidedStaticBounds[4] = mesh->z + sinfo->z_maxc;
+							CollidedStaticBounds[5] = mesh->z + sinfo->z_minc;
+						}
+
+						if (BikeBounds[0] > CollidedStaticBounds[1] &&
+							BikeBounds[1] < CollidedStaticBounds[0] &&
+							BikeBounds[2] > CollidedStaticBounds[3] &&
+							BikeBounds[3] < CollidedStaticBounds[2] &&
+							BikeBounds[4] > CollidedStaticBounds[5] &&
+							BikeBounds[5] < CollidedStaticBounds[4])
+						{
+							ShatterObject(0, mesh, -128, rn, 0);
+							SoundEffect(SFX_HIT_ROCK, (PHD_3DPOS*)&pos, SFX_DEFAULT);
+							SmashedMeshRoom[SmashedMeshCount] = rn;
+							SmashedMesh[SmashedMeshCount] = mesh;
+							SmashedMeshCount++;
+							mesh->Flags &= ~1;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Inject_Bike(bool replace)
@@ -615,4 +737,5 @@ void Inject_Bike(bool replace)
 	ProcessInject(0x466120, (unsigned int)tomb4::BikeStart, replace);
 	ProcessInject(0x463DB0, (unsigned int)tomb4::DrawBikeExtras, replace);
 	ProcessInject(0x463BD0, (unsigned int)tomb4::DrawBikeBeam, false);
+	ProcessInject(0x464FD0, (unsigned int)tomb4::BikeCollideStaticObjects, replace);
 }

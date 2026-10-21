@@ -297,6 +297,18 @@
     <ClInclude Include="tomb4\game\larafire.h">
       <Filter>tomb4\game</Filter>
     </ClInclude>
+    <ClInclude Include="plugin\objecthelper\PlugIn_trng.h">
+      <Filter>plugin\objecthelper</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\objecthelper\trng.h">
+      <Filter>plugin\objecthelper</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\objecthelper\constants_mine.h">
+      <Filter>plugin\objecthelper</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\objecthelper\structures_mine.h">
+      <Filter>plugin\objecthelper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -561,6 +573,12 @@
     <ClCompile Include="tomb4\game\larafire.cpp">
       <Filter>tomb4\game</Filter>
     </ClCompile>
+    <ClCompile Include="plugin\objecthelper\PlugIn_trng.cpp">
+      <Filter>plugin\objecthelper</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\objecthelper\trng.cpp">
+      <Filter>plugin\objecthelper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
@@ -598,6 +616,9 @@
     </Filter>
     <Filter Include="trngce">
       <UniqueIdentifier>{5d652e4a-c1d6-46ef-a66b-0db201c88ece}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin\objecthelper">
+      <UniqueIdentifier>{c39798fc-bca0-493c-b3e4-e63348847253}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

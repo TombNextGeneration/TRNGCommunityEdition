@@ -24,6 +24,8 @@ namespace tomb4
 	void phd_TranslateAbs(long x, long y, long z);
 	void phd_RotYXZ(short y, short x, short z);
 	void phd_LookAt(long sx, long sy, long sz, long tx, long ty, long tz, short roll);
+	void phd_PushUnitMatrix();
+	long phd_TranslateRel(long x, long y, long z);
 }
 
 void Inject_3dmath(bool replace);

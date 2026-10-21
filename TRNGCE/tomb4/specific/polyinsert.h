@@ -11,6 +11,8 @@ namespace tomb4
 	void CalcColorSplit(D3DCOLOR s, D3DCOLOR* d);
 	void InitialiseSortList();
 	void DrawSortList();
+	long IsVolumetric();
+	void TriggerFXFogBulb(long x, long y, long z, long FXRad, long density, long r, long g, long b, long room_number);
 }
 
 void Inject_Polyinsert(bool replace);

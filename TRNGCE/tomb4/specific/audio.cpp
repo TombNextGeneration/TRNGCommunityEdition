@@ -147,8 +147,8 @@ void Inject_Audio(bool replace)
 	IndirectReferenceInject(Inject_Audio_TrackFileNames());
 
 	ProcessInject(0x46BDC0, (unsigned int)tomb4::S_CDStop, false);
-	ProcessInject(0x46BEB0, (unsigned int)tomb4::ACMSetVolume, 0x1000C4AF, replace);
-	ProcessInject(0x46BD20, (unsigned int)tomb4::S_CDPlay, 0x1000C496, replace);
+	ProcessPatchInject(0x46BEB0, (unsigned int)tomb4::ACMSetVolume, 0x1000C4AF, replace);
+	ProcessPatchInject(0x46BD20, (unsigned int)tomb4::S_CDPlay, 0x1000C496, replace);
 	ProcessInject(0x46BF70, (unsigned int)tomb4::ACMSetupNotifications, replace);
 	ProcessInject(0x46CA20, (unsigned int)tomb4::ACMHandleNotifications, false);
 	ProcessInject(0x46C860, (unsigned int)tomb4::ACMEmulateCDPlay, false);

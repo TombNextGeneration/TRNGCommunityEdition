@@ -9,6 +9,7 @@ namespace tomb4
 	void ShiftItem(ITEM_INFO* item, COLL_INFO* coll);
 	long TestBoundsCollide(ITEM_INFO* item, ITEM_INFO* l, long rad);
 	long ItemPushLara(ITEM_INFO* item, ITEM_INFO* l, COLL_INFO* coll, long spaz, long BigPush);
+	long GetCollidedObjects(ITEM_INFO* item, long rad, long noInvisible, ITEM_INFO** StoredItems, MESH_INFO** StoredStatics, long StoreLara);
 }
 
 void Inject_Collide(bool replace);

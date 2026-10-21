@@ -14,6 +14,7 @@ namespace tomb4
 	short &ChaseCameraDefaultElevation = *reinterpret_cast<decltype(&ChaseCameraDefaultElevation)>(0x442DB9);
 	long &LookCameraDefaultTargetZ = *reinterpret_cast<decltype(&LookCameraDefaultTargetZ)>(0x44387C);
 	long &LookCameraDefaultStartY = *reinterpret_cast<decltype(&LookCameraDefaultStartY)>(0x443732);
+	SHATTER_ITEM &ShatterItem = *reinterpret_cast<decltype(&ShatterItem)>(0x7FE840);
 
 	void CalculateCamera()
 	{

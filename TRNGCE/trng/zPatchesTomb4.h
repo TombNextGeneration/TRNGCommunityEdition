@@ -43,6 +43,7 @@ namespace trng {
 	extern float &Float1_240;
 	extern float &Float512;
 	extern float &Float240;
+	extern int &ResultCheckSpecific;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -184,6 +185,8 @@ namespace trng {
 	void RestartCutsceneCamera(void);
 	void RestoreAllFlipMesh(void);
 	void aClearFX(void);
+	bool CheckShatterSpecific(WORD SlotEnemy, bool TestLaraWeapon);
+	bool CheckSpecificXVeicolo(void);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

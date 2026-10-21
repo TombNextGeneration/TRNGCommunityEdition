@@ -3,6 +3,8 @@
 
 namespace tomb4
 {
+	char (&tsv_buffer)[16384] = *reinterpret_cast<decltype(&tsv_buffer)>(0x804E60);
+
 	void UpdateDebris()
 	{
 		__try { throw __func__; } __finally {}

@@ -1,4 +1,5 @@
 #include "control.h"
+#include <intrin.h>
 #include "../../inject.h"
 #include "pickup.h"
 #include "spotcam.h"
@@ -39,6 +40,10 @@
 #include "../../plugin/flycheat/trng.h"
 #include "../../plugin/particlesystem/trng/trng.h"
 #include "../../plugin/particlesystem/Plugin_ParticleSystem.h"
+#include "larafire.h"
+#include "switch.h"
+#include "../../plugin/objecthelper/trng.h"
+#include "../../plugin/objecthelper/PlugIn_trng.h"
 
 namespace tomb4
 {
@@ -83,6 +88,10 @@ namespace tomb4
 	short* &trigger_index = *reinterpret_cast<decltype(&trigger_index)>(0x7FE128);
 	short &FXType = *reinterpret_cast<decltype(&FXType)>(0x7FE6C0);
 	short &IsRoomOutsideNo = *reinterpret_cast<decltype(&IsRoomOutsideNo)>(0x7FE6C2);
+	char &LaserSightActive = *reinterpret_cast<decltype(&LaserSightActive)>(0x4BF256);
+	long &LaserSightX = *reinterpret_cast<decltype(&LaserSightX)>(0x800048);
+	long &LaserSightY = *reinterpret_cast<decltype(&LaserSightY)>(0x800040);
+	long &LaserSightZ = *reinterpret_cast<decltype(&LaserSightZ)>(0x800044);
 
 	// consentire uso di mirino laser per arpione sott'acqua
 	// chiamata con jmp
@@ -710,6 +719,240 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long ExplodeItemNode(ITEM_INFO* item, long Node, long NoXZVel, long bits)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	long GetTargetOnLOS(GAME_VECTOR* src, GAME_VECTOR* dest, long DrawTarget, long firing)
+	{
+		ITEM_INFO* shotitem;
+		MESH_INFO* Mesh;
+		GAME_VECTOR target;
+		PHD_VECTOR v;
+		ulong index;
+		short item_no, hit, ricochet, room_number, TriggerItems[8], NumTrigs;
+		bool skip;
+
+		hit = 0;
+		target.x = dest->x;
+		target.y = dest->y;
+		target.z = dest->z;
+		ricochet = (short)LOS(src, &target);
+
+		// vederer se siamo in modalita' binocolo
+		if (*trng::AdrGlobali.pZoomFactor)
+		{
+			// tripletta e rooom a partire da esp+24h
+			trng::GlobTomb4.TargetBinoculars.CordX = target.x;
+			trng::GlobTomb4.TargetBinoculars.CordY = target.y;
+			trng::GlobTomb4.TargetBinoculars.CordZ = target.z;
+			trng::GlobTomb4.TargetBinoculars.Room = target.room_number;
+		}
+
+		GetFloor(target.x, target.y, target.z, &target.room_number);
+
+		if (!flep::pPatchMap[flep::PATCH_SYNCHRONIZE_LASERSIGHT_WITH_ANIMATIONS] && firing && LaserSight)
+		{
+			if (lara.gun_type == WEAPON_REVOLVER)
+				SoundEffect(SFX_DESERT_EAGLE_FIRE, 0, SFX_DEFAULT);
+		}
+
+		item_no = (short)ObjectOnLOS2(src, dest, &v, &Mesh);
+
+		if (item_no != 999)
+		{
+			target.x = v.x - ((v.x - src->x) >> 5);
+			target.y = v.y - ((v.y - src->y) >> 5);
+			target.z = v.z - ((v.z - src->z) >> 5);
+
+			if (firing)
+			{
+				if (flep::pPatchMap[flep::PATCH_HK_GUN] || lara.gun_type != WEAPON_CROSSBOW)
+				{
+					if (item_no < 0)
+					{
+						skip = false;
+
+						if (Mesh->Flags & trng::OCBS_SHATTER_SPECIFIC)
+						{
+							// controllo se e' shatterable
+							trng::ResultCheckSpecific = trng::CheckShatterSpecific(LARA, true);
+
+							if (!trng::ResultCheckSpecific)
+								skip = true;
+						}
+						else if (!(Mesh->Flags & trng::OCBS_SCALABLE) && Mesh->Flags & trng::OCBS_HARD_SHATTER)
+						{
+							// se pitola revolver o uzi niente shatter
+							if (lara.gun_type < WEAPON_SHOTGUN)
+								skip = true;
+						}
+
+						if (!skip && Mesh->static_number >= trng::GlobTomb4.pBaseCustomize->ShatterInizio && Mesh->static_number <= trng::GlobTomb4.pBaseCustomize->ShatterFine)
+						{
+							ShatterObject(0, Mesh, 128, dest->room_number, 0);
+							SmashedMeshRoom[SmashedMeshCount] = dest->room_number;
+							SmashedMesh[SmashedMeshCount] = Mesh;
+							SmashedMeshCount++;
+							Mesh->Flags &= ~1;
+							SoundEffect(SFX_HIT_ROCK, (PHD_3DPOS*)&target, SFX_DEFAULT);
+						}
+
+						TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, 0);
+						TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, 0);
+					}
+					else
+					{
+						shotitem = &items[item_no];
+
+						if (shotitem->object_number != SWITCH_TYPE7 && shotitem->object_number != SWITCH_TYPE8)
+						{
+							if (flep::pPatchMap[flep::PATCH_VERTEX_SHADER_BASE] && ShatterItem.Bit)
+							{
+								_BitScanForward(&index, ShatterItem.Bit);
+								flep::temporary = short((index << 10) | (shotitem->object_number & 0x3FF));
+							}
+
+							if (objects[shotitem->object_number].explodable_meshbits & ShatterItem.Bit && LaserSight)
+							{
+								skip = false;
+
+								if (plugin::objecthelper::Trng.IdMyPlugin != -1)
+								{
+									plugin::objecthelper::HeadshotEnemy((trng::StrItemTr4*)shotitem);
+
+									if (plugin::objecthelper::Result.Available && plugin::objecthelper::Result.Support)
+									{
+										if (plugin::objecthelper::Result.Value)
+										{
+											shotitem->hit_points = 1;
+											HitTarget(shotitem, &target, 1, 0);
+										}
+
+										skip = true;
+									}
+								}
+
+								if (!skip)
+								{
+									ShatterObject(&ShatterItem, 0, 128, shotitem->room_number, 0);
+									shotitem->mesh_bits &= ~ShatterItem.Bit;
+									TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, 0);
+								}
+							}
+							else if (DrawTarget && lara.gun_type == WEAPON_REVOLVER)
+							{
+								if (objects[shotitem->object_number].intelligent)
+									HitTarget(shotitem, &target, weapons[lara.gun_type].damage, 0);
+							}
+							else
+							{
+								skip = false;
+
+								if (plugin::objecthelper::Trng.IdMyPlugin != -1)
+								{
+									plugin::objecthelper::HitEnemy((trng::StrItemTr4*)shotitem);
+
+									if (plugin::objecthelper::Result.Available && plugin::objecthelper::Result.Support && plugin::objecthelper::Result.Value)
+										skip = true;
+								}
+
+								if (!skip)
+								{
+									if (objects[shotitem->object_number].HitEffect == 1)
+										DoBloodSplat(target.x, target.y, target.z, (GetRandomControl() & 3) + 3, shotitem->pos.y_rot, shotitem->room_number);
+									else if (objects[shotitem->object_number].HitEffect == 2)
+										TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, -5);
+									else if (objects[shotitem->object_number].HitEffect == 3)
+										TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, 0);
+
+									shotitem->hit_status = 1;
+
+									if (!objects[shotitem->object_number].undead)
+										shotitem->hit_points -= weapons[lara.gun_type].damage;
+								}
+							}
+						}
+						else
+						{
+							if (ShatterItem.Bit == 1 << (objects[shotitem->object_number].nmeshes - 1) && !(shotitem->flags & IFL_SWITCH_ONESHOT))
+							{
+								if (shotitem->object_number == SWITCH_TYPE7)
+									ExplodeItemNode(shotitem, objects[shotitem->object_number].nmeshes - 1, 0, 64);
+
+								if (shotitem->flags & IFL_CODEBITS && (shotitem->flags & IFL_CODEBITS) != IFL_CODEBITS)
+								{
+									room_number = shotitem->room_number;
+									GetHeight(GetFloor(shotitem->pos.x_pos, shotitem->pos.y_pos - 256, shotitem->pos.z_pos, &room_number), shotitem->pos.x_pos, shotitem->pos.y_pos - 256, shotitem->pos.z_pos);
+									TestTriggers(trigger_index, 1, shotitem->flags & IFL_CODEBITS);
+								}
+								else
+								{
+									NumTrigs = (short)GetSwitchTrigger(shotitem, TriggerItems, 1);
+
+									for (int i = NumTrigs - 1; i >= 0; i--)
+									{
+										AddActiveItem(TriggerItems[i]);
+										items[TriggerItems[i]].status = ITEM_ACTIVE;
+										items[TriggerItems[i]].flags |= IFL_CODEBITS;
+									}
+								}
+
+								AddActiveItem(item_no);
+								shotitem->status = ITEM_ACTIVE;
+								shotitem->flags |= IFL_SWITCH_ONESHOT | IFL_CODEBITS;
+							}
+
+							TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_hit, 0);
+						}
+					}
+				}
+				else if (LaserSight)
+					FireCrossBowFromLaserSight(src, &target);
+			}
+
+			hit = 1;
+		}
+		else if (flep::pPatchMap[flep::PATCH_HK_GUN] || lara.gun_type != WEAPON_CROSSBOW)
+		{
+			target.x -= (target.x - src->x) >> 5;
+			target.y -= (target.y - src->y) >> 5;
+			target.z -= (target.z - src->z) >> 5;
+
+			if (firing && !ricochet)
+				TriggerRicochetSpark(&target, lara_item->pos.y_rot, ricochet_spark_count_no_hit, 0);
+		}
+		else if (firing && LaserSight)
+			FireCrossBowFromLaserSight(src, &target);
+
+		if (DrawTarget && (hit || !ricochet))
+		{
+			LaserSightActive = 1;
+			LaserSightX = target.x;
+			LaserSightY = target.y;
+			LaserSightZ = target.z;
+			TriggerDynamic(target.x, target.y, target.z, 16, 32, 0, 0);
+		}
+
+		return hit;
+	}
+
+	long LOS(GAME_VECTOR* start, GAME_VECTOR* target)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	long ObjectOnLOS2(GAME_VECTOR* start, GAME_VECTOR* target, PHD_VECTOR* Coord, MESH_INFO** StaticMesh)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void FireCrossBowFromLaserSight(GAME_VECTOR* start, GAME_VECTOR* target)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -734,4 +977,9 @@ void Inject_Control(bool replace)
 	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
 	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, false);
 	ProcessInject(0x44ACB0, (unsigned int)tomb4::TriggerActive, false);
+	ProcessInject(0x44D4E0, (unsigned int)tomb4::ExplodeItemNode, false);
+	ProcessInject(0x44CF10, (unsigned int)tomb4::GetTargetOnLOS, replace);
+	ProcessInject(0x44B260, (unsigned int)tomb4::LOS, false);
+	ProcessInject(0x44C270, (unsigned int)tomb4::ObjectOnLOS2, false);
+	ProcessInject(0x44CEA0, (unsigned int)tomb4::FireCrossBowFromLaserSight, false);
 }

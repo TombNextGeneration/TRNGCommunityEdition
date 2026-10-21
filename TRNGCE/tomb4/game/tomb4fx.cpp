@@ -227,6 +227,16 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void TriggerFlashSmoke(long x, long y, long z, short room_number)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void TriggerShockwave(PHD_VECTOR* pos, long InnerOuterRads, long speed, long bgrl, long XRotFlags)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Tomb4fx(bool replace)
@@ -251,4 +261,6 @@ void Inject_Tomb4fx(bool replace)
 	ProcessInject(0x4391A0, (unsigned int)tomb4::CreateBubble, false);
 	ProcessInject(0x43AFC0, (unsigned int)tomb4::DrawWeaponMissile, replace);
 	ProcessInject(0x4396D0, (unsigned int)tomb4::SetFadeClip, false);
+	ProcessInject(0x43ADB0, (unsigned int)tomb4::TriggerFlashSmoke, false);
+	ProcessInject(0x43A420, (unsigned int)tomb4::TriggerShockwave, false);
 }

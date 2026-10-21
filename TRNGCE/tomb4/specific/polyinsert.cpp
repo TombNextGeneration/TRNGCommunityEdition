@@ -2,6 +2,7 @@
 #include "../../inject.h"
 #include "../../trng/Tomb_NextGeneration.h"
 #include "output.h"
+#include "winmain.h"
 
 namespace tomb4
 {
@@ -124,6 +125,16 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long IsVolumetric()
+	{
+		return App.Volumetric;
+	}
+
+	void TriggerFXFogBulb(long x, long y, long z, long FXRad, long density, long r, long g, long b, long room_number)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Polyinsert_SortBuffer() { __asm lea eax, [tomb4::SortBuffer] __asm ret }
@@ -139,4 +150,6 @@ void Inject_Polyinsert(bool replace)
 	ProcessInject(0x482830, (unsigned int)tomb4::CalcColorSplit, replace);
 	ProcessInject(0x47F6F0, (unsigned int)tomb4::InitialiseSortList, replace);
 	ProcessInject(0x47E950, (unsigned int)tomb4::DrawSortList, false);
+	ProcessInject(0x47F960, (unsigned int)tomb4::IsVolumetric, replace);
+	ProcessInject(0x47F880, (unsigned int)tomb4::TriggerFXFogBulb, false);
 }

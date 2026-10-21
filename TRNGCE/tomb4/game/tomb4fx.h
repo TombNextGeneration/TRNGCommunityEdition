@@ -32,6 +32,8 @@ namespace tomb4
 	void CreateBubble(PHD_3DPOS* pos, short room_number, long size, long biggest);
 	void DrawWeaponMissile(ITEM_INFO* item);
 	void SetFadeClip(short height, short speed);
+	void TriggerFlashSmoke(long x, long y, long z, short room_number);
+	void TriggerShockwave(PHD_VECTOR* pos, long InnerOuterRads, long speed, long bgrl, long XRotFlags);
 }
 
 void Inject_Tomb4fx(bool replace);

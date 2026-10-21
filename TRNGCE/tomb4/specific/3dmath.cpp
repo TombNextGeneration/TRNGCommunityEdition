@@ -73,6 +73,16 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void phd_PushUnitMatrix()
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	long phd_TranslateRel(long x, long y, long z)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_3dmath(bool replace)
@@ -86,4 +96,6 @@ void Inject_3dmath(bool replace)
 	ProcessInject(0x48E690, (unsigned int)tomb4::phd_TranslateAbs, false);
 	ProcessInject(0x48E4A0, (unsigned int)tomb4::phd_RotYXZ, false);
 	ProcessInject(0x48DD90, (unsigned int)tomb4::phd_LookAt, false);
+	ProcessInject(0x48DF90, (unsigned int)tomb4::phd_PushUnitMatrix, false);
+	ProcessInject(0x48DFD0, (unsigned int)tomb4::phd_TranslateRel, false);
 }

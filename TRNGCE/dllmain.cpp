@@ -81,6 +81,9 @@
 #include "tomb4/specific/dxsound.h"
 #include "tomb4/specific/lighting.h"
 #include "tomb4/specific/texture.h"
+#include "tomb4/game/larafire.h"
+#include "plugin/objecthelper/PlugIn_trng.h"
+#include "plugin/objecthelper/trng.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -466,6 +469,16 @@ static const char *PatchTitles[342] = {
 	"Electric Lara",
 	"Headlight"
 };
+static const char* PluginNames[3] = {
+	"Plugin_FlyCheat.dll",
+	"Plugin_ParticleSystem.dll",
+	"Plugin_ObjectHelper.dll"
+};
+static const WORD RequiredPluginVersions[3][4] = {
+	{4, 0, 0, 3},
+	{1, 1, 0, 0},
+	{3, 0, 0, 1}
+};
 static void *InvalidAddress;
 
 #pragma comment(linker, "/EXPORT:_DummyFunction,@1,NONAME")
@@ -553,47 +566,42 @@ static void Terminate(const char *message) {
 	TerminateProcess(GetCurrentProcess(), 0);
 }
 
-[[noreturn]] static void PluginErrorTerminate(const char *name) {
-	char message[1024];
-
-	strcpy_s(message, "The game can't start because ");
-	strcat_s(message, name);
-	strcat_s(message, " is incompatible with TRNG-CE. Try installing the latest version of the plugin to fix this problem.");
-	Terminate(message);
-	__assume(0);
-}
-
-static void CheckPluginVersion(const char *name, WORD major, WORD minor, WORD build, WORD revision) {
+static bool CheckPluginVersion(const char *name, const WORD *required) {
 	DWORD size;
 	LPVOID block;
 	VS_FIXEDFILEINFO *version;
 	UINT length;
-	WORD required[4], actual[4];
-	int index;
+	WORD actual[4];
+	int index, result;
 
 	if (!name || !GetModuleHandle(name))
-		return;
+		return true;
+	result = -1;
 	size = GetFileVersionInfoSize(name, NULL);
-	if (!size)
-		PluginErrorTerminate(name);
-	block = HeapAlloc(GetProcessHeap(), 0, size);
-	if (!block || !GetFileVersionInfo(name, 0, size, block) || !VerQueryValue(block, "\\", (LPVOID*)&version, &length) || !length)
-		PluginErrorTerminate(name);
-	required[0] = major;
-	required[1] = minor;
-	required[2] = build;
-	required[3] = revision;
-	actual[0] = version->dwFileVersionMS >> 16;
-	actual[1] = version->dwFileVersionMS & 0xFFFF;
-	actual[2] = version->dwFileVersionLS >> 16;
-	actual[3] = version->dwFileVersionLS & 0xFFFF;
-	for (index = 0; index < 4; ++index) {
-		if (actual[index] > required[index])
-			break;
-		if (actual[index] < required[index])
-			PluginErrorTerminate(name);
+	if (size) {
+		block = HeapAlloc(GetProcessHeap(), 0, size);
+		if (block) {
+			if (GetFileVersionInfo(name, 0, size, block) && VerQueryValue(block, "\\", (LPVOID*)&version, &length) && length) {
+				actual[0] = version->dwFileVersionMS >> 16;
+				actual[1] = version->dwFileVersionMS & 0xFFFF;
+				actual[2] = version->dwFileVersionLS >> 16;
+				actual[3] = version->dwFileVersionLS & 0xFFFF;
+				result = 0;
+				for (index = 0; index < 4; ++index) {
+					if (actual[index] > required[index]) {
+						result = 1;
+						break;
+					}
+					if (actual[index] < required[index]) {
+						result = -1;
+						break;
+					}
+				}
+			}
+			HeapFree(GetProcessHeap(), 0, block);
+		}
 	}
-	HeapFree(GetProcessHeap(), 0, block);
+	return result >= 0;
 }
 
 static void Inject(bool replace) {
@@ -665,6 +673,9 @@ static void Inject(bool replace) {
 	Inject_Dxsound(replace);
 	Inject_Lighting(replace);
 	Inject_Texture(replace);
+	Inject_Larafire(replace);
+	Inject_Plugin_Objecthelper(GetModuleHandle("Plugin_ObjectHelper.dll"), replace);
+	Inject_Plugin_Objecthelper_trng(GetModuleHandle("Plugin_ObjectHelper.dll"), replace);
 }
 
 static LPSTR __stdcall CallInject() {
@@ -687,8 +698,20 @@ static LPSTR __stdcall CallInject() {
 		strcat_s(message, "\nTry enabling the patches to fix this problem.");
 		Terminate(message);
 	}
-	CheckPluginVersion("Plugin_FlyCheat.dll", 4, 0, 0, 2);
-	CheckPluginVersion("Plugin_ParticleSystem.dll", 1, 1, 0, 0);
+	for (index = 0; index < 3; ++index) {
+		if (!CheckPluginVersion(PluginNames[index], RequiredPluginVersions[index])) {
+			if (!error) {
+				strcpy_s(message, "The game can't start because the following plugins are incompatible with TRNG-CE:\n\n");
+				error = true;
+			}
+			strcat_s(message, PluginNames[index]);
+			strcat_s(message, "\n");
+		}
+	}
+	if (error) {
+		strcat_s(message, "\nTry installing the latest versions of the plugins to fix this problem.");
+		Terminate(message);
+	}
 	Inject(REPLACE);
 	GetCommandLineBinding = GetCommandLineA;
 	return GetCommandLineA();
@@ -705,7 +728,7 @@ void ProcessInject(unsigned int from, unsigned int to, bool replace) {
 		ProcessInjectJump(to, from);
 }
 
-void ProcessInject(unsigned int from, unsigned int to, unsigned int patch, bool replace) {
+void ProcessPatchInject(unsigned int from, unsigned int to, unsigned int patch, bool replace) {
 	ProcessInject(from, to, replace);
 	if (replace)
 		ProcessInjectReturn(patch);
@@ -718,6 +741,13 @@ void ModuleProcessInject(void *module, const char *name, unsigned int to, bool r
 		ProcessInject((unsigned int) GetProcAddress((HMODULE) module, name), to, replace);
 }
 
+void ModuleAddressProcessInject(void *module, unsigned int address, unsigned int to, bool replace) {
+	if (!module)
+		ProcessInject((unsigned int) Break, to, false);
+	else
+		ProcessInject((unsigned int) module + address - 0x10000000, to, replace);
+}
+
 void IndirectReferenceInject(void **reference) {
 	ReferenceInject(reference, *reference);
 }
@@ -726,6 +756,13 @@ void ModuleReferenceInject(void **reference, void *module) {
 	void *address;
 
 	address = module ? (void *) GetProcAddress((HMODULE) module, (LPCSTR) *reference) : InvalidAddress;
+	ReferenceInject(reference, &address);
+}
+
+void ModuleAddressReferenceInject(void **reference, void *module) {
+	void *address;
+
+	address = module ? (void *) ((unsigned int) module + (unsigned int) *reference - 0x10000000) : InvalidAddress;
 	ReferenceInject(reference, &address);
 }
 
@@ -742,6 +779,12 @@ void CopyInject(void *module, const char *name, void *target, unsigned int size)
 	if (!module)
 		return;
 	memcpy(target, (void *) GetProcAddress((HMODULE) module, name), size);
+}
+
+void CopyAddressInject(void *module, unsigned int address, void *target, unsigned int size) {
+	if (!module)
+		return;
+	memcpy(target, (void *) ((unsigned int) module + address - 0x10000000), size);
 }
 
 bool ConditionNoScript() {

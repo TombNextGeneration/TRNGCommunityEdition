@@ -42,6 +42,10 @@ namespace tomb4
 	extern short* &trigger_index;
 	extern short &FXType;
 	extern short &IsRoomOutsideNo;
+	extern char &LaserSightActive;
+	extern long &LaserSightX;
+	extern long &LaserSightY;
+	extern long &LaserSightZ;
 
 	long ControlPhase(long nframes, long demo_mode);
 	void UpdateSky();
@@ -57,6 +61,11 @@ namespace tomb4
 	long IsRoomOutside(long x, long y, long z);
 	void AnimateItem(ITEM_INFO* item);
 	long TriggerActive(ITEM_INFO* item);
+	long ExplodeItemNode(ITEM_INFO* item, long Node, long NoXZVel, long bits);
+	long GetTargetOnLOS(GAME_VECTOR* src, GAME_VECTOR* dest, long DrawTarget, long firing);
+	long LOS(GAME_VECTOR* start, GAME_VECTOR* target);
+	long ObjectOnLOS2(GAME_VECTOR* start, GAME_VECTOR* target, PHD_VECTOR* Coord, MESH_INFO** StaticMesh);
+	void FireCrossBowFromLaserSight(GAME_VECTOR* start, GAME_VECTOR* target);
 }
 
 void Inject_Control(bool replace);

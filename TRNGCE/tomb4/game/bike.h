@@ -19,6 +19,7 @@ namespace tomb4
 	void BikeStart(ITEM_INFO* item, ITEM_INFO* l);
 	void DrawBikeExtras(ITEM_INFO* item);
 	void DrawBikeBeam(ITEM_INFO* item);
+	void BikeCollideStaticObjects(long x, long y, long z, short room_number, long height);
 }
 
 void Inject_Bike(bool replace);

@@ -50,6 +50,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	void InitialiseItem(short item_num)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Items(bool replace)
@@ -59,4 +64,5 @@ void Inject_Items(bool replace)
 	ProcessInject(0x453840, (unsigned int)tomb4::CreateItem, replace);
 	ProcessInject(0x453C10, (unsigned int)tomb4::AddActiveItem, false);
 	ProcessInject(0x453AC0, (unsigned int)tomb4::RemoveActiveItem, false);
+	ProcessInject(0x453890, (unsigned int)tomb4::InitialiseItem, false);
 }

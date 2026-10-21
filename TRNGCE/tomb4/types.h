@@ -3394,7 +3394,7 @@ namespace tomb4
 		short shot_accuracy;
 		short gun_height;
 		short target_dist;
-		char damage;
+		uchar damage;
 		char recoil_frame;
 		char flash_time;
 		char draw_frame;
@@ -3411,6 +3411,27 @@ namespace tomb4
 		float y1;	//top
 		float x2;	//right
 		float y2;	//bottom
+	};
+
+	struct SPLASH_SETUP
+	{
+		long x;
+		long y;
+		long z;
+		short InnerRad;
+		short InnerSize;
+		short InnerRadVel;
+		short InnerYVel;
+		short pad1;
+		short MiddleRad;
+		short MiddleSize;
+		short MiddleRadVel;
+		short MiddleYVel;
+		short pad2;
+		short OuterRad;
+		short OuterSize;
+		short OuterRadVel;
+		short pad3;
 	};
 #pragma pack(pop)
 }

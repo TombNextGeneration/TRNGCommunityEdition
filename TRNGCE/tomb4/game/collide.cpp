@@ -60,6 +60,11 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long GetCollidedObjects(ITEM_INFO* item, long rad, long noInvisible, ITEM_INFO** StoredItems, MESH_INFO** StoredStatics, long StoreLara)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Collide(bool replace)
@@ -70,4 +75,5 @@ void Inject_Collide(bool replace)
 	ProcessInject(0x446700, (unsigned int)tomb4::ShiftItem, false);
 	ProcessInject(0x447270, (unsigned int)tomb4::TestBoundsCollide, false);
 	ProcessInject(0x446EC0, (unsigned int)tomb4::ItemPushLara, false);
+	ProcessInject(0x4484E0, (unsigned int)tomb4::GetCollidedObjects, false);
 }

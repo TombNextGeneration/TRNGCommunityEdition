@@ -5,8 +5,8 @@
 #include "../../tomb4/game/scarab.h"
 
 namespace plugin::flycheat {
-	bool (&Transition)[COMMANDS] = *reinterpret_cast<decltype(&Transition)>((char*)"Transition");
-	bool (&State)[COMMANDS] = *reinterpret_cast<decltype(&State)>((char*)"State");
+	bool (&Transition)[COMMANDS] = *reinterpret_cast<decltype(&Transition)>(0x1000A318);
+	bool (&State)[COMMANDS] = *reinterpret_cast<decltype(&State)>(0x1000A330);
 
 	void FriendlyFish(void)
 	{
@@ -38,9 +38,9 @@ __declspec(naked) static void** Inject_Plugin_FlyCheat_State() { __asm lea eax, 
 
 void Inject_Plugin_FlyCheat(void* module, bool replace)
 {
-	ModuleReferenceInject(Inject_Plugin_FlyCheat_Transition(), module);
-	ModuleReferenceInject(Inject_Plugin_FlyCheat_State(), module);
+	ModuleAddressReferenceInject(Inject_Plugin_FlyCheat_Transition(), module);
+	ModuleAddressReferenceInject(Inject_Plugin_FlyCheat_State(), module);
 
-	ModuleProcessInject(module, "FriendlyFish", (unsigned int)plugin::flycheat::FriendlyFish, replace);
-	ModuleProcessInject(module, "FriendlyBeetles", (unsigned int)plugin::flycheat::FriendlyBeetles, replace);
+	ModuleAddressProcessInject(module, 0x10001150, (unsigned int)plugin::flycheat::FriendlyFish, replace);
+	ModuleAddressProcessInject(module, 0x10001100, (unsigned int)plugin::flycheat::FriendlyBeetles, replace);
 }

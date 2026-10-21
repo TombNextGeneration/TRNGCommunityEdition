@@ -89,6 +89,7 @@ namespace trng {
 	float &Float1_240 = *reinterpret_cast<decltype(&Float1_240)>(0x1016A2E4);   // era 540
 	float &Float512 = *reinterpret_cast<decltype(&Float512)>(0x1016A2E8);
 	float &Float240 = *reinterpret_cast<decltype(&Float240)>(0x1016A2EC);   // era 540
+	int &ResultCheckSpecific = *reinterpret_cast<decltype(&ResultCheckSpecific)>(0x10657B78);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -8414,6 +8415,105 @@ namespace trng {
 	{
 		ClearRainSnowBuffers();
 	}
+
+	// verify se Slot is one of CUST_SHATTER_SPECIFIC  returns true if it is
+	// if TestLaraWeapon = true, ignore Slot and check for current weapon and ammo
+	bool CheckShatterSpecific(WORD SlotEnemy, bool TestLaraWeapon)
+	{
+		short ArmaNow;
+		// [0] = fucile / [1] = balestra / [2] = lanciagrante
+		BYTE Ammo;
+		int i;
+		StrShaterCustSpecific *pSpec;
+
+		if (TestLaraWeapon) {
+			// impostare SlotEnemy a seconda dello slot di lara
+			ArmaNow = *GlobTomb4.pAdr->pObjInLaraHandsNow;
+			SlotEnemy = 0;
+
+			switch (ArmaNow) {
+			case HOLD_PISTOLS:
+				SlotEnemy = 350; // PISTOLS_AMMO_ITEM;
+				break;
+			case HOLD_REVOLVER:
+				SlotEnemy = 367;  // SIXSHOOTER_AMMO_ITEM;
+				break;
+			case HOLD_UZI:
+				SlotEnemy = 352; // UZI_AMMO_ITEM;
+				break;
+			case HOLD_SHOTGUN:
+				// fucile
+				Ammo = tomb4::lara.shotgun_type_carried;
+				if (Ammo & 0x08) {
+
+					// normali
+					SlotEnemy = 354; // SHOTGUN_AMMO1_ITEM;
+				} else {
+					// esplosive
+					SlotEnemy = 355; // SHOTGUN_AMMO2_ITEM;
+				}
+
+				break;
+			case HOLD_GRENADEGUN:
+				// lancia granate
+				Ammo = tomb4::lara.grenade_type_carried;
+				if (Ammo & 0x08) {
+					SlotEnemy = 362; // GRENADE_GUN_AMMO1_ITEM;
+				}
+				if (Ammo & 0x10) {
+					SlotEnemy = 363; // GRENADE_GUN_AMMO2_ITEM;
+				}
+				if (Ammo & 0x20) {
+					SlotEnemy = 364; // GRENADE_GUN_AMMO3_ITEM
+				}
+				break;
+			case HOLD_CROSSBOW:
+				// balestra
+				Ammo = tomb4::lara.crossbow_type_carried;
+				if (Ammo & 0x08) {
+					SlotEnemy = 357; // CROSSBOW_AMMO1_ITEM;
+				}
+				if (Ammo & 0x10) {
+					SlotEnemy = 358; // CROSSBOW_AMMO2_ITEM;
+				}
+				if (Ammo & 0x20) {
+					SlotEnemy = 359; // CROSSBOW_AMMO3_ITEM;
+				}
+				break;
+			}
+
+			if (SlotEnemy == 0) {
+				return false;
+			}
+		}
+
+		pSpec = &GlobTomb4.pBaseCustomize->BaseShatterSpecific;
+
+		// vedere se slotenemy e' uno di quelli previsti
+		for (i = 0; i < pSpec->TotSpecific; i++) {
+			if (pSpec->VetSpecific[i] == SlotEnemy)
+				return true;
+		}
+		return false;
+	}
+
+	// chiamata quando e' un veicolo a colpire shatter
+	// localkzzare lo slot del veicolo e poi chiama CheckShatterSpecific
+	bool CheckSpecificXVeicolo(void)
+	{
+		int Indice;
+		WORD Slot;
+
+		Indice = *GlobTomb4.pAdr->pVehicleIndex;
+		if (Indice == -1) {
+			// anomalia
+			return true;
+		}
+
+		Slot = GlobTomb4.pAdr->pVetItems[Indice].SlotID;
+
+		return CheckShatterSpecific(Slot, false);
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -8569,4 +8669,6 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100B1D3A, (unsigned int)trng::RestartCutsceneCamera, replace);
 	ProcessInject(0x100D0EDA, (unsigned int)trng::RestoreAllFlipMesh, replace);
 	ProcessInject(0x100B703E, (unsigned int)trng::aClearFX, replace);
+	ProcessInject(0x100D394E, (unsigned int)trng::CheckShatterSpecific, replace);
+	ProcessInject(0x100D3AFD, (unsigned int)trng::CheckSpecificXVeicolo, replace);
 }

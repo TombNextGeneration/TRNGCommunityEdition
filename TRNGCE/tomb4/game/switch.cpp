@@ -62,10 +62,16 @@ namespace tomb4
 		GetHeight(GetFloor(x, y, z, &room_number), x, y, z);
 		TestTriggers(trigger_index, heavy, flags);
 	}
+
+	long GetSwitchTrigger(ITEM_INFO* item, short* ItemNos, long AttatchedToSwitch)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 void Inject_Switch(bool replace)
 {
 	ProcessInject(0x460CE0, (unsigned int)tomb4::SwitchTrigger, replace);
 	ProcessInject(0x460E80, (unsigned int)tomb4::TestTriggersAtXYZ, replace);
+	ProcessInject(0x460DB0, (unsigned int)tomb4::GetSwitchTrigger, false);
 }

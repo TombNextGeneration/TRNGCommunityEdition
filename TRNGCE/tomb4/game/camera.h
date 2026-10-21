@@ -14,6 +14,7 @@ namespace tomb4
 	extern short &ChaseCameraDefaultElevation;
 	extern long &LookCameraDefaultTargetZ;
 	extern long &LookCameraDefaultStartY;
+	extern SHATTER_ITEM &ShatterItem;
 
 	void CalculateCamera();
 	void InitialiseCamera();

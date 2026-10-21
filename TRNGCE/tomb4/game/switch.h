@@ -9,6 +9,7 @@ namespace tomb4
 
 	long SwitchTrigger(short item_number, short timer);
 	void TestTriggersAtXYZ(long x, long y, long z, short room_number, short heavy, short flags);
+	long GetSwitchTrigger(ITEM_INFO* item, short* ItemNos, long AttatchedToSwitch);
 }
 
 void Inject_Switch(bool replace);
