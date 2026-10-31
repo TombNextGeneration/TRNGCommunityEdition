@@ -84,6 +84,8 @@
 #include "tomb4/game/larafire.h"
 #include "plugin/objecthelper/PlugIn_trng.h"
 #include "plugin/objecthelper/trng.h"
+#include "plugin/classicinventory/trng.h"
+#include "plugin/classicinventory/Plugin_ClassicInventory.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -469,15 +471,17 @@ static const char *PatchTitles[342] = {
 	"Electric Lara",
 	"Headlight"
 };
-static const char* PluginNames[3] = {
+static const char* PluginNames[4] = {
 	"Plugin_FlyCheat.dll",
 	"Plugin_ParticleSystem.dll",
-	"Plugin_ObjectHelper.dll"
+	"Plugin_ObjectHelper.dll",
+	"Plugin_ClassicInventory.dll"
 };
-static const WORD RequiredPluginVersions[3][4] = {
+static const WORD RequiredPluginVersions[4][4] = {
 	{4, 0, 0, 3},
 	{1, 1, 0, 0},
-	{3, 0, 0, 1}
+	{3, 0, 0, 1},
+	{1, 2, 0, 4}
 };
 static void *InvalidAddress;
 
@@ -676,6 +680,8 @@ static void Inject(bool replace) {
 	Inject_Larafire(replace);
 	Inject_Plugin_Objecthelper(GetModuleHandle("Plugin_ObjectHelper.dll"), replace);
 	Inject_Plugin_Objecthelper_trng(GetModuleHandle("Plugin_ObjectHelper.dll"), replace);
+	Inject_Plugin_ClassicInventory_trng(GetModuleHandle("Plugin_ClassicInventory.dll"), replace);
+	Inject_Plugin_ClassicInventory(GetModuleHandle("Plugin_ClassicInventory.dll"), replace);
 }
 
 static LPSTR __stdcall CallInject() {
@@ -698,7 +704,7 @@ static LPSTR __stdcall CallInject() {
 		strcat_s(message, "\nTry enabling the patches to fix this problem.");
 		Terminate(message);
 	}
-	for (index = 0; index < 3; ++index) {
+	for (index = 0; index < 4; ++index) {
 		if (!CheckPluginVersion(PluginNames[index], RequiredPluginVersions[index])) {
 			if (!error) {
 				strcpy_s(message, "The game can't start because the following plugins are incompatible with TRNG-CE:\n\n");

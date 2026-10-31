@@ -13,6 +13,7 @@ namespace tomb4
 	long S_CallInventory2();
 	long convert_obj_to_invobj(short obj);
 	void update_laras_weapons_status();
+	void DEL_picked_up_object(short objnum);
 }
 
 void Inject_Newinv(bool replace);

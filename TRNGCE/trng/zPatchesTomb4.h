@@ -44,6 +44,7 @@ namespace trng {
 	extern float &Float512;
 	extern float &Float240;
 	extern int &ResultCheckSpecific;
+	extern DWORD &ValEsito;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -187,6 +188,7 @@ namespace trng {
 	void aClearFX(void);
 	bool CheckShatterSpecific(WORD SlotEnemy, bool TestLaraWeapon);
 	bool CheckSpecificXVeicolo(void);
+	bool AnalisiScatolaMunizioni(WORD Oggetto);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

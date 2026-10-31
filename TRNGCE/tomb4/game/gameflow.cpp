@@ -319,6 +319,7 @@ namespace tomb4
 				break;
 
 			default:
+
 				if (n >= CMD_KEY1 && n <= CMD_KEY12)
 					n -= 82;
 				else if (n >= CMD_PUZZLE1 && n <= CMD_PUZZLE12)

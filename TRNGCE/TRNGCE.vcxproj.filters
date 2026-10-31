@@ -309,6 +309,12 @@
     <ClInclude Include="plugin\objecthelper\structures_mine.h">
       <Filter>plugin\objecthelper</Filter>
     </ClInclude>
+    <ClInclude Include="plugin\classicinventory\trng.h">
+      <Filter>plugin\classicinventory</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\classicinventory\Plugin_ClassicInventory.h">
+      <Filter>plugin\classicinventory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -579,6 +585,12 @@
     <ClCompile Include="plugin\objecthelper\trng.cpp">
       <Filter>plugin\objecthelper</Filter>
     </ClCompile>
+    <ClCompile Include="plugin\classicinventory\trng.cpp">
+      <Filter>plugin\classicinventory</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\classicinventory\Plugin_ClassicInventory.cpp">
+      <Filter>plugin\classicinventory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TRNGCE.rc" />
@@ -619,6 +631,9 @@
     </Filter>
     <Filter Include="plugin\objecthelper">
       <UniqueIdentifier>{c39798fc-bca0-493c-b3e4-e63348847253}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin\classicinventory">
+      <UniqueIdentifier>{53a91c31-2106-451e-84fc-a6120631e6d7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

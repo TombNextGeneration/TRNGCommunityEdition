@@ -9223,7 +9223,7 @@ Concludi:
 		CALL_CONDITION pCall;
 		CALL_CONDITION_MINE pCallMine;
 		int Responso;
-		int ValEsito;
+		int ValoreEsito;
 		StrPluginRec *pRec;
 		bool TestReplaced;
 		StrRecordCallBack *pCB;
@@ -9233,7 +9233,7 @@ Concludi:
 		*pTestSalta = false;
 		*pTestRestore = false;
 		*pRepeatType = 0;
-		ValEsito = 0;
+		ValoreEsito = 0;
 
 		if (GlobTomb4.BaseSalvaFloor.InsideCondition != 0) {
 			*pRepeatType = 0;
@@ -9277,13 +9277,13 @@ Concludi:
 				sprintf_s(BufferLog, "ERROR: the \"%s\" plugin has not set the callback for its conditional triggers", MyGlobPrivate.DataBase.pVetPlugins[PluginId].Nome);
 				*pRepeatType = 3;
 				InviaLog(BufferLog);
-				return ValEsito;
+				return ValoreEsito;
 			}
 
 			// int (__cdecl *CALL_CONDITION_MINE) (WORD ConditionIndex, int ItemIndex, WORD Extra, WORD ActivationMode);
 			Responso = pCallMine(Condizione, Indice, ExtraButtons, Flags);
 			if (Responso & CTRET_IS_TRUE)
-				ValEsito = 1;
+				ValoreEsito = 1;
 			if (Responso & CTRET_EXTRA_PARAM)
 				*pTestRestore = true;
 			if (Responso & CTRET_ON_MOVEABLE)
@@ -9302,7 +9302,7 @@ Concludi:
 			if (Responso & CTRET_PERFORM_ONCE_AND_GO) {
 				*pRepeatType = 3;
 			}
-			return ValEsito;
+			return ValoreEsito;
 
 		}
 
@@ -9339,7 +9339,7 @@ Concludi:
 				TestReplaced = false;
 			} else {
 				if (Responso & CTRET_IS_TRUE)
-					ValEsito = 1;
+					ValoreEsito = 1;
 				if (Responso & CTRET_EXTRA_PARAM)
 					*pTestRestore = true;
 				if (Responso & CTRET_ON_MOVEABLE)
@@ -9364,7 +9364,7 @@ Concludi:
 
 		// --------------------------  ORIGINAL TRNG CONDITION -------------------------------------
 		if (TestReplaced == false) {
-			ValEsito = PerformTRNGCondition(Condizione, Indice, ExtraButtons, pTestRestore, pTestSalta, pRepeatType, Flags);
+			ValoreEsito = PerformTRNGCondition(Condizione, Indice, ExtraButtons, pTestRestore, pTestSalta, pRepeatType, Flags);
 		}
 
 		// -------------------------- CALLBACK AFTER ? -----------------------------------------------
@@ -9382,19 +9382,19 @@ Concludi:
 
 						pCall = (CALL_CONDITION) pCB->pCall;
 						TestEsito = false;
-						if (ValEsito)
+						if (ValoreEsito)
 							TestEsito = true;
 
 						Responso = pCall(Condizione, Indice, ExtraButtons, Flags, TestEsito, CBT_AFTER);
 						if ((Responso & CTRET_EXECUTE_ORIGINAL) == 0) {
 
-							ValEsito = 0;
+							ValoreEsito = 0;
 							*pTestRestore = false;
 							*pTestSalta = false;
 							*pRepeatType = 0;
 
 							if (Responso & CTRET_IS_TRUE)
-								ValEsito = 1;
+								ValoreEsito = 1;
 							if (Responso & CTRET_EXTRA_PARAM)
 								*pTestRestore = true;
 							if (Responso & CTRET_ON_MOVEABLE)
@@ -9421,7 +9421,7 @@ Concludi:
 				pRec++;
 			}
 		}
-		return ValEsito;
+		return ValoreEsito;
 	}
 
 	// verifica se e' una condizione valide per dummy mode.

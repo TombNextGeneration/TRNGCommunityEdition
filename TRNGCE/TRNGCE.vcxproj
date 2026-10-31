@@ -129,6 +129,8 @@
     <ClInclude Include="flep\patches\quadbike.h" />
     <ClInclude Include="flep\structures_mine.h" />
     <ClInclude Include="inject.h" />
+    <ClInclude Include="plugin\classicinventory\Plugin_ClassicInventory.h" />
+    <ClInclude Include="plugin\classicinventory\trng.h" />
     <ClInclude Include="plugin\flycheat\constants_mine.h" />
     <ClInclude Include="plugin\flycheat\PlugIn_trng.h" />
     <ClInclude Include="plugin\flycheat\trng.h" />
@@ -233,6 +235,8 @@
     <ClCompile Include="flep\patches\quadbike.cpp" />
     <ClCompile Include="flep\patches\sub.cpp" />
     <ClCompile Include="flep\PlugIn_trng.cpp" />
+    <ClCompile Include="plugin\classicinventory\Plugin_ClassicInventory.cpp" />
+    <ClCompile Include="plugin\classicinventory\trng.cpp" />
     <ClCompile Include="plugin\flycheat\PlugIn_trng.cpp" />
     <ClCompile Include="plugin\flycheat\trng.cpp" />
     <ClCompile Include="plugin\objecthelper\PlugIn_trng.cpp" />

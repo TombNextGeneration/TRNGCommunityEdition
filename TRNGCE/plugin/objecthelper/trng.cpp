@@ -13,7 +13,7 @@ namespace plugin::objecthelper {
 	//  mov  ecx, dword ptr [eax+04h]  ; and now ECX points to the trng
 	// data (pGlobTomb4)
 	// see the "Trng Plugin tutorial" for more infos.
-	trng::StrTrngInfos Trng = { -1 };
+	trng::StrTrngInfos Trng = {-1};
 
 	// FOR_YOU:
 	// perform an (existing) flipeffect trigger with the given data

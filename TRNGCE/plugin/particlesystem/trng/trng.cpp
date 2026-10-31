@@ -11,7 +11,7 @@ namespace plugin::particlesystem {
 	//  mov  ecx, dword ptr [eax+04h]  ; and now ECX points to the trng
 	// data (pGlobTomb4)
 	// see the "Trng Plugin tutorial" for more infos.
-	trng::StrTrngInfos Trng = { -1 };
+	trng::StrTrngInfos Trng = {-1};
 }
 
 void Inject_Plugin_Particlesystem_trng(void* module, bool replace)

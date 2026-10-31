@@ -90,6 +90,7 @@ namespace trng {
 	float &Float512 = *reinterpret_cast<decltype(&Float512)>(0x1016A2E8);
 	float &Float240 = *reinterpret_cast<decltype(&Float240)>(0x1016A2EC);   // era 540
 	int &ResultCheckSpecific = *reinterpret_cast<decltype(&ResultCheckSpecific)>(0x10657B78);
+	DWORD &ValEsito = *reinterpret_cast<decltype(&ValEsito)>(0x10669B6C);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -8514,6 +8515,58 @@ namespace trng {
 
 		return CheckShatterSpecific(Slot, false);
 	}
+
+	// oggetto contiene il numero di slot del tipo di oggetto
+	// raccolto
+	// se e' una delle scatole di munizioni da gestire effettua
+	// l'aggiornameto e poi restituisce true
+	// in caso contrario restituisce false
+	bool AnalisiScatolaMunizioni(WORD Oggetto)
+	{
+		StrBaseCustomize *pCust;
+
+		pCust = GlobTomb4.pBaseCustomize;
+
+		switch (Oggetto) {
+		case 354:
+			// SHOTGUN_AMMO1_ITEM
+			if (tomb4::lara.num_shotgun_ammo1 == -1)
+				break;
+			tomb4::lara.num_shotgun_ammo1 += pCust->AmmoFucileNormale.Pickup;
+			break;
+
+		case 357:
+			// CROSSBOW_AMMO1_ITEM
+			if (tomb4::lara.num_crossbow_ammo1 == -1)
+				break;
+			tomb4::lara.num_crossbow_ammo1 += pCust->AmmoBalestraNormali.Pickup;
+			break;
+
+		case 367:
+			// SIXSHOOTER_AMMO_ITEM
+			if (tomb4::lara.num_revolver_ammo == -1)
+				break;
+			tomb4::lara.num_revolver_ammo += pCust->AmmoRevolver.Pickup;
+			break;
+
+		case 350:
+			// PISTOLS_AMMO_ITEM
+			if (tomb4::lara.num_pistols_ammo == -1)
+				break;
+			tomb4::lara.num_pistols_ammo += pCust->AmmoPistols.Pickup;
+			break;
+
+		case 352:
+			// UZI_AMMO_ITEM
+			if (tomb4::lara.num_uzi_ammo == -1)
+				break;
+			tomb4::lara.num_uzi_ammo += pCust->AmmoUZI.Pickup;
+			break;
+		default:
+			return false;
+		}
+		return true;
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -8671,4 +8724,5 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100B703E, (unsigned int)trng::aClearFX, replace);
 	ProcessInject(0x100D394E, (unsigned int)trng::CheckShatterSpecific, replace);
 	ProcessInject(0x100D3AFD, (unsigned int)trng::CheckSpecificXVeicolo, replace);
+	ProcessInject(0x100CA712, (unsigned int)trng::AnalisiScatolaMunizioni, replace);
 }
