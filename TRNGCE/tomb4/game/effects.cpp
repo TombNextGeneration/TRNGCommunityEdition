@@ -5,6 +5,7 @@ namespace tomb4
 {
 	long &GlobalFogOff = *reinterpret_cast<decltype(&GlobalFogOff)>(0x4BF248);
 	FX_INFO* &effects = *reinterpret_cast<decltype(&effects)>(0x8011C0);
+	void (*(&effect_routines)[47])(ITEM_INFO* item) = *reinterpret_cast<decltype(&effect_routines)>(0x4ABE80);
 
 	void SoundEffects()
 	{

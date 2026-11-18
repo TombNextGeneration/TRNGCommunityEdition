@@ -66,6 +66,8 @@ namespace tomb4
 	long LOS(GAME_VECTOR* start, GAME_VECTOR* target);
 	long ObjectOnLOS2(GAME_VECTOR* start, GAME_VECTOR* target, PHD_VECTOR* Coord, MESH_INFO** StaticMesh);
 	void FireCrossBowFromLaserSight(GAME_VECTOR* start, GAME_VECTOR* target);
+	long GetChange(ITEM_INFO* item, ANIM_STRUCT* anim);
+	void TranslateItem(ITEM_INFO* item, short x, short y, short z);
 }
 
 void Inject_Control(bool replace);

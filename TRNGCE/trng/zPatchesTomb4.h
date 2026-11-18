@@ -10,7 +10,7 @@ namespace trng {
 	extern StrBaseMemAllocata &BaseAlloc;
 	extern int &LivelloOldNumber;
 	extern int &GlobIndiceCombine;
-	extern int &TestLoadedGame;
+	extern bool &TestLoadedGame;
 	extern WORD &RetSlotAss;
 	extern int &SlotSceltoInventario;
 	extern int &TestEsitoBow;
@@ -45,6 +45,8 @@ namespace trng {
 	extern float &Float240;
 	extern int &ResultCheckSpecific;
 	extern DWORD &ValEsito;
+	extern int &SuonoPerKayak;
+	extern int &TestSaltaSuono;
 
 	void SalvaDimensioniMesh(WORD *VetPtrMesh[], int TotMesh);
 	bool FreeMine(void *pMemory);
@@ -189,6 +191,8 @@ namespace trng {
 	bool CheckShatterSpecific(WORD SlotEnemy, bool TestLaraWeapon);
 	bool CheckSpecificXVeicolo(void);
 	bool AnalisiScatolaMunizioni(WORD Oggetto);
+	int AnalisiSuoniKayak(int SuonoSfx);
+	bool IsSuonoDaSaltarexStanza(StrItemTr4 *pItem, DWORD Flags);
 }
 
 void Inject_ZPatchesTomb4(bool replace);

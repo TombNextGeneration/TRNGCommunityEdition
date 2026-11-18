@@ -2370,6 +2370,26 @@ namespace trng {
 	inline constexpr int FIL_PRESERVE_LEVEL = 0x0010; // this flag is present: from savegame or from go and back for level jump and no resethub
 	inline constexpr int FIL_FROM_LIKE_SAVEGAME = 0x0020; // this flag is enabled if level is from savegame or from level jump with no reset hub and go and back from two levels.
 
+	// BUGF_... flag per CUST_FIX_BUGS
+	inline constexpr int BUGF_TRANSPARENT_WHITE_ON_FOG = 0x0001;
+	inline constexpr int BUGF_DART_NO_POISON_LARA = 0x0002;
+	inline constexpr int BUGF_LAND_WATER_SFX_ENEMIES = 0x0004;
+
+	// flag per room buttons of room structure
+	inline constexpr int FROOM_COLD = 0x1000;
+	inline constexpr int FROOM_RAIN = 0x0800;
+	inline constexpr int FROOM_SNOW = 0x0400;
+	inline constexpr int FROOM_REFLECTION = 0x0200;
+	inline constexpr int FROOM_MIST = 0x0100;
+	inline constexpr int FROOM_NON_LENS_FLARE = 0x0080;
+	inline constexpr int FROOM_MISTERY = 0x0040;
+	inline constexpr int FROOM_OUTSIDE = 0x0020;
+	inline constexpr int FROOM_DAMAGE = 0x0010;
+	inline constexpr int FROOM_HORIZON = 0x0008;
+	inline constexpr int FROOM_QUICKSAND = 0x0004;
+	inline constexpr int FROOM_IS_FLIPROOM = 0x0002;
+	inline constexpr int FROOM_WATER = 0x0001;
+
 #pragma pack(push, 1)
 	struct StrRelocatedMem {
 		DWORD Start; // new start address for this memory zone

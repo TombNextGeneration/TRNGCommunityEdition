@@ -54,7 +54,7 @@ namespace trng {
 	int &LivelloOldNumber = *reinterpret_cast<decltype(&LivelloOldNumber)>(0x10679F50); // usato per passarlo a callback cbInitLevel
 	int &GlobIndiceCombine = *reinterpret_cast<decltype(&GlobIndiceCombine)>(0x10679E68);
 	// chiamata quando si entra in inventario
-	int &TestLoadedGame = *reinterpret_cast<decltype(&TestLoadedGame)>(0x10657B68);
+	bool &TestLoadedGame = *reinterpret_cast<decltype(&TestLoadedGame)>(0x10657B68);
 	WORD &RetSlotAss = *reinterpret_cast<decltype(&RetSlotAss)>(0x10657B6A);
 	int &SlotSceltoInventario = *reinterpret_cast<decltype(&SlotSceltoInventario)>(0x10657F7C);
 	int &TestEsitoBow = *reinterpret_cast<decltype(&TestEsitoBow)>(0x10679E3C);
@@ -91,6 +91,8 @@ namespace trng {
 	float &Float240 = *reinterpret_cast<decltype(&Float240)>(0x1016A2EC);   // era 540
 	int &ResultCheckSpecific = *reinterpret_cast<decltype(&ResultCheckSpecific)>(0x10657B78);
 	DWORD &ValEsito = *reinterpret_cast<decltype(&ValEsito)>(0x10669B6C);
+	int &SuonoPerKayak = *reinterpret_cast<decltype(&SuonoPerKayak)>(0x10679EAC);
+	int &TestSaltaSuono = *reinterpret_cast<decltype(&TestSaltaSuono)>(0x10657B60);
 
 	// chiamata in fase caricamento di tr4 quando ancora
 	// le mesh sono uguali a quelle in file tr4
@@ -8567,6 +8569,65 @@ namespace trng {
 		}
 		return true;
 	}
+
+	// chiamato in esefcuzioni animcommand playsound di lara
+	// quando il suono e' uno di quelli di acqua per kayak
+	// restituisce eventuale suono modificato
+	int AnalisiSuoniKayak(int SuonoSfx)
+	{
+		WORD *PSinkAttiva;
+		StrItemTr4 *pItem;
+		int i;
+		BYTE *pByte;
+
+		PSinkAttiva = (WORD *) &tomb4::lara.current_active;   // ;ZonaSave_73_SinkAttive
+		if (*PSinkAttiva != 0)
+			return SuonoSfx;
+
+		i = *GlobTomb4.pAdr->pVehicleIndex;
+		if (i == -1)
+			return SuonoSfx;
+
+		pItem = &GlobTomb4.pAdr->pVetItems[i];
+		if (pItem->SlotID != 492)
+			return SuonoSfx;
+
+		pByte = (BYTE *) pItem->pZonaSavegame;
+		if (pByte[0x2c] == 1)
+			return SuonoSfx;
+
+		// ok, allora: siamo con kayak, ma non c'e' acqua e nemmeno una sink
+		// uindi cancellare o modificare il suono
+		// fare suono solo come terra:
+		return 0x4000 | 71;
+	}
+
+	bool IsSuonoDaSaltarexStanza(StrItemTr4 *pItem, DWORD Flags)
+	{
+		// se non c'e' coincidenza tra flag (acqua / terra) e tipo di stanza di item, allora restituitre true per saltare suono
+		StrRoomTr4 *pRoom;
+		bool TestWater;
+
+		if (pItem->Room == 255)
+			return false;
+
+		pRoom = &GlobTomb4.pAdr->pVetRooms[pItem->Room];
+		TestWater = false;
+		if (pRoom->FlagsRoom & FROOM_WATER)
+			TestWater = true;
+
+		if (TestWater == true && (Flags & 0x8000) == 0) {
+			// stanza in acqua ma non c'e' flag per acqua
+			return true;
+		}
+
+		if (TestWater == false && (Flags & 0x4000) == 0) {
+			// stanza senza acqua ma non c'e' flag di terra
+			return true;
+		}
+
+		return false;
+	}
 }
 
 __declspec(naked) static void** Inject_ZPatchesTomb4_DatiMoveables() { __asm lea eax, [trng::DatiMoveables] __asm ret }
@@ -8725,4 +8786,6 @@ void LoadTombNextGenerationInject_ZPatchesTomb4(bool replace)
 	ProcessInject(0x100D394E, (unsigned int)trng::CheckShatterSpecific, replace);
 	ProcessInject(0x100D3AFD, (unsigned int)trng::CheckSpecificXVeicolo, replace);
 	ProcessInject(0x100CA712, (unsigned int)trng::AnalisiScatolaMunizioni, replace);
+	ProcessInject(0x100D377D, (unsigned int)trng::AnalisiSuoniKayak, replace);
+	ProcessInject(0x100D38C0, (unsigned int)trng::IsSuonoDaSaltarexStanza, replace);
 }

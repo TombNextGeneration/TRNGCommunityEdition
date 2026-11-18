@@ -18,6 +18,7 @@ namespace plugin::objecthelper {
 	void PerformGeneralFlipeffect(int Handle, int Flipeffect, WORD Timer, WORD Extra);
 	int HighestBitSet(DWORD Value);
 	void HitEnemy(trng::StrItemTr4 *item);
+	void EnemyDie(trng::StrItemTr4 *item);
 }
 
 void Inject_Plugin_Objecthelper(void* module, bool replace);

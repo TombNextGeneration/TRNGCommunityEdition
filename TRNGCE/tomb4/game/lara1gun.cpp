@@ -25,8 +25,8 @@ namespace tomb4
 	long &CrossbowOffsetZ = *reinterpret_cast<decltype(&CrossbowOffsetZ)>(0x429FA4);
 	uchar &GrenadeWeight = *reinterpret_cast<decltype(&GrenadeWeight)>(0x429676);
 	long &GrenadeRotation = *reinterpret_cast<decltype(&GrenadeRotation)>(0x42966F);
-#define GrenadeRotation (GrenadeRotation != 0x660000B8)
 	uchar &GrenadeOneTouch = *reinterpret_cast<decltype(&GrenadeOneTouch)>(0x429796);
+#define GrenadeRotation (GrenadeRotation != 0x660000B8)
 #define GrenadeOneTouch (GrenadeOneTouch == 0x90)
 
 	void TriggerUnderwaterExplosion(ITEM_INFO* item, long vehicle)

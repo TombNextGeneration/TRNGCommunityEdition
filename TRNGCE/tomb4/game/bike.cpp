@@ -33,8 +33,8 @@ namespace tomb4
 
 	long &bike_booster_object = *reinterpret_cast<decltype(&bike_booster_object)>(0x463922);
 	uchar &bike_explode_in_water = *reinterpret_cast<decltype(&bike_explode_in_water)>(0x465B09);
-#define bike_explode_in_water (bike_explode_in_water == 0x74)
 	long &bike_maximum_depth = *reinterpret_cast<decltype(&bike_maximum_depth)>(0x818B4A);
+#define bike_explode_in_water (bike_explode_in_water == 0x74)
 
 	static long UserControl(ITEM_INFO* item, long height, long* pitch)
 	{

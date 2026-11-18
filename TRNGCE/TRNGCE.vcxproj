@@ -47,13 +47,13 @@
     <LinkIncremental>true</LinkIncremental>
     <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
+    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-char-subscripts</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-missing-designated-field-initializers,-clang-diagnostic-missing-field-initializers</ClangTidyChecks>
+    <ClangTidyChecks>-*,clang-analyzer-*,clang-diagnostic-*,-clang-diagnostic-microsoft-cast,-clang-diagnostic-unused-parameter,-clang-diagnostic-pragma-once-outside-header,-clang-diagnostic-pragma-pack,-clang-diagnostic-char-subscripts</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
@@ -88,6 +88,7 @@
       <FixedBaseAddress>true</FixedBaseAddress>
       <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;dxguid.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+      <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -115,6 +116,7 @@
       <FixedBaseAddress>true</FixedBaseAddress>
       <AdditionalDependencies>msimg32.lib;version.lib;ddraw.lib;dsound.lib;msacm32.lib;dxguid.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+      <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -154,6 +156,7 @@
     <ClInclude Include="tomb4\game\gameflow.h" />
     <ClInclude Include="tomb4\game\hair.h" />
     <ClInclude Include="tomb4\game\health.h" />
+    <ClInclude Include="tomb4\game\horse.h" />
     <ClInclude Include="tomb4\game\init.h" />
     <ClInclude Include="tomb4\game\items.h" />
     <ClInclude Include="tomb4\game\jeep.h" />
@@ -164,6 +167,7 @@
     <ClInclude Include="tomb4\game\laramisc.h" />
     <ClInclude Include="tomb4\game\laraskin.h" />
     <ClInclude Include="tomb4\game\laraswim.h" />
+    <ClInclude Include="tomb4\game\lot.h" />
     <ClInclude Include="tomb4\game\newinv.h" />
     <ClInclude Include="tomb4\game\objects.h" />
     <ClInclude Include="tomb4\game\objlight.h" />
@@ -256,6 +260,7 @@
     <ClCompile Include="tomb4\game\gameflow.cpp" />
     <ClCompile Include="tomb4\game\hair.cpp" />
     <ClCompile Include="tomb4\game\health.cpp" />
+    <ClCompile Include="tomb4\game\horse.cpp" />
     <ClCompile Include="tomb4\game\init.cpp" />
     <ClCompile Include="tomb4\game\items.cpp" />
     <ClCompile Include="tomb4\game\jeep.cpp" />
@@ -266,6 +271,7 @@
     <ClCompile Include="tomb4\game\laramisc.cpp" />
     <ClCompile Include="tomb4\game\laraskin.cpp" />
     <ClCompile Include="tomb4\game\laraswim.cpp" />
+    <ClCompile Include="tomb4\game\lot.cpp" />
     <ClCompile Include="tomb4\game\newinv.cpp" />
     <ClCompile Include="tomb4\game\objects.cpp" />
     <ClCompile Include="tomb4\game\objlight.cpp" />

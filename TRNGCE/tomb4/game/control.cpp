@@ -44,6 +44,7 @@
 #include "switch.h"
 #include "../../plugin/objecthelper/trng.h"
 #include "../../plugin/objecthelper/PlugIn_trng.h"
+#include "../specific/file.h"
 
 namespace tomb4
 {
@@ -113,6 +114,38 @@ namespace tomb4
 
 		// ok e' tutto a posto
 		return true;
+	}
+
+	static bool CanSFXPlay(ITEM_INFO* item, ushort type)
+	{
+		// qui vedere se bisogna fare patch per fix bug di mancato controllo tra suoni water e land
+		if (!(trng::BaseCustomize.BugsToFix & trng::BUGF_LAND_WATER_SFX_ENEMIES))
+			return true;
+
+		// se flag erano 00,, ossia always, non c'e' bisogno di analisi
+		if (type == SFX_LANDANDWATER)
+			return true;
+
+		// fare fix: controllare stanza attuale e flag attuali e saltare esecuzione suono se non e' coerente
+		trng::TestSaltaSuono = trng::IsSuonoDaSaltarexStanza((trng::StrItemTr4*)item, type);
+
+		if (!trng::TestSaltaSuono)
+			return true;
+
+		return false;
+	}
+
+	static void KillCommand(ITEM_INFO* item)
+	{
+		if (objects[item->object_number].intelligent && !item->after_death)
+		{
+			if (flep::pPatchMap[flep::PATCH_KEEP_DEAD_ENEMIES] && item->object_number == HYDRA)
+				item->after_death = 127;
+			else
+				item->after_death = !trng::GlobTomb4.pBaseCustomize->TestKeepNemiciMorti;
+		}
+
+		item->status = ITEM_DEACTIVATED;
 	}
 
 	long ControlPhase(long nframes, long demo_mode)
@@ -222,7 +255,7 @@ namespace tomb4
 				{
 					trng::GlobTomb4.LastTimeBinoculars = 0;
 					trng::SalvaMiniShot();
-					trng::TestLoadedGame = 0;
+					trng::TestLoadedGame = false;
 					skip = false;
 
 					// controlla callback first
@@ -243,7 +276,7 @@ namespace tomb4
 						{
 							// eseguire replace
 							if (inventory_call(trng::CBT_REPLACE, false, -1) & trng::IRET_LOADED_GAME)
-								trng::TestLoadedGame = 1;
+								trng::TestLoadedGame = true;
 						}
 						else
 							trng::TestLoadedGame = S_CallInventory2();
@@ -254,7 +287,7 @@ namespace tomb4
 					{
 						// eseguire callback after
 						if (trng::EseguiCallBackDirects(trng::CB_INVENTORY_MAIN, trng::CBT_AFTER, NULL, 0, trng::TestLoadedGame, false, NULL) & trng::IRET_LOADED_GAME)
-							trng::TestLoadedGame = 1;
+							trng::TestLoadedGame = true;
 					}
 
 					if (trng::TestLoadedGame)
@@ -712,7 +745,208 @@ namespace tomb4
 
 	void AnimateItem(ITEM_INFO* item)
 	{
-		__try { throw __func__; } __finally {}
+		ANIM_STRUCT* anim;
+		short* cmd;
+		long speed, speed2;
+		ushort type, num;
+		bool skip;
+
+		anim = &anims[item->anim_number];
+		item->touch_bits = 0;
+		item->hit_status = 0;
+		item->frame_number++;
+
+		if (anim->number_changes > 0)
+		{
+			if (GetChange(item, anim))
+			{
+				anim = &anims[item->anim_number];
+				item->current_anim_state = anim->current_anim_state;
+
+				if (item->required_anim_state == item->current_anim_state)
+					item->required_anim_state = 0;
+			}
+		}
+
+		if (item->frame_number > anim->frame_end)
+		{
+			skip = false;
+
+			if (plugin::objecthelper::Trng.IdMyPlugin != -1)
+			{
+				plugin::objecthelper::EnemyDie((trng::StrItemTr4*)item);
+
+				if (plugin::objecthelper::Result.Available && plugin::objecthelper::Result.Support && plugin::objecthelper::Result.Value)
+				{
+					KillCommand(item);
+					skip = true;
+				}
+			}
+
+			if (!skip && anim->number_commands > 0)
+			{
+				cmd = &commands[anim->command_index];
+
+				for (int i = anim->number_commands; i > 0; i--)
+				{
+					switch (*cmd++)
+					{
+					case ACMD_SETPOS:
+
+						// vedere se e' un comando setposition normale
+						if ((cmd[0] & 0xC000) != 0x8000)
+							TranslateItem(item, cmd[0], cmd[1], cmd[2]);
+
+						cmd += 3;
+						break;
+
+					case ACMD_JUMPVEL:
+						item->fallspeed = cmd[0];
+						item->speed = cmd[1];
+						item->gravity_status = 1;
+						cmd += 2;
+						break;
+
+					case ACMD_KILL:
+						KillCommand(item);
+						break;
+
+					case ACMD_PLAYSFX:
+					case ACMD_FLIPEFFECT:
+						cmd += 2;
+						break;
+					}
+				}
+			}
+
+			item->anim_number = anim->jump_anim_num;
+			item->frame_number = anim->jump_frame_num;
+			anim = &anims[item->anim_number];
+
+			if (item->current_anim_state != anim->current_anim_state)
+			{
+				item->current_anim_state = anim->current_anim_state;
+				item->goal_anim_state = anim->current_anim_state;
+			}
+
+			if (item->required_anim_state == item->current_anim_state)
+				item->required_anim_state = 0;
+		}
+
+		if (anim->number_commands > 0)
+		{
+			cmd = &commands[anim->command_index];
+
+			for (int i = anim->number_commands; i > 0; i--)
+			{
+				switch (*cmd++)
+				{
+				case ACMD_SETPOS:
+
+					if ((cmd[0] & 0xC000) == 0x8000)
+					{
+						// eseguire
+						trng::EseguiNgAnimCommand((trng::StrItemTr4*)item, (WORD*)cmd, (short)trng::GetIndiceItem((DWORD)item));
+					}
+
+					cmd += 3;
+					break;
+
+				case ACMD_JUMPVEL:
+					cmd += 2;
+					break;
+
+				case ACMD_PLAYSFX:
+
+					if (item->frame_number == *cmd)
+					{
+						// elimina (o cambia) suoni per pagaia di kayak se e' sul terreno
+						// vedere se e' uno dei suoni da modificare
+						num = cmd[1] & 0x3FFF;
+						type = cmd[1] & 0xC000;
+
+						if (num == 1245 || num == 1280)
+						{
+							trng::SuonoPerKayak = trng::AnalisiSuoniKayak(num);
+							num = trng::SuonoPerKayak & 0x3FFF;
+							type = trng::SuonoPerKayak & 0xC000;
+						}
+
+						if (CanSFXPlay(item, type))
+						{
+							if (objects[item->object_number].water_creature)
+							{
+								if (room[item->room_number].flags & ROOM_UNDERWATER)
+									SoundEffect(num, &item->pos, SFX_WATER);
+								else
+									SoundEffect(num, &item->pos, SFX_DEFAULT);
+							}
+							else if (item->room_number == 255)
+							{
+								item->pos.x_pos = lara_item->pos.x_pos;
+								item->pos.y_pos = lara_item->pos.y_pos - 762;
+								item->pos.z_pos = lara_item->pos.z_pos;
+								SoundEffect(num, &item->pos, SFX_DEFAULT);
+							}
+							else if (room[item->room_number].flags & ROOM_UNDERWATER)
+							{
+								if (type == SFX_LANDANDWATER || type == SFX_WATERONLY)
+									SoundEffect(num, &item->pos, SFX_DEFAULT);
+							}
+							else if (type == SFX_LANDANDWATER || type == SFX_LANDONLY)
+								SoundEffect(num, &item->pos, SFX_DEFAULT);
+						}
+					}
+
+					cmd += 2;
+					break;
+
+				case ACMD_FLIPEFFECT:
+
+					if (item->frame_number == *cmd)
+					{
+						FXType = cmd[1] & 0xC000;
+						effect_routines[cmd[1] & 0x3FFF](item);
+					}
+
+					cmd += 2;
+					break;
+				}
+			}
+		}
+
+		speed2 = 0;
+
+		if (item->gravity_status)
+		{
+			if (item->fallspeed < 128)
+				item->fallspeed += 6;
+			else
+				item->fallspeed++;
+
+			item->pos.y_pos += item->fallspeed;
+		}
+		else
+		{
+			speed = anim->velocity;
+
+			if (anim->acceleration)
+				speed += anim->acceleration * (item->frame_number - anim->frame_base);
+
+			item->speed = speed >> 16;
+
+			speed2 = anim->Xvelocity;
+
+			if (anim->Xacceleration)
+				speed2 += anim->Xacceleration * (item->frame_number - anim->frame_base);
+
+			speed2 >>= 16;
+		}
+
+		item->pos.x_pos += (item->speed * phd_sin(item->pos.y_rot)) >> W2V_SHIFT;
+		item->pos.z_pos += (item->speed * phd_cos(item->pos.y_rot)) >> W2V_SHIFT;
+		item->pos.x_pos += (speed2 * phd_sin(item->pos.y_rot + 0x4000)) >> W2V_SHIFT;
+		item->pos.z_pos += (speed2 * phd_cos(item->pos.y_rot + 0x4000)) >> W2V_SHIFT;
 	}
 
 	long TriggerActive(ITEM_INFO* item)
@@ -953,6 +1187,16 @@ namespace tomb4
 	{
 		__try { throw __func__; } __finally {}
 	}
+
+	long GetChange(ITEM_INFO* item, ANIM_STRUCT* anim)
+	{
+		__try { throw __func__; } __finally {}
+	}
+
+	void TranslateItem(ITEM_INFO* item, short x, short y, short z)
+	{
+		__try { throw __func__; } __finally {}
+	}
 }
 
 __declspec(naked) static void** Inject_Control_flip_stats() { __asm lea eax, [tomb4::flip_stats] __asm ret }
@@ -975,11 +1219,13 @@ void Inject_Control(bool replace)
 	ProcessInject(0x449A50, (unsigned int)tomb4::GetWaterHeight, false);
 	ProcessInject(0x44BBF0, (unsigned int)tomb4::FlipMap, false);
 	ProcessInject(0x44C050, (unsigned int)tomb4::IsRoomOutside, false);
-	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, false);
+	ProcessInject(0x449280, (unsigned int)tomb4::AnimateItem, replace);
 	ProcessInject(0x44ACB0, (unsigned int)tomb4::TriggerActive, false);
 	ProcessInject(0x44D4E0, (unsigned int)tomb4::ExplodeItemNode, false);
 	ProcessInject(0x44CF10, (unsigned int)tomb4::GetTargetOnLOS, replace);
 	ProcessInject(0x44B260, (unsigned int)tomb4::LOS, false);
 	ProcessInject(0x44C270, (unsigned int)tomb4::ObjectOnLOS2, false);
 	ProcessInject(0x44CEA0, (unsigned int)tomb4::FireCrossBowFromLaserSight, false);
+	ProcessInject(0x4496B0, (unsigned int)tomb4::GetChange, false);
+	ProcessInject(0x449750, (unsigned int)tomb4::TranslateItem, false);
 }

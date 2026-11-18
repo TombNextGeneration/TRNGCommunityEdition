@@ -86,6 +86,9 @@
 #include "plugin/objecthelper/trng.h"
 #include "plugin/classicinventory/trng.h"
 #include "plugin/classicinventory/Plugin_ClassicInventory.h"
+#include "tomb4/game/horse.h"
+#include "tomb4/game/senet.h"
+#include "tomb4/game/lot.h"
 
 #ifndef _DEBUG
 #error TRNG-CE requires Debug configuration
@@ -682,6 +685,9 @@ static void Inject(bool replace) {
 	Inject_Plugin_Objecthelper_trng(GetModuleHandle("Plugin_ObjectHelper.dll"), replace);
 	Inject_Plugin_ClassicInventory_trng(GetModuleHandle("Plugin_ClassicInventory.dll"), replace);
 	Inject_Plugin_ClassicInventory(GetModuleHandle("Plugin_ClassicInventory.dll"), replace);
+	Inject_Horse(replace);
+	Inject_Senet(replace);
+	Inject_Lot(replace);
 }
 
 static LPSTR __stdcall CallInject() {

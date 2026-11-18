@@ -321,6 +321,7 @@ namespace trng {
 	void CorreggiVerticiJoint(StrMeshTr4 *pMesh, StrMeshTr4 * pMesh2, int Indice);
 	void SwapMeshItem(short SlotItem, WORD SlotSwap);
 	void SwapFlipMesh(int Slot, int Mesh, bool TestMemo);
+	void EseguiNgAnimCommand(StrItemTr4 *pItem, WORD *pPosition, short ItemIndex);
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace);

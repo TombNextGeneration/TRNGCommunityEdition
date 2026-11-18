@@ -315,6 +315,12 @@
     <ClInclude Include="plugin\classicinventory\Plugin_ClassicInventory.h">
       <Filter>plugin\classicinventory</Filter>
     </ClInclude>
+    <ClInclude Include="tomb4\game\horse.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
+    <ClInclude Include="tomb4\game\lot.h">
+      <Filter>tomb4\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -590,6 +596,12 @@
     </ClCompile>
     <ClCompile Include="plugin\classicinventory\Plugin_ClassicInventory.cpp">
       <Filter>plugin\classicinventory</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\horse.cpp">
+      <Filter>tomb4\game</Filter>
+    </ClCompile>
+    <ClCompile Include="tomb4\game\lot.cpp">
+      <Filter>tomb4\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

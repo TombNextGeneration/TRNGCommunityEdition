@@ -5,6 +5,7 @@ namespace tomb4
 {
 	extern long &GlobalFogOff;
 	extern FX_INFO* &effects;
+	extern void (*(&effect_routines)[47])(ITEM_INFO* item);
 
 	void SoundEffects();
 	void KillActiveBaddies(ITEM_INFO* item);

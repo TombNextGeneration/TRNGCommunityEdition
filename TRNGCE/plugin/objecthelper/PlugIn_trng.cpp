@@ -66,6 +66,12 @@ namespace plugin::objecthelper {
 		Trng.pGlobTomb4->pBaseVariableTRNG->Globals.CurrentValue = (int) item;
 		MakeQuery(item->SlotID, QUERY_ZOMBIE);
 	}
+
+	void EnemyDie(trng::StrItemTr4 *item)
+	{
+		Trng.pGlobTomb4->pBaseVariableTRNG->Globals.CurrentValue = (int) item;
+		MakeQuery(item->SlotID, QUERY_DEATH);
+	}
 }
 
 __declspec(naked) static void** Inject_Plugin_Objecthelper_PluginFunctionQueryHandle() { __asm lea eax, [plugin::objecthelper::PluginFunctionQueryHandle] __asm ret }
@@ -86,4 +92,5 @@ void Inject_Plugin_Objecthelper(void* module, bool replace)
 	ModuleAddressProcessInject(module, 0x10001110, (unsigned int)plugin::objecthelper::MakeQuery, replace);
 	ModuleAddressProcessInject(module, 0x10001000, (unsigned int)plugin::objecthelper::PerformNewFlipeffect, replace);
 	ModuleAddressProcessInject(module, 0x100013F0, (unsigned int)plugin::objecthelper::HitEnemy, replace);
+	ModuleAddressProcessInject(module, 0x10001450, (unsigned int)plugin::objecthelper::EnemyDie, replace);
 }

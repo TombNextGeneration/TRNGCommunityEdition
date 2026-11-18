@@ -2225,6 +2225,33 @@ namespace tomb4
 		ITEM_INVISIBLE
 	};
 
+	enum ai_bits
+	{
+		GUARD = 0x1,
+		AMBUSH = 0x2,
+		PATROL1 = 0x4,
+		MODIFY = 0x8,
+		FOLLOW = 0x10
+	};
+
+	enum anim_commands
+	{
+		ACMD_NULL,
+		ACMD_SETPOS,
+		ACMD_JUMPVEL,
+		ACMD_FREEHANDS,
+		ACMD_KILL,
+		ACMD_PLAYSFX,
+		ACMD_FLIPEFFECT
+	};
+
+	enum sfx_types
+	{
+		SFX_LANDANDWATER = 0,
+		SFX_LANDONLY = 0x4000,
+		SFX_WATERONLY = 0x8000
+	};
+
 #pragma pack(push, 1)
 	struct PHD_3DPOS
 	{
@@ -3432,6 +3459,26 @@ namespace tomb4
 		short OuterSize;
 		short OuterRadVel;
 		short pad3;
+	};
+
+	struct AI_INFO
+	{
+		short zone_number;
+		short enemy_zone;
+		long distance;
+		long ahead;
+		long bite;
+		short angle;
+		short x_angle;
+		short enemy_facing;
+	};
+
+	struct BITE_INFO
+	{
+		long x;
+		long y;
+		long z;
+		long mesh_num;
 	};
 #pragma pack(pop)
 }

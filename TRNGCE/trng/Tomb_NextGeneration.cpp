@@ -17542,6 +17542,59 @@ Concludi:
 			GlobTomb4.BaseFlipMesh.TotFlipMesh--;
 		}
 	}
+
+	// riceve in input il record del moveable che esegue l'animazione
+	// e il putnatore ai tre valori x,y,z di comando setposition
+
+	void EseguiNgAnimCommand(StrItemTr4 *pItem, WORD *pPosition, short ItemIndex)
+	{
+		WORD FrameNow;
+		WORD FramePosition;
+		int NumeroFlip;
+		WORD Timer;
+		WORD AzioneTimer;
+		StrAnimationTr4 *pAnim;
+
+		pAnim = &GlobTomb4.pAdr->pVetAnimations[pItem->AnimationNow];
+
+		FrameNow = pItem->FrameNow - pAnim->FrameStart;
+		FramePosition = pPosition[0] & 0xff;
+
+		if (FramePosition != 0xff && FrameNow != FramePosition)
+			return;
+		GlobTomb4.ItemIndexAnimCommand = ItemIndex;
+
+		// ora vedere se e' un flipeffec to un azione
+		if (pPosition[0] & TGROUP_FLIPEFFECT) {
+			// e' un flipeffect
+			NumeroFlip = pPosition[1];
+			Timer = pPosition[2];
+			GlobTomb4.ItemIndexCurrent = ItemIndex;
+			EsecuzioneFlipeffect(0, NumeroFlip, Timer, SCANF_ANIM_COMMAND);
+
+		} else {
+			// e' un action
+			// prendere numero di azione
+			AzioneTimer = pPosition[1] & 0xff;
+			// ora calcolare l'indice su cui effettuare l'azione
+			if (pPosition[0] & TGROUP_MOVEABLE) {
+				// bisogna usare indice fornito
+
+				ItemIndex = pPosition[1] & 0xff00;
+				ItemIndex = ItemIndex >> 8;
+				ItemIndex |= (pPosition[0] & 0x0F00);
+				// ora convertirlo
+				ItemIndex = GlobTomb4.VetRemapObjects[ItemIndex];
+				if (ItemIndex < 0)
+					return;
+
+			}
+			// aggiungere extra timer
+			AzioneTimer |= (pPosition[2] & 0xff00);
+			EsecuzioneActionTrigger(0, AzioneTimer, ItemIndex, SCANF_ANIM_COMMAND);
+
+		}
+	}
 }
 
 void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
@@ -17800,4 +17853,5 @@ void LoadTombNextGenerationInject_TombNextGeneration(bool replace)
 	ProcessInject(0x1007C38D, (unsigned int)trng::CorreggiVerticiJoint, replace);
 	ProcessInject(0x1003B32B, (unsigned int)trng::SwapMeshItem, replace);
 	ProcessInject(0x1003E1EB, (unsigned int)trng::SwapFlipMesh, replace);
+	ProcessInject(0x10081C67, (unsigned int)trng::EseguiNgAnimCommand, replace);
 }
