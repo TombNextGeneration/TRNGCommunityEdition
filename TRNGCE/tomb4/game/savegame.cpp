@@ -46,7 +46,7 @@ namespace tomb4
 			return true;
 
 		// se vitalita 0xc000 allora morto con esplosione
-		if (item->hit_points == -16384)
+		if ((short)item->il.ambient == -16384)
 			return true;
 
 		// se campo di mesh visdibili mancno le prime 8 mesh
